@@ -1,0 +1,157 @@
+{
+  "purpose": "production-renderer benchmark comparison recorded alongside dictation append fix",
+  "current": {
+    "runID": "2026-09-20T20-10-54-820Z-13673",
+    "port": 3112,
+    "backendPort": "fixture-owned by performance config",
+    "status": "passed",
+    "legacy": {
+      "cold": {
+        "firstDestinationObservedMs": {
+          "min": 71.90000000037253,
+          "median": 88.69999999925494,
+          "max": 100.40000000037253,
+          "missing": 0
+        },
+        "firstCorrectObservedMs": {
+          "min": 71.90000000037253,
+          "median": 88.69999999925494,
+          "max": 100.40000000037253,
+          "missing": 0
+        },
+        "stableObservedMs": {
+          "min": 81.70000000111759,
+          "median": 98.09999999962747,
+          "max": 112.30000000074506,
+          "missing": 0
+        }
+      },
+      "hot": {
+        "firstDestinationObservedMs": {
+          "min": 19,
+          "median": 22,
+          "max": 23.100000001490116,
+          "missing": 0
+        },
+        "firstCorrectObservedMs": {
+          "min": 19,
+          "median": 22,
+          "max": 23.100000001490116,
+          "missing": 0
+        },
+        "stableObservedMs": {
+          "min": 23.700000001117587,
+          "median": 29.59999999962747,
+          "max": 38.29999999888241,
+          "missing": 0
+        }
+      }
+    },
+    "v2": {
+      "closed": {
+        "cold": {
+          "firstDestinationObservedMs": {
+            "min": 77.69999999925494,
+            "median": 82.30000000074506,
+            "max": 108.69999999925494,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 77.69999999925494,
+            "median": 82.30000000074506,
+            "max": 108.69999999925494,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 89.20000000111759,
+            "median": 92.19999999925494,
+            "max": 119.69999999925494,
+            "missing": 0
+          }
+        },
+        "hot": {
+          "firstDestinationObservedMs": {
+            "min": 21.59999999962747,
+            "median": 26.299999998882413,
+            "max": 29.59999999962747,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 21.59999999962747,
+            "median": 26.299999998882413,
+            "max": 29.59999999962747,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 29,
+            "median": 30.699999999254942,
+            "max": 51.5,
+            "missing": 0
+          }
+        }
+      },
+      "open": {
+        "cold": {
+          "firstDestinationObservedMs": {
+            "min": 47.40000000037253,
+            "median": 56.59999999962747,
+            "max": 81.59999999962747,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 47.40000000037253,
+            "median": 56.59999999962747,
+            "max": 81.59999999962747,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 59.30000000074506,
+            "median": 64.5,
+            "max": 96.09999999962747,
+            "missing": 0
+          }
+        },
+        "hot": {
+          "firstDestinationObservedMs": {
+            "min": 24.5,
+            "median": 24.90000000037253,
+            "max": 32.19999999925494,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 24.5,
+            "median": 24.90000000037253,
+            "max": 32.19999999925494,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 31.300000000745058,
+            "median": 31.40000000037253,
+            "max": 42.30000000074506,
+            "missing": 0
+          }
+        }
+      }
+    },
+    "correctness": "all firstCorrectObservedMs matched firstDestinationObservedMs; missing/wrong/blank/unknown samples were zero"
+  },
+  "comparisonBaseline": {
+    "runID": "2026-09-20T17-55-56-533Z-42949",
+    "source": "parent-provided prior benchmark summary; older artifact source was plans/validation/session-switch-benchmark.json",
+    "legacy": {
+      "stableMedianMs": 44.4,
+      "hotStableMedianMs": 14.9
+    },
+    "v2": {
+      "closedStableMedianMs": 46.2,
+      "closedHotStableMedianMs": 13.4,
+      "reviewStableMedianMs": 22.8,
+      "reviewHotStableMedianMs": 21.7
+    },
+    "correctness": "zero correctness failures"
+  },
+  "limitations": [
+    "Current and comparison runs are renderer benchmarks, not dictation latency measurements.",
+    "The comparison baseline came from a prior run and has fewer raw dimensions than this artifact."
+  ]
+}

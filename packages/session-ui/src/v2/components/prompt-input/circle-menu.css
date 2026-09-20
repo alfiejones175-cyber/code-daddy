@@ -1,0 +1,154 @@
+[data-component="menu-v2-content"].prompt-input-v2-circle-menu {
+  width: 144px;
+  height: 140px;
+  min-width: 0;
+  padding: 0;
+  overflow: visible;
+  pointer-events: none;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+}
+
+[data-component="menu-v2-item"].prompt-input-v2-circle-menu-item {
+  --circle-menu-item-size: 44px;
+
+  position: absolute;
+  inset-block-start: var(--circle-menu-y);
+  inset-inline-start: var(--circle-menu-x);
+  display: grid;
+  place-items: center;
+  width: var(--circle-menu-item-size);
+  height: var(--circle-menu-item-size);
+  padding: 0;
+  pointer-events: auto;
+  color: var(--v2-icon-icon-base);
+  cursor: pointer;
+  background:
+    linear-gradient(180deg, var(--v2-alpha-light-8), var(--v2-alpha-light-0)), var(--v2-background-bg-layer-01);
+  border: 0.5px solid var(--v2-border-border-base);
+  border-radius: 999px;
+  box-shadow:
+    var(--v2-elevation-floating),
+    inset 0 1px 0 var(--v2-alpha-light-8);
+  opacity: 0;
+  animation: prompt-input-v2-circle-item-in 280ms cubic-bezier(0.2, 0.9, 0.25, 1.18) forwards;
+  animation-delay: calc(var(--circle-menu-index) * 32ms);
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+
+  &:is([data-highlighted], :focus-visible) {
+    color: var(--v2-icon-icon-accent);
+    background:
+      linear-gradient(180deg, var(--v2-alpha-light-12), var(--v2-alpha-light-0)),
+      var(--v2-background-bg-layer-02);
+    border-color: var(--v2-border-border-focus);
+    transform: scale(1.08);
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--v2-border-border-focus);
+    outline-offset: 2px;
+  }
+
+  [data-slot="circle-menu-icon"] {
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 530;
+    line-height: 1;
+  }
+
+  [data-slot="circle-menu-label"] {
+    position: absolute;
+    inset-block-end: calc(100% + 6px);
+    inset-inline-start: 50%;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: max-content;
+    max-width: 180px;
+    min-height: 24px;
+    padding: 4px 7px;
+    color: var(--v2-text-text-base);
+    font-size: 11px;
+    font-weight: 530;
+    line-height: 14px;
+    white-space: nowrap;
+    pointer-events: none;
+    background: var(--v2-background-bg-layer-01);
+    border: 0.5px solid var(--v2-border-border-base);
+    border-radius: 5px;
+    box-shadow: var(--v2-elevation-floating);
+    opacity: 0;
+    transform: translateX(-50%) translateY(2px) scale(0.96);
+    transition:
+      opacity 100ms ease,
+      transform 120ms ease;
+  }
+
+  &:first-child [data-slot="circle-menu-label"] {
+    inset-inline-start: 0;
+    transform: translateY(2px) scale(0.96);
+  }
+
+  &:is([data-highlighted], :focus-visible) [data-slot="circle-menu-label"] {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+
+  &:first-child:is([data-highlighted], :focus-visible) [data-slot="circle-menu-label"] {
+    transform: translateY(0) scale(1);
+  }
+
+  [data-slot="circle-menu-shortcut"] {
+    color: var(--v2-text-text-faint);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 530;
+  }
+}
+
+[data-action="prompt-attach"] [data-slot="icon-svg"] {
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+[data-action="prompt-attach"][data-expanded] [data-slot="icon-svg"] {
+  transform: rotate(45deg);
+}
+
+@keyframes prompt-input-v2-circle-item-in {
+  from {
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(
+        calc(0px - var(--circle-menu-x)),
+        calc(140px - var(--circle-menu-y))
+      )
+      scale(0.62);
+  }
+  to {
+    pointer-events: auto;
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="menu-v2-item"].prompt-input-v2-circle-menu-item {
+    animation-duration: 0ms;
+    animation-delay: 0ms;
+    transition-duration: 0ms;
+  }
+
+  [data-action="prompt-attach"] [data-slot="icon-svg"],
+  [data-component="menu-v2-item"].prompt-input-v2-circle-menu-item [data-slot="circle-menu-label"] {
+    transition-duration: 0ms;
+  }
+}

@@ -1,0 +1,119 @@
+[data-component="prompt-input-v2"] {
+  --prompt-input-v2-surface: var(--v2-background-bg-layer-01);
+  --prompt-input-v2-rim: var(--v2-border-border-muted);
+  --prompt-input-v2-control-surface: var(--v2-background-bg-layer-02);
+
+  background:
+    linear-gradient(180deg, var(--v2-alpha-light-6) 0%, var(--v2-alpha-light-0) 52%), var(--prompt-input-v2-surface) !important;
+  box-shadow:
+    inset 0 1px 0 var(--prompt-input-v2-rim),
+    inset 0 -1px 0 var(--v2-alpha-dark-4);
+  transition:
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+[data-component="prompt-input-v2"]:not([data-dock-border-underlay]) {
+  box-shadow:
+    var(--v2-elevation-raised),
+    inset 0 1px 0 var(--prompt-input-v2-rim),
+    inset 0 -1px 0 var(--v2-alpha-dark-4);
+}
+
+[data-component="prompt-input-v2"][data-mode="shell"] {
+  --prompt-input-v2-surface: var(--v2-background-bg-deep);
+}
+
+[data-component="prompt-input-v2"]:focus-within {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--v2-border-border-focus) 52%, transparent),
+    inset 0 1px 0 var(--prompt-input-v2-rim),
+    inset 0 -1px 0 var(--v2-alpha-dark-4);
+}
+
+[data-component="prompt-input-v2"]:not([data-dock-border-underlay]):focus-within {
+  box-shadow:
+    var(--v2-elevation-raised),
+    0 0 0 1px color-mix(in srgb, var(--v2-border-border-focus) 52%, transparent),
+    inset 0 1px 0 var(--prompt-input-v2-rim),
+    inset 0 -1px 0 var(--v2-alpha-dark-4);
+}
+
+[data-component="prompt-input-v2"] [data-slot="prompt-input-v2-toolbar"] {
+  border-top: 0.5px solid var(--v2-border-border-muted);
+  background: linear-gradient(180deg, var(--v2-alpha-dark-4), var(--v2-alpha-light-0));
+}
+
+[data-component="prompt-input-v2"] [data-slot="prompt-input-v2-controls"] [data-component="button-v2"],
+[data-component="prompt-input-v2"] [data-slot="prompt-input-v2-controls"] [data-component="icon-button-v2"] {
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--prompt-input-v2-control-surface) 72%, transparent);
+  box-shadow: inset 0 0 0 0.5px var(--v2-border-border-muted);
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+[data-component="prompt-input-v2"] [data-slot="prompt-input-v2-controls"] [data-component="icon-button-v2"] {
+  width: 28px;
+  height: 28px;
+}
+
+[data-component="prompt-input-v2"]
+  [data-slot="prompt-input-v2-controls"]
+  :is([data-component="button-v2"], [data-component="icon-button-v2"]):is(
+    :hover,
+    [data-state="hover"],
+    [data-expanded]
+  ):not(:disabled) {
+  background-color: var(--prompt-input-v2-control-surface);
+  box-shadow:
+    inset 0 0 0 0.5px var(--v2-border-border-base),
+    0 1px 1px var(--v2-alpha-dark-4);
+}
+
+[data-component="prompt-input-v2"]
+  [data-slot="prompt-input-v2-controls"]
+  :is([data-component="button-v2"], [data-component="icon-button-v2"]):active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+[data-component="prompt-input-v2"]
+  [data-slot="prompt-input-v2-controls"]
+  :is([data-component="button-v2"], [data-component="icon-button-v2"]):focus-visible:not(:disabled) {
+  box-shadow:
+    inset 0 0 0 0.5px var(--v2-border-border-base),
+    0 0 0 1px var(--v2-border-border-focus);
+}
+
+[data-component="prompt-input-v2"] [data-action="prompt-submit"] {
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, var(--v2-alpha-light-20), var(--v2-alpha-light-0)), var(--v2-background-bg-accent) !important;
+  color: var(--v2-text-text-inverse);
+  transition:
+    box-shadow 160ms ease,
+    filter 160ms ease,
+    transform 160ms ease;
+}
+
+[data-component="prompt-input-v2"] [data-action="prompt-submit"]:is(:hover, :focus-visible):not(:disabled) {
+  box-shadow:
+    var(--v2-elevation-button-contrast),
+    0 0 0 1px color-mix(in srgb, var(--v2-border-border-focus) 70%, transparent);
+  filter: brightness(1.08);
+}
+
+[data-component="prompt-input-v2"] [data-action="prompt-submit"]:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="prompt-input-v2"],
+  [data-component="prompt-input-v2"] [data-slot="prompt-input-v2-controls"] [data-component],
+  [data-component="prompt-input-v2"] [data-action="prompt-submit"] {
+    transition-duration: 0ms;
+  }
+}

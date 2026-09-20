@@ -1,0 +1,13 @@
+{
+  "tools": 25,
+  "navigation": "passed",
+  "screenshot": "image/png",
+  "interaction": "passed",
+  "preset": [
+    "npx",
+    "-y",
+    "@playwright/mcp",
+    "--isolated"
+  ],
+  "testMode": "headless"
+}

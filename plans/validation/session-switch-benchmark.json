@@ -1,0 +1,282 @@
+{
+  "baseline": [
+    {
+      "name": "benchmarks cold and hot session tab switching",
+      "status": "passed",
+      "runID": "2026-09-20T16-14-09-215Z-8355",
+      "summary": {
+        "cold": {
+          "firstDestinationObservedMs": {
+            "min": 27.199999999720603,
+            "median": 34,
+            "max": 35.3000000002794,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 27.199999999720603,
+            "median": 34,
+            "max": 35.3000000002794,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 40.90000000037253,
+            "median": 45,
+            "max": 50.10000000009313,
+            "missing": 0
+          }
+        },
+        "hot": {
+          "firstDestinationObservedMs": {
+            "min": 2.3999999999068677,
+            "median": 2.7000000001862645,
+            "max": 7.7000000001862645,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 2.3999999999068677,
+            "median": 2.7000000001862645,
+            "max": 7.7000000001862645,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 12.799999999813735,
+            "median": 14.299999999813735,
+            "max": 16.399999999906868,
+            "missing": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "benchmarks v2 session tab switching with and without the review pane",
+      "status": "passed",
+      "runID": "2026-09-20T16-14-09-215Z-8355",
+      "summary": {
+        "closed": {
+          "cold": {
+            "firstDestinationObservedMs": {
+              "min": 38.299999999813735,
+              "median": 45,
+              "max": 49.700000000186265,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 38.299999999813735,
+              "median": 45,
+              "max": 49.700000000186265,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 55,
+              "median": 59.700000000186265,
+              "max": 63.799999999813735,
+              "missing": 0
+            }
+          },
+          "hot": {
+            "firstDestinationObservedMs": {
+              "min": 2.7999999998137355,
+              "median": 3.3999999999068677,
+              "max": 4,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 2.7999999998137355,
+              "median": 3.3999999999068677,
+              "max": 4,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 11.100000000093132,
+              "median": 14.5,
+              "max": 19.100000000093132,
+              "missing": 0
+            }
+          }
+        },
+        "open": {
+          "cold": {
+            "firstDestinationObservedMs": {
+              "min": 8.799999999813735,
+              "median": 8.799999999813735,
+              "max": 23.600000000093132,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 8.799999999813735,
+              "median": 8.799999999813735,
+              "max": 23.600000000093132,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 23.899999999906868,
+              "median": 26.300000000279397,
+              "max": 37.1999999997206,
+              "missing": 0
+            }
+          },
+          "hot": {
+            "firstDestinationObservedMs": {
+              "min": 4.399999999906868,
+              "median": 4.600000000093132,
+              "max": 6,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 4.399999999906868,
+              "median": 4.600000000093132,
+              "max": 6,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 12.399999999906868,
+              "median": 17.100000000093132,
+              "max": 20.5,
+              "missing": 0
+            }
+          }
+        }
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "benchmarks cold and hot session tab switching",
+      "status": "passed",
+      "runID": "2026-09-20T16-39-23-820Z-15162",
+      "summary": {
+        "cold": {
+          "firstDestinationObservedMs": {
+            "min": 28.899999999906868,
+            "median": 34.40000000037253,
+            "max": 38.5,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 28.899999999906868,
+            "median": 34.40000000037253,
+            "max": 38.5,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 40.60000000009313,
+            "median": 49.700000000186265,
+            "max": 56.700000000186265,
+            "missing": 0
+          }
+        },
+        "hot": {
+          "firstDestinationObservedMs": {
+            "min": 2.5,
+            "median": 2.6000000000931323,
+            "max": 2.8000000002793968,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 2.5,
+            "median": 2.6000000000931323,
+            "max": 2.8000000002793968,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 14.099999999627471,
+            "median": 14.100000000093132,
+            "max": 18.5,
+            "missing": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "benchmarks v2 session tab switching with and without the review pane",
+      "status": "passed",
+      "runID": "2026-09-20T16-39-23-820Z-15162",
+      "summary": {
+        "closed": {
+          "cold": {
+            "firstDestinationObservedMs": {
+              "min": 30.600000000093132,
+              "median": 32.40000000037253,
+              "max": 35.799999999813735,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 30.600000000093132,
+              "median": 32.40000000037253,
+              "max": 35.799999999813735,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 38.10000000009313,
+              "median": 43.40000000037253,
+              "max": 52.200000000186265,
+              "missing": 0
+            }
+          },
+          "hot": {
+            "firstDestinationObservedMs": {
+              "min": 2.6000000000931323,
+              "median": 2.8000000002793968,
+              "max": 3,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 2.6000000000931323,
+              "median": 2.8000000002793968,
+              "max": 3,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 12.299999999813735,
+              "median": 13.800000000279397,
+              "max": 14.700000000186265,
+              "missing": 0
+            }
+          }
+        },
+        "open": {
+          "cold": {
+            "firstDestinationObservedMs": {
+              "min": 7.5,
+              "median": 7.7999999998137355,
+              "max": 9.600000000093132,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 7.5,
+              "median": 7.7999999998137355,
+              "max": 9.600000000093132,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 21.700000000186265,
+              "median": 23.700000000186265,
+              "max": 32.8000000002794,
+              "missing": 0
+            }
+          },
+          "hot": {
+            "firstDestinationObservedMs": {
+              "min": 4.699999999720603,
+              "median": 6.199999999720603,
+              "max": 19,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 4.699999999720603,
+              "median": 6.199999999720603,
+              "max": 19,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 14.599999999627471,
+              "median": 19.899999999906868,
+              "max": 32.39999999990687,
+              "missing": 0
+            }
+          }
+        }
+      }
+    }
+  ]
+}

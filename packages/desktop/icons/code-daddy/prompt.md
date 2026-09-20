@@ -1,0 +1,6 @@
+Generated with the built-in image generation tool.
+
+Use case: logo-brand.
+Asset type: premium macOS app icon / mascot logo for the coding app Code Daddy.
+Primary request: Santa sat at a desk coding.
+Create one finished square icon, not a mockup or a contact sheet. A charismatic, slightly mischievous Santa with an iconic sweeping white beard and red hat, seated at a compact desk, hands typing on a keyboard in front of a computer displaying a simple luminous code-bracket glyph. Three-quarter view with Santa's face and the act of coding clearly visible. Bold, expertly simplified graphic shapes, crisp outlines, beautifully controlled dimensional shading, contemporary collectible mascot aesthetic. Santa should feel cool and confident, not generic Christmas clip art. Strong readable silhouette and generous margins for a Mac Dock icon. Rich red, warm ivory beard, near-black desk and a restrained cool monitor glow. Center the tightly composed character and desk inside a deep charcoal rounded-square tile, with clean transparent space outside the tile. High contrast and restrained detail so it is recognizable when small. No lettering, no wordmark, no watermark, no extra characters, no Christmas decorations, no busy room background. Render at high resolution, square format.

@@ -1,0 +1,9 @@
+/* Use the terminal's selected font throughout the Matrix workspace, including portals. */
+html[data-theme="matrix"] body {
+  --font-family-sans: var(--font-family-terminal, "JetBrainsMono Nerd Font Mono", ui-monospace, monospace);
+  --font-family-mono: var(--font-family-terminal, "JetBrainsMono Nerd Font Mono", ui-monospace, monospace);
+  --font-family-text: var(--font-family-sans);
+  --v2-font-family-sans: var(--font-family-sans);
+  font-family: var(--font-family-sans);
+  font-variant-ligatures: none;
+}

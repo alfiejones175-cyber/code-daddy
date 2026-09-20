@@ -1,0 +1,302 @@
+{
+  "before": [
+    {
+      "name": "benchmarks cold and hot session tab switching",
+      "status": "passed",
+      "summary": {
+        "cold": {
+          "firstDestinationObservedMs": {
+            "min": 27.199999999720603,
+            "median": 34,
+            "max": 35.3000000002794,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 27.199999999720603,
+            "median": 34,
+            "max": 35.3000000002794,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 40.90000000037253,
+            "median": 45,
+            "max": 50.10000000009313,
+            "missing": 0
+          }
+        },
+        "hot": {
+          "firstDestinationObservedMs": {
+            "min": 2.3999999999068677,
+            "median": 2.7000000001862645,
+            "max": 7.7000000001862645,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 2.3999999999068677,
+            "median": 2.7000000001862645,
+            "max": 7.7000000001862645,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 12.799999999813735,
+            "median": 14.299999999813735,
+            "max": 16.399999999906868,
+            "missing": 0
+          }
+        }
+      },
+      "faults": {
+        "blankSamples": 0,
+        "wrongDestinationSamples": 0,
+        "reviewFileHostMissingSamples": 0,
+        "reviewFileHostReplacedSamples": 0
+      }
+    },
+    {
+      "name": "benchmarks v2 session tab switching with and without the review pane",
+      "status": "passed",
+      "summary": {
+        "closed": {
+          "cold": {
+            "firstDestinationObservedMs": {
+              "min": 38.299999999813735,
+              "median": 45,
+              "max": 49.700000000186265,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 38.299999999813735,
+              "median": 45,
+              "max": 49.700000000186265,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 55,
+              "median": 59.700000000186265,
+              "max": 63.799999999813735,
+              "missing": 0
+            }
+          },
+          "hot": {
+            "firstDestinationObservedMs": {
+              "min": 2.7999999998137355,
+              "median": 3.3999999999068677,
+              "max": 4,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 2.7999999998137355,
+              "median": 3.3999999999068677,
+              "max": 4,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 11.100000000093132,
+              "median": 14.5,
+              "max": 19.100000000093132,
+              "missing": 0
+            }
+          }
+        },
+        "open": {
+          "cold": {
+            "firstDestinationObservedMs": {
+              "min": 8.799999999813735,
+              "median": 8.799999999813735,
+              "max": 23.600000000093132,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 8.799999999813735,
+              "median": 8.799999999813735,
+              "max": 23.600000000093132,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 23.899999999906868,
+              "median": 26.300000000279397,
+              "max": 37.1999999997206,
+              "missing": 0
+            }
+          },
+          "hot": {
+            "firstDestinationObservedMs": {
+              "min": 4.399999999906868,
+              "median": 4.600000000093132,
+              "max": 6,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 4.399999999906868,
+              "median": 4.600000000093132,
+              "max": 6,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 12.399999999906868,
+              "median": 17.100000000093132,
+              "max": 20.5,
+              "missing": 0
+            }
+          }
+        }
+      },
+      "faults": {
+        "blankSamples": 0,
+        "wrongDestinationSamples": 0,
+        "reviewFileHostMissingSamples": 0,
+        "reviewFileHostReplacedSamples": 0
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "benchmarks cold and hot session tab switching",
+      "status": "passed",
+      "summary": {
+        "cold": {
+          "firstDestinationObservedMs": {
+            "min": 29.699999999254942,
+            "median": 31.299999999813735,
+            "max": 36.60000000055879,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 29.699999999254942,
+            "median": 31.299999999813735,
+            "max": 36.60000000055879,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 40.299999999813735,
+            "median": 43.299999999813735,
+            "max": 52.30000000074506,
+            "missing": 0
+          }
+        },
+        "hot": {
+          "firstDestinationObservedMs": {
+            "min": 2.599999999627471,
+            "median": 2.7000000001862645,
+            "max": 2.7999999998137355,
+            "missing": 0
+          },
+          "firstCorrectObservedMs": {
+            "min": 2.599999999627471,
+            "median": 2.7000000001862645,
+            "max": 2.7999999998137355,
+            "missing": 0
+          },
+          "stableObservedMs": {
+            "min": 13.099999999627471,
+            "median": 13.700000000186265,
+            "max": 14,
+            "missing": 0
+          }
+        }
+      },
+      "faults": {
+        "blankSamples": 0,
+        "wrongDestinationSamples": 0,
+        "reviewFileHostMissingSamples": 0,
+        "reviewFileHostReplacedSamples": 0
+      }
+    },
+    {
+      "name": "benchmarks v2 session tab switching with and without the review pane",
+      "status": "passed",
+      "summary": {
+        "closed": {
+          "cold": {
+            "firstDestinationObservedMs": {
+              "min": 31,
+              "median": 33.299999999813735,
+              "max": 34.299999999813735,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 31,
+              "median": 33.299999999813735,
+              "max": 34.299999999813735,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 40.200000000186265,
+              "median": 48.700000000186265,
+              "max": 50.5,
+              "missing": 0
+            }
+          },
+          "hot": {
+            "firstDestinationObservedMs": {
+              "min": 2.2000000001862645,
+              "median": 2.7999999998137355,
+              "max": 2.8999999994412065,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 2.2000000001862645,
+              "median": 2.7999999998137355,
+              "max": 2.8999999994412065,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 11.599999999627471,
+              "median": 12.100000000558794,
+              "max": 15.900000000372529,
+              "missing": 0
+            }
+          }
+        },
+        "open": {
+          "cold": {
+            "firstDestinationObservedMs": {
+              "min": 7.599999999627471,
+              "median": 8.300000000745058,
+              "max": 20.199999999254942,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 7.599999999627471,
+              "median": 8.300000000745058,
+              "max": 20.199999999254942,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 20.700000000186265,
+              "median": 24.299999999813735,
+              "max": 31.5,
+              "missing": 0
+            }
+          },
+          "hot": {
+            "firstDestinationObservedMs": {
+              "min": 4.5,
+              "median": 5.1000000005587935,
+              "max": 16.200000000186265,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 4.5,
+              "median": 5.1000000005587935,
+              "max": 16.200000000186265,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 17.800000000745058,
+              "median": 19.90000000037253,
+              "max": 27.40000000037253,
+              "missing": 0
+            }
+          }
+        }
+      },
+      "faults": {
+        "blankSamples": 0,
+        "wrongDestinationSamples": 0,
+        "reviewFileHostMissingSamples": 0,
+        "reviewFileHostReplacedSamples": 0
+      }
+    }
+  ]
+}

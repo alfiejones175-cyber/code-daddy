@@ -1,0 +1,1186 @@
+{
+  "before": [
+    {
+      "schemaVersion": 2,
+      "runID": "2026-09-20T20-03-02-994Z-92716",
+      "name": "benchmarks cold and hot session tab switching",
+      "status": "passed",
+      "expectedStatus": "passed",
+      "retry": 0,
+      "repeatEachIndex": 0,
+      "context": {
+        "project": "chromium",
+        "platform": "darwin"
+      },
+      "metrics": {
+        "results": {
+          "cold": [
+            {
+              "firstDestinationObservedMs": 26.699999999254942,
+              "firstCorrectObservedMs": 26.699999999254942,
+              "stableObservedMs": 44.19999999925494,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 28.40000000037253,
+              "firstCorrectObservedMs": 28.40000000037253,
+              "stableObservedMs": 44,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 28.5,
+              "firstCorrectObservedMs": 28.5,
+              "stableObservedMs": 44.29999999888241,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 31.5,
+              "firstCorrectObservedMs": 31.5,
+              "stableObservedMs": 47.30000000074506,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 31.199999999254942,
+              "firstCorrectObservedMs": 31.199999999254942,
+              "stableObservedMs": 45.19999999925494,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            }
+          ],
+          "hot": [
+            {
+              "firstDestinationObservedMs": 2.5,
+              "firstCorrectObservedMs": 2.5,
+              "stableObservedMs": 12.900000000372529,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 2.599999999627471,
+              "firstCorrectObservedMs": 2.599999999627471,
+              "stableObservedMs": 17.90000000037253,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 4.099999999627471,
+              "firstCorrectObservedMs": 4.099999999627471,
+              "stableObservedMs": 17,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 2.700000001117587,
+              "firstCorrectObservedMs": 2.700000001117587,
+              "stableObservedMs": 17.59999999962747,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 2.799999998882413,
+              "firstCorrectObservedMs": 2.799999998882413,
+              "stableObservedMs": 16.699999999254942,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            }
+          ]
+        },
+        "summary": {
+          "cold": {
+            "firstDestinationObservedMs": {
+              "min": 26.699999999254942,
+              "median": 28.5,
+              "max": 31.5,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 26.699999999254942,
+              "median": 28.5,
+              "max": 31.5,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 44,
+              "median": 44.29999999888241,
+              "max": 47.30000000074506,
+              "missing": 0
+            }
+          },
+          "hot": {
+            "firstDestinationObservedMs": {
+              "min": 2.5,
+              "median": 2.700000001117587,
+              "max": 4.099999999627471,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 2.5,
+              "median": 2.700000001117587,
+              "max": 4.099999999627471,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 12.900000000372529,
+              "median": 17,
+              "max": 17.90000000037253,
+              "missing": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "runID": "2026-09-20T20-03-02-994Z-92716",
+      "name": "benchmarks v2 session tab switching with and without the review pane",
+      "status": "passed",
+      "expectedStatus": "passed",
+      "retry": 0,
+      "repeatEachIndex": 0,
+      "context": {
+        "project": "chromium",
+        "platform": "darwin",
+        "runs": 5,
+        "reviewDiffs": 72
+      },
+      "metrics": {
+        "results": {
+          "closed": {
+            "cold": [
+              {
+                "firstDestinationObservedMs": 29.700000001117587,
+                "firstCorrectObservedMs": 29.700000001117587,
+                "stableObservedMs": 41.59999999962747,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 28.59999999962747,
+                "firstCorrectObservedMs": 28.59999999962747,
+                "stableObservedMs": 39.19999999925494,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 31.200000001117587,
+                "firstCorrectObservedMs": 31.200000001117587,
+                "stableObservedMs": 46.30000000074506,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 31.300000000745058,
+                "firstCorrectObservedMs": 31.300000000745058,
+                "stableObservedMs": 44,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 30.100000001490116,
+                "firstCorrectObservedMs": 30.100000001490116,
+                "stableObservedMs": 46.80000000074506,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              }
+            ],
+            "hot": [
+              {
+                "firstDestinationObservedMs": 3,
+                "firstCorrectObservedMs": 3,
+                "stableObservedMs": 13.400000000372529,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 4.900000000372529,
+                "firstCorrectObservedMs": 4.900000000372529,
+                "stableObservedMs": 20.40000000037253,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 4.099999999627471,
+                "firstCorrectObservedMs": 4.099999999627471,
+                "stableObservedMs": 17.5,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 4,
+                "firstCorrectObservedMs": 4,
+                "stableObservedMs": 18.899999998509884,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 2.699999999254942,
+                "firstCorrectObservedMs": 2.699999999254942,
+                "stableObservedMs": 12.699999999254942,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              }
+            ]
+          },
+          "open": {
+            "cold": [
+              {
+                "firstDestinationObservedMs": 8.5,
+                "firstCorrectObservedMs": 8.5,
+                "stableObservedMs": 30.59999999962747,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 10.800000000745058,
+                "firstCorrectObservedMs": 10.800000000745058,
+                "stableObservedMs": 32.100000001490116,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 7.900000000372529,
+                "firstCorrectObservedMs": 7.900000000372529,
+                "stableObservedMs": 31.5,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 7.199999999254942,
+                "firstCorrectObservedMs": 7.199999999254942,
+                "stableObservedMs": 21.59999999962747,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 7.800000000745058,
+                "firstCorrectObservedMs": 7.800000000745058,
+                "stableObservedMs": 31,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              }
+            ],
+            "hot": [
+              {
+                "firstDestinationObservedMs": 11.199999999254942,
+                "firstCorrectObservedMs": 11.199999999254942,
+                "stableObservedMs": 29.199999999254942,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 5.299999998882413,
+                "firstCorrectObservedMs": 5.299999998882413,
+                "stableObservedMs": 29.5,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 5,
+                "firstCorrectObservedMs": 5,
+                "stableObservedMs": 22,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 5.099999999627471,
+                "firstCorrectObservedMs": 5.099999999627471,
+                "stableObservedMs": 21.40000000037253,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 5.099999999627471,
+                "firstCorrectObservedMs": 5.099999999627471,
+                "stableObservedMs": 25.700000001117587,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              }
+            ]
+          }
+        },
+        "summary": {
+          "closed": {
+            "cold": {
+              "firstDestinationObservedMs": {
+                "min": 28.59999999962747,
+                "median": 30.100000001490116,
+                "max": 31.300000000745058,
+                "missing": 0
+              },
+              "firstCorrectObservedMs": {
+                "min": 28.59999999962747,
+                "median": 30.100000001490116,
+                "max": 31.300000000745058,
+                "missing": 0
+              },
+              "stableObservedMs": {
+                "min": 39.19999999925494,
+                "median": 44,
+                "max": 46.80000000074506,
+                "missing": 0
+              }
+            },
+            "hot": {
+              "firstDestinationObservedMs": {
+                "min": 2.699999999254942,
+                "median": 4,
+                "max": 4.900000000372529,
+                "missing": 0
+              },
+              "firstCorrectObservedMs": {
+                "min": 2.699999999254942,
+                "median": 4,
+                "max": 4.900000000372529,
+                "missing": 0
+              },
+              "stableObservedMs": {
+                "min": 12.699999999254942,
+                "median": 17.5,
+                "max": 20.40000000037253,
+                "missing": 0
+              }
+            }
+          },
+          "open": {
+            "cold": {
+              "firstDestinationObservedMs": {
+                "min": 7.199999999254942,
+                "median": 7.900000000372529,
+                "max": 10.800000000745058,
+                "missing": 0
+              },
+              "firstCorrectObservedMs": {
+                "min": 7.199999999254942,
+                "median": 7.900000000372529,
+                "max": 10.800000000745058,
+                "missing": 0
+              },
+              "stableObservedMs": {
+                "min": 21.59999999962747,
+                "median": 31,
+                "max": 32.100000001490116,
+                "missing": 0
+              }
+            },
+            "hot": {
+              "firstDestinationObservedMs": {
+                "min": 5,
+                "median": 5.099999999627471,
+                "max": 11.199999999254942,
+                "missing": 0
+              },
+              "firstCorrectObservedMs": {
+                "min": 5,
+                "median": 5.099999999627471,
+                "max": 11.199999999254942,
+                "missing": 0
+              },
+              "stableObservedMs": {
+                "min": 21.40000000037253,
+                "median": 25.700000001117587,
+                "max": 29.5,
+                "missing": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "after": [
+    {
+      "schemaVersion": 2,
+      "runID": "2026-09-20T20-09-08-210Z-3538",
+      "name": "benchmarks cold and hot session tab switching",
+      "status": "passed",
+      "expectedStatus": "passed",
+      "retry": 0,
+      "repeatEachIndex": 0,
+      "context": {
+        "project": "chromium",
+        "platform": "darwin"
+      },
+      "metrics": {
+        "results": {
+          "cold": [
+            {
+              "firstDestinationObservedMs": 99.59999999962747,
+              "firstCorrectObservedMs": 99.59999999962747,
+              "stableObservedMs": 109.79999999888241,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 2,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 99,
+              "firstCorrectObservedMs": 99,
+              "stableObservedMs": 105.20000000111759,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 3,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 93,
+              "firstCorrectObservedMs": 93,
+              "stableObservedMs": 105.30000000074506,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 2,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 78.09999999962747,
+              "firstCorrectObservedMs": 78.09999999962747,
+              "stableObservedMs": 89.39999999850988,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 1,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 72.40000000037253,
+              "firstCorrectObservedMs": 72.40000000037253,
+              "stableObservedMs": 81.19999999925494,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 1,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            }
+          ],
+          "hot": [
+            {
+              "firstDestinationObservedMs": 25.699999999254942,
+              "firstCorrectObservedMs": 25.699999999254942,
+              "stableObservedMs": 29.5,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 19.300000000745058,
+              "firstCorrectObservedMs": 19.300000000745058,
+              "stableObservedMs": 24,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 22.800000000745058,
+              "firstCorrectObservedMs": 22.800000000745058,
+              "stableObservedMs": 33.80000000074506,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 19.40000000037253,
+              "firstCorrectObservedMs": 19.40000000037253,
+              "stableObservedMs": 23.90000000037253,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            },
+            {
+              "firstDestinationObservedMs": 20.200000001117587,
+              "firstCorrectObservedMs": 20.200000001117587,
+              "stableObservedMs": 25.5,
+              "wrongDestinationSamples": 0,
+              "blankSamples": 0,
+              "unknownSamples": 0,
+              "sourceSamples": 0,
+              "reviewFileHostMissingSamples": 0,
+              "reviewFileHostReplacedSamples": 0,
+              "reviewHeaders": [],
+              "reviewReplacedLevels": []
+            }
+          ]
+        },
+        "summary": {
+          "cold": {
+            "firstDestinationObservedMs": {
+              "min": 72.40000000037253,
+              "median": 93,
+              "max": 99.59999999962747,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 72.40000000037253,
+              "median": 93,
+              "max": 99.59999999962747,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 81.19999999925494,
+              "median": 105.20000000111759,
+              "max": 109.79999999888241,
+              "missing": 0
+            }
+          },
+          "hot": {
+            "firstDestinationObservedMs": {
+              "min": 19.300000000745058,
+              "median": 20.200000001117587,
+              "max": 25.699999999254942,
+              "missing": 0
+            },
+            "firstCorrectObservedMs": {
+              "min": 19.300000000745058,
+              "median": 20.200000001117587,
+              "max": 25.699999999254942,
+              "missing": 0
+            },
+            "stableObservedMs": {
+              "min": 23.90000000037253,
+              "median": 25.5,
+              "max": 33.80000000074506,
+              "missing": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "runID": "2026-09-20T20-09-08-210Z-3538",
+      "name": "benchmarks v2 session tab switching with and without the review pane",
+      "status": "passed",
+      "expectedStatus": "passed",
+      "retry": 0,
+      "repeatEachIndex": 0,
+      "context": {
+        "project": "chromium",
+        "platform": "darwin",
+        "runs": 5,
+        "reviewDiffs": 72
+      },
+      "metrics": {
+        "results": {
+          "closed": {
+            "cold": [
+              {
+                "firstDestinationObservedMs": 73.70000000111759,
+                "firstCorrectObservedMs": 73.70000000111759,
+                "stableObservedMs": 81.09999999962747,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 1,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 82.69999999925494,
+                "firstCorrectObservedMs": 82.69999999925494,
+                "stableObservedMs": 89.89999999850988,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 2,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 72.20000000111759,
+                "firstCorrectObservedMs": 72.20000000111759,
+                "stableObservedMs": 81.60000000149012,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 1,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 68.5,
+                "firstCorrectObservedMs": 68.5,
+                "stableObservedMs": 73.90000000037253,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 1,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 73.59999999962747,
+                "firstCorrectObservedMs": 73.59999999962747,
+                "stableObservedMs": 79.59999999962747,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 1,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              }
+            ],
+            "hot": [
+              {
+                "firstDestinationObservedMs": 23.59999999962747,
+                "firstCorrectObservedMs": 23.59999999962747,
+                "stableObservedMs": 32.59999999962747,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 20.300000000745058,
+                "firstCorrectObservedMs": 20.300000000745058,
+                "stableObservedMs": 22.90000000037253,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 25.800000000745058,
+                "firstCorrectObservedMs": 25.800000000745058,
+                "stableObservedMs": 33.09999999962747,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 21.5,
+                "firstCorrectObservedMs": 21.5,
+                "stableObservedMs": 32.30000000074506,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 23.40000000037253,
+                "firstCorrectObservedMs": 23.40000000037253,
+                "stableObservedMs": 38.40000000037253,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [],
+                "reviewReplacedLevels": []
+              }
+            ]
+          },
+          "open": {
+            "cold": [
+              {
+                "firstDestinationObservedMs": 49,
+                "firstCorrectObservedMs": 49,
+                "stableObservedMs": 56.600000001490116,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 1,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 54.5,
+                "firstCorrectObservedMs": 54.5,
+                "stableObservedMs": 63.600000001490116,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 1,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 53.70000000111759,
+                "firstCorrectObservedMs": 53.70000000111759,
+                "stableObservedMs": 63.5,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 1,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 48.20000000111759,
+                "firstCorrectObservedMs": 48.20000000111759,
+                "stableObservedMs": 57.20000000111759,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 1,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 58.5,
+                "firstCorrectObservedMs": 58.5,
+                "stableObservedMs": 63.59999999962747,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 2,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              }
+            ],
+            "hot": [
+              {
+                "firstDestinationObservedMs": 23.899999998509884,
+                "firstCorrectObservedMs": 23.899999998509884,
+                "stableObservedMs": 31.199999999254942,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 23.40000000037253,
+                "firstCorrectObservedMs": 23.40000000037253,
+                "stableObservedMs": 31.40000000037253,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 25.5,
+                "firstCorrectObservedMs": 25.5,
+                "stableObservedMs": 32.399999998509884,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 27,
+                "firstCorrectObservedMs": 27,
+                "stableObservedMs": 36.70000000111759,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              },
+              {
+                "firstDestinationObservedMs": 26.199999999254942,
+                "firstCorrectObservedMs": 26.199999999254942,
+                "stableObservedMs": 33.19999999925494,
+                "wrongDestinationSamples": 0,
+                "blankSamples": 0,
+                "unknownSamples": 0,
+                "sourceSamples": 0,
+                "reviewFileHostMissingSamples": 0,
+                "reviewFileHostReplacedSamples": 0,
+                "reviewHeaders": [
+                  "Mgenerated-000.tssrc/review/+3-3"
+                ],
+                "reviewReplacedLevels": []
+              }
+            ]
+          }
+        },
+        "summary": {
+          "closed": {
+            "cold": {
+              "firstDestinationObservedMs": {
+                "min": 68.5,
+                "median": 73.59999999962747,
+                "max": 82.69999999925494,
+                "missing": 0
+              },
+              "firstCorrectObservedMs": {
+                "min": 68.5,
+                "median": 73.59999999962747,
+                "max": 82.69999999925494,
+                "missing": 0
+              },
+              "stableObservedMs": {
+                "min": 73.90000000037253,
+                "median": 81.09999999962747,
+                "max": 89.89999999850988,
+                "missing": 0
+              }
+            },
+            "hot": {
+              "firstDestinationObservedMs": {
+                "min": 20.300000000745058,
+                "median": 23.40000000037253,
+                "max": 25.800000000745058,
+                "missing": 0
+              },
+              "firstCorrectObservedMs": {
+                "min": 20.300000000745058,
+                "median": 23.40000000037253,
+                "max": 25.800000000745058,
+                "missing": 0
+              },
+              "stableObservedMs": {
+                "min": 22.90000000037253,
+                "median": 32.59999999962747,
+                "max": 38.40000000037253,
+                "missing": 0
+              }
+            }
+          },
+          "open": {
+            "cold": {
+              "firstDestinationObservedMs": {
+                "min": 48.20000000111759,
+                "median": 53.70000000111759,
+                "max": 58.5,
+                "missing": 0
+              },
+              "firstCorrectObservedMs": {
+                "min": 48.20000000111759,
+                "median": 53.70000000111759,
+                "max": 58.5,
+                "missing": 0
+              },
+              "stableObservedMs": {
+                "min": 56.600000001490116,
+                "median": 63.5,
+                "max": 63.600000001490116,
+                "missing": 0
+              }
+            },
+            "hot": {
+              "firstDestinationObservedMs": {
+                "min": 23.40000000037253,
+                "median": 25.5,
+                "max": 27,
+                "missing": 0
+              },
+              "firstCorrectObservedMs": {
+                "min": 23.40000000037253,
+                "median": 25.5,
+                "max": 27,
+                "missing": 0
+              },
+              "stableObservedMs": {
+                "min": 31.199999999254942,
+                "median": 32.399999998509884,
+                "max": 36.70000000111759,
+                "missing": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

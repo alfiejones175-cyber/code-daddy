@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-20",
+  "scope": "Production session timeline benchmark before recovery and provider-watchdog changes",
+  "command": "bunx playwright test --config e2e/performance/playwright.config.ts timeline/session-tab-switch-benchmark.spec.ts",
+  "workingDirectory": "packages/app",
+  "runID": "2026-09-20T17-02-14-893Z-22272",
+  "result": {
+    "passed": 2,
+    "failed": 0,
+    "durationSeconds": 35
+  },
+  "stableObservedMs": {
+    "legacy": {
+      "cold": [47.9, 52.8, 45.6, 49.5, 47.5],
+      "hot": [15.5, 16.7, 16.3, 16.2, 16.3],
+      "median": { "cold": 47.9, "hot": 16.3 }
+    },
+    "v2ReviewClosed": {
+      "cold": [43, 50.6, 50.2, 53.3, 51.2],
+      "hot": [11.6, 14.9, 12.3, 17.9, 21.1],
+      "median": { "cold": 50.6, "hot": 14.9 }
+    },
+    "v2ReviewOpen": {
+      "cold": [28.8, 95, 83.1, 1355.5, 26.9],
+      "hot": [17, 18.7, 18.1, 15, 36.9],
+      "median": { "cold": 83.1, "hot": 18.1 }
+    }
+  },
+  "correctness": {
+    "wrongDestination": 0,
+    "blankContent": 0,
+    "unknownContent": 0,
+    "reviewHostMissing": 0,
+    "reviewHostReplaced": 0
+  },
+  "notes": [
+    "The harness built the production bundle and used its own isolated preview process; no existing app or server was restarted.",
+    "The v2 review-open cold samples include one 1355.5ms outlier. Compare both the median and raw spread after changes."
+  ]
+}

@@ -1,0 +1,34 @@
+/* Terminal look: monospace sidebar + prompt, caret blink, clean project rows.
+   Applied automatically; no opt-in flag. */
+
+[data-component="sidebar-rail"],
+[data-component="workspace-item"],
+#prompt-project-menu {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+[data-component="workspace-item"] {
+  border-left: 2px solid transparent;
+}
+
+[data-component="workspace-item"]:hover,
+[data-component="workspace-item"]:focus-within {
+  border-left-color: var(--text-interactive-base);
+}
+
+.terminal-caret::after {
+  content: "▊";
+  animation: terminal-blink 1.1s steps(1) infinite;
+}
+
+@keyframes terminal-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal-caret::after {
+    animation: none;
+  }
+}

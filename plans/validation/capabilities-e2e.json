@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-20",
+  "scope": "Production-browser regression checks for workspace capabilities, explicit recovery, delegated task controls, provider retry, and permission scope",
+  "workingDirectory": "packages/app",
+  "productionBuild": {
+    "command": "bun run build",
+    "status": "passed"
+  },
+  "e2e": {
+    "command": "PLAYWRIGHT_BASE_URL=http://127.0.0.1:3107 PLAYWRIGHT_PORT=3107 PLAYWRIGHT_SERVER_PORT=3107 PLAYWRIGHT_WORKERS=1 bunx playwright test e2e/regression/capabilities.spec.ts",
+    "status": "passed",
+    "passed": 5,
+    "failed": 0,
+    "durationSeconds": 3.6,
+    "isolatedPreviewPort": 3107
+  },
+  "typecheck": {
+    "command": "bun run typecheck:e2e",
+    "status": "passed"
+  },
+  "backend": {
+    "focusedCoreTests": { "passed": 92, "failed": 0 },
+    "sessionRecoveryHttpTests": { "passed": 1, "failed": 0, "assertions": 7 },
+    "typechecks": {
+      "core": "passed",
+      "server": "passed",
+      "protocol": "passed",
+      "schema": "passed",
+      "client": "passed"
+    }
+  },
+  "screenshots": [
+    "plans/validation/capabilities-setup.png",
+    "plans/validation/recovery-needs-review.png",
+    "plans/validation/recovery-resumed.png",
+    "plans/validation/team-delegation-dialog.png",
+    "plans/validation/team-prepared-task.png"
+  ],
+  "benchmark": {
+    "command": "PLAYWRIGHT_PORT=3108 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3108 PLAYWRIGHT_WORKERS=1 bunx playwright test --config e2e/performance/playwright.config.ts timeline/session-tab-switch-benchmark.spec.ts",
+    "runID": "2026-09-20T17-55-56-533Z-42949",
+    "status": "passed",
+    "passed": 2,
+    "failed": 0,
+    "stableObservedMsMedian": {
+      "legacy": { "cold": 44.4, "hot": 14.9 },
+      "v2ReviewClosed": { "cold": 46.2, "hot": 13.4 },
+      "v2ReviewOpen": { "cold": 22.8, "hot": 21.7 }
+    },
+    "correctness": {
+      "wrongDestination": 0,
+      "blankContent": 0,
+      "unknownContent": 0,
+      "reviewHostMissing": 0,
+      "reviewHostReplaced": 0
+    }
+  },
+  "notes": [
+    "The final benchmark built its own production bundle and ran on isolated port 3108.",
+    "The focused E2E run used the final production bundle on isolated port 3107; no existing app or standard development server was restarted.",
+    "PLAYWRIGHT_SERVER_PORT must match the isolated production preview port so the fixture represents the active local server scope. MCP v2 responses use the canonical Location.response envelope."
+  ]
+}
