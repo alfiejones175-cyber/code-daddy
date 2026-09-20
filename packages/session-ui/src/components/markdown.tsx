@@ -515,7 +515,7 @@ export function Markdown(
     })
     activeCodeKeys.clear()
     nextCodeKeys.forEach((key) => activeCodeKeys.add(key))
-    content.forEach((block, index) => updateBlock(container, index, block, labels))
+    content.forEach((block, index) => updateBlock(container, index, block, labels, local.streaming ?? false))
     while (container.children.length > content.length) {
       const child = container.lastElementChild
       if (!child) break
@@ -586,12 +586,20 @@ function disposeCode(key: string) {
   disposeStreamingCode(key)
 }
 
-function updateBlock(container: HTMLDivElement, index: number, block: RenderedBlock, labels: CopyLabels) {
+function updateBlock(
+  container: HTMLDivElement,
+  index: number,
+  block: RenderedBlock,
+  labels: CopyLabels,
+  streaming: boolean,
+) {
   const current = container.children[index]
   if (block.mode === "code") {
     updateCodeBlock(container, current, block, labels)
     return
   }
+  const previousText = current?.textContent ?? ""
+  if (current instanceof HTMLDivElement) unwrapStreamingWords(current)
   if (
     current instanceof HTMLDivElement &&
     current.dataset.markdownKey === block.key &&
@@ -609,6 +617,7 @@ function updateBlock(container: HTMLDivElement, index: number, block: RenderedBl
 
   if (!(current instanceof HTMLDivElement)) {
     container.appendChild(next)
+    if (streaming) animateStreamingWords(next, "")
     return
   }
 
@@ -629,6 +638,68 @@ function updateBlock(container: HTMLDivElement, index: number, block: RenderedBl
       if (node instanceof Element) disposeCopyButtons(node)
       return true
     },
+  })
+  if (streaming) animateStreamingWords(current, previousText)
+}
+
+function unwrapStreamingWords(root: HTMLDivElement) {
+  const parents = new Set<Node>()
+  root.querySelectorAll<HTMLElement>("[data-streaming-word]").forEach((word) => {
+    const parent = word.parentNode
+    if (parent) parents.add(parent)
+    word.replaceWith(document.createTextNode(word.textContent ?? ""))
+  })
+  parents.forEach((parent) => parent.normalize())
+}
+
+function animateStreamingWords(root: HTMLDivElement, previousText: string) {
+  const text = root.textContent ?? ""
+  if (!text.startsWith(previousText) || text.length === previousText.length) return
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const nodes: Text[] = []
+  while (walker.nextNode()) {
+    if (walker.currentNode instanceof Text) nodes.push(walker.currentNode)
+  }
+
+  let offset = 0
+  let index = 0
+  nodes.forEach((node) => {
+    const value = node.nodeValue ?? ""
+    const end = offset + value.length
+    const parent = node.parentElement
+    if (
+      end <= previousText.length ||
+      !parent ||
+      parent.closest("pre, code, button, svg, [data-slot='markdown-copy-button']")
+    ) {
+      offset = end
+      return
+    }
+
+    const overlap = Math.max(0, previousText.length - offset)
+    let start = overlap
+    while (start > 0 && !/\s/.test(value[start - 1] ?? "")) start--
+    const fragment = document.createDocumentFragment()
+    if (start > 0) fragment.appendChild(document.createTextNode(value.slice(0, start)))
+    value
+      .slice(start)
+      .split(/(\s+)/)
+      .filter(Boolean)
+      .forEach((part) => {
+        if (/^\s+$/.test(part)) {
+          fragment.appendChild(document.createTextNode(part))
+          return
+        }
+        const word = document.createElement("span")
+        word.dataset.streamingWord = ""
+        word.style.setProperty("--streaming-word-delay", `${Math.min(index, 6) * 60}ms`)
+        word.textContent = part
+        fragment.appendChild(word)
+        index++
+      })
+    node.replaceWith(fragment)
+    offset = end
   })
 }
 

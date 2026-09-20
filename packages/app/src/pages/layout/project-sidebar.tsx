@@ -1,6 +1,6 @@
 import { A } from "@solidjs/router"
 import type { SessionMessageInfo } from "@opencode-ai/client/promise"
-import { createEffect, createMemo, createUniqueId, For, on, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createUniqueId, For, Index, on, onCleanup, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { createMediaQuery } from "@solid-primitives/media"
 import { makeEventListener } from "@solid-primitives/event-listener"
@@ -34,7 +34,7 @@ import {
   homeProjectDirectories,
   sortedRootSessions,
 } from "./helpers"
-import { sidebarAncestors, sidebarOutcome } from "./project-sidebar-model"
+import { sidebarAncestors, sidebarOutcome, sidebarSessionUsage } from "./project-sidebar-model"
 import "./project-sidebar.css"
 
 const activityDays = 42
@@ -230,6 +230,8 @@ export function ProjectSidebar() {
   createEffect(() => {
     if (!list || !marker) return
     let frame: number | undefined
+    let markerY: number | undefined
+    let markerAnimation: Animation | undefined
     const resize = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(schedule)
     const mutations = new MutationObserver(schedule)
     const sync = () => {
@@ -239,6 +241,7 @@ export function ProjectSidebar() {
         marker?.setAttribute("data-visible", "false")
         if (markerRow) resize?.unobserve(markerRow)
         markerRow = undefined
+        markerY = undefined
         return
       }
       if (markerRow !== row) {
@@ -248,8 +251,21 @@ export function ProjectSidebar() {
       }
       const listBounds = list.getBoundingClientRect()
       const rowBounds = row.getBoundingClientRect()
+      const nextY = rowBounds.top - listBounds.top + list.scrollTop
       marker.style.height = `${rowBounds.height}px`
-      marker.style.transform = `translate3d(0, ${rowBounds.top - listBounds.top + list.scrollTop}px, 0)`
+      marker.style.transform = `translate3d(0, ${nextY}px, 0)`
+      if (markerY !== undefined && markerY !== nextY && !reducedMotion()) {
+        markerAnimation?.cancel()
+        markerAnimation = marker.animate(
+          [
+            { transform: `translate3d(0, ${markerY}px, 0)` },
+            { transform: `translate3d(${nextY > markerY ? 7 : -7}px, ${markerY + (nextY - markerY) * 0.62}px, 0)` },
+            { transform: `translate3d(0, ${nextY}px, 0)` },
+          ],
+          { duration: 260, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+        )
+      }
+      markerY = nextY
       marker.setAttribute("data-visible", "true")
       marker.setAttribute("data-ready", "true")
     }
@@ -269,6 +285,7 @@ export function ProjectSidebar() {
     schedule()
     onCleanup(() => {
       if (frame !== undefined) cancelAnimationFrame(frame)
+      markerAnimation?.cancel()
       resize?.disconnect()
       mutations.disconnect()
       list?.removeEventListener("scroll", schedule)
@@ -446,7 +463,7 @@ export function ProjectSidebar() {
           </Show>
         </div>
         <div class="sidebar-footer">
-          <AppUsageActivity sessions={usageSessions()} />
+          <Show when={context()}>{(ctx) => <AppUsageActivity context={ctx()} sessions={usageSessions()} />}</Show>
           <div class="sidebar-footer-actions">
             <button type="button" class="sidebar-connections" onClick={() => openSettings(true)}>
               <span class="sidebar-provider-icons">
@@ -661,8 +678,14 @@ function ProjectGroup(props: {
   )
 }
 
-function AppUsageActivity(props: { sessions: Session[] }) {
+function AppUsageActivity(props: { context: ServerCtx; sessions: Session[] }) {
   const language = useLanguage()
+  const [state, setState] = createStore({
+    loading: false,
+    loaded: false,
+    failed: false,
+    providers: [] as { id: string; tokens: number; cost: number }[],
+  })
   const format = createMemo(
     () => new Intl.NumberFormat(language.intl(), { notation: "compact", maximumFractionDigits: 1 }),
   )
@@ -670,6 +693,46 @@ function AppUsageActivity(props: { sessions: Session[] }) {
   const days = createMemo(() => usageActivity(props.sessions))
   const total = createMemo(() => days().reduce((sum, day) => sum + day.tokens, 0))
   const label = () => `${format().format(total())} ${language.t("context.usage.tokens")}`
+  const money = (value: number) =>
+    new Intl.NumberFormat(language.intl(), { style: "currency", currency: "USD", maximumFractionDigits: 4 }).format(
+      value,
+    )
+  const loadProviders = async () => {
+    if (state.loading || state.loaded) return
+    setState({ loading: true, failed: false })
+    const result = await (async () => {
+      if ((await props.context.sdk.protocol) !== "v2") return []
+      const messages = await Promise.all(
+        props.sessions.map((session) =>
+          props.context.sdk.api.message
+            .list({ sessionID: session.id, order: "asc", limit: 100 })
+            .catch(() => ({ data: [] })),
+        ),
+      )
+      const providers = new Map<string, { tokens: number; cost: number }>()
+      messages
+        .flatMap((result) => result.data)
+        .forEach((message) => {
+          if (message.type !== "assistant") return
+          const current = providers.get(message.model.providerID) ?? { tokens: 0, cost: 0 }
+          const tokens = message.tokens
+          current.tokens +=
+            (tokens?.input ?? 0) +
+            (tokens?.output ?? 0) +
+            (tokens?.reasoning ?? 0) +
+            (tokens?.cache.read ?? 0) +
+            (tokens?.cache.write ?? 0)
+          current.cost += message.cost ?? 0
+          providers.set(message.model.providerID, current)
+        })
+      return Array.from(providers, ([id, usage]) => ({ id, ...usage })).sort((a, b) => b.tokens - a.tokens)
+    })().catch(() => undefined)
+    if (!result) {
+      setState({ loading: false, failed: true })
+      return
+    }
+    setState({ loading: false, loaded: true, providers: result })
+  }
 
   return (
     <Popover
@@ -682,6 +745,7 @@ function AppUsageActivity(props: { sessions: Session[] }) {
         type: "button",
         class: "sidebar-app-usage",
         "aria-label": label(),
+        onClick: () => void loadProviders(),
       }}
       trigger={
         <>
@@ -711,6 +775,28 @@ function AppUsageActivity(props: { sessions: Session[] }) {
             )}
           </For>
         </div>
+        <Show when={state.loading}>
+          <p class="sidebar-hint" role="status">
+            {language.t("common.loading")}
+          </p>
+        </Show>
+        <Show when={state.loaded}>
+          <dl class="sidebar-app-usage-providers">
+            <For each={state.providers}>
+              {(provider) => (
+                <div>
+                  <dt>{provider.id}</dt>
+                  <dd>
+                    {format().format(provider.tokens)} {language.t("context.usage.tokens")} · {money(provider.cost)}
+                  </dd>
+                </div>
+              )}
+            </For>
+          </dl>
+        </Show>
+        <Show when={state.failed}>
+          <p class="sidebar-hint">{language.t("common.requestFailed")}</p>
+        </Show>
       </div>
     </Popover>
   )
@@ -917,6 +1003,7 @@ function SidebarSession(props: {
         </A>
         <SidebarUsage
           session={props.context.sync.session.get(props.session.id) ?? props.session}
+          sessions={known()}
           titleID={`${id}-title`}
         />
       </div>
@@ -957,7 +1044,7 @@ function SidebarSession(props: {
   )
 }
 
-function SidebarUsage(props: { session: Session; titleID: string }) {
+function SidebarUsage(props: { session: Session; sessions: Session[]; titleID: string }) {
   const language = useLanguage()
   const [state, setState] = createStore({ tick: false })
   let initialized = false
@@ -967,14 +1054,16 @@ function SidebarUsage(props: { session: Session; titleID: string }) {
   const format = createMemo(
     () => new Intl.NumberFormat(language.intl(), { notation: "compact", maximumFractionDigits: 1 }),
   )
-  // Session counters are cumulative and disjoint: visible output excludes reasoning,
-  // and input excludes cache reads/writes. Do not sum loaded transcript pages or children.
+  const usage = createMemo(() => sidebarSessionUsage(props.session.id, props.sessions))
   const total = () => {
-    const tokens = props.session.tokens
-    if (!tokens) return undefined
-    return tokens.input + tokens.output + tokens.reasoning + tokens.cache.read + tokens.cache.write
+    if (usage().tokenizedSessions === 0) return undefined
+    return usage().input + usage().output + usage().reasoning + usage().cacheRead + usage().cacheWrite
   }
   const number = (value: number | undefined) => (value === undefined ? "—" : value.toLocaleString(language.intl()))
+  const compact = () => {
+    const value = total()
+    return value === undefined ? "—" : format().format(value)
+  }
   createEffect(() => {
     const value = total()
     if (!initialized) {
@@ -989,7 +1078,7 @@ function SidebarUsage(props: { session: Session; titleID: string }) {
     if (timer) window.clearTimeout(timer)
     frame = requestAnimationFrame(() => {
       setState("tick", true)
-      timer = window.setTimeout(() => setState("tick", false), 220)
+      timer = window.setTimeout(() => setState("tick", false), 1000)
     })
   })
   onCleanup(() => {
@@ -1013,7 +1102,13 @@ function SidebarUsage(props: { session: Session; titleID: string }) {
         trigger={
           <>
             <span class="sidebar-usage-value" classList={{ tick: state.tick }}>
-              {total() === undefined ? "—" : format().format(total()!)}
+              <Index each={compact().split("")}>
+                {(character, index) => (
+                  <span class="sidebar-usage-digit" style={{ "--sidebar-digit-delay": `${index * 70}ms` }}>
+                    {character()}
+                  </span>
+                )}
+              </Index>
             </span>
             <span>{language.t("context.usage.tokens")}</span>
           </>
@@ -1028,32 +1123,33 @@ function SidebarUsage(props: { session: Session; titleID: string }) {
           <dl>
             <div>
               <dt>{language.t("context.stats.inputTokens")}</dt>
-              <dd>{number(props.session.tokens?.input)}</dd>
+              <dd>{number(usage().tokenizedSessions ? usage().input : undefined)}</dd>
             </div>
             <div>
               <dt>{language.t("context.stats.outputTokens")}</dt>
-              <dd>{number(props.session.tokens?.output)}</dd>
+              <dd>{number(usage().tokenizedSessions ? usage().output : undefined)}</dd>
             </div>
             <div>
               <dt>{language.t("context.stats.reasoningTokens")}</dt>
-              <dd>{number(props.session.tokens?.reasoning)}</dd>
+              <dd>{number(usage().tokenizedSessions ? usage().reasoning : undefined)}</dd>
             </div>
             <div>
               <dt>{language.t("context.stats.cacheTokens")}</dt>
               <dd>
-                {number(props.session.tokens?.cache.read)} / {number(props.session.tokens?.cache.write)}
+                {number(usage().tokenizedSessions ? usage().cacheRead : undefined)} /{" "}
+                {number(usage().tokenizedSessions ? usage().cacheWrite : undefined)}
               </dd>
             </div>
             <div>
               <dt>{language.t("context.stats.totalCost")}</dt>
               <dd>
-                {props.session.cost === undefined
+                {usage().costedSessions === 0
                   ? "—"
                   : new Intl.NumberFormat(language.intl(), {
                       style: "currency",
                       currency: "USD",
                       maximumFractionDigits: 4,
-                    }).format(props.session.cost)}
+                    }).format(usage().cost)}
               </dd>
             </div>
           </dl>

@@ -102,7 +102,40 @@ test("shows recent project token activity", async ({ page }) => {
     }),
     time: { created: now, updated: now },
   }
-  await setup(page, { sessions: [sessions[0], active, recent, sessions[2]] })
+  await setup(page, {
+    sessions: [sessions[0], active, recent, sessions[2]],
+    pageMessages: (sessionID) => {
+      if (sessionID !== recent.id) return { items: [] }
+      return {
+        items: [
+          {
+            info: {
+              id: "msg_sidebar_openai_usage",
+              role: "assistant",
+              time: { created: now },
+              providerID: "openai",
+              modelID: "gpt-5",
+              cost: 0.02,
+              tokens: { input: 600, output: 350, reasoning: 150, cache: { read: 1200, write: 60 } },
+            },
+            parts: [{ id: "part_sidebar_openai_usage", type: "text", text: "Done" }],
+          },
+          {
+            info: {
+              id: "msg_sidebar_openrouter_usage",
+              role: "assistant",
+              time: { created: now },
+              providerID: "openrouter",
+              modelID: "meta-llama/llama-3.3-70b-instruct",
+              cost: 0.01,
+              tokens: { input: 100, output: 50, reasoning: 0, cache: { read: 0, write: 0 } },
+            },
+            parts: [{ id: "part_sidebar_openrouter_usage", type: "text", text: "Done" }],
+          },
+        ],
+      }
+    },
+  })
   await page.goto(href(active.id))
   await expectSessionTitle(page, active.title)
 
@@ -112,6 +145,11 @@ test("shows recent project token activity", async ({ page }) => {
   const grid = page.getByRole("img", { name: /Tokens/ })
   await expect(grid).toBeVisible()
   await expect(grid.locator("span")).toHaveCount(42)
+  const providers = page.locator(".sidebar-app-usage-providers")
+  await expect(providers).toContainText("openai")
+  await expect(providers).toContainText("2.4K Tokens")
+  await expect(providers).toContainText("openrouter")
+  await expect(providers).toContainText("150 Tokens")
   await page.screenshot({ path: "../../plans/validation/project-token-activity.png", animations: "disabled" })
   await page.keyboard.press("Escape")
   await expect(grid).not.toBeVisible()
@@ -556,6 +594,7 @@ async function setup(
     sessions?: ReturnType<typeof session>[]
     sandbox?: string
     events?: () => unknown[]
+    pageMessages?: (sessionID: string) => { items: unknown[] }
     appearance?: (request: { directory?: string; body: unknown }) => void
   },
 ) {
@@ -570,7 +609,7 @@ async function setup(
     project: directories[1],
     sessions: items,
     provider: { all: [], connected: [], default: { providerID: "", modelID: "" } },
-    pageMessages: () => ({ items: [] }),
+    pageMessages: input?.pageMessages ?? (() => ({ items: [] })),
     fileList: () => [],
     findFiles: () => [],
     events: input?.events,

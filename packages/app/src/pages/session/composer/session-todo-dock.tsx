@@ -1,13 +1,12 @@
 import type { Todo } from "@opencode-ai/sdk/v2"
 import { AnimatedNumber } from "@opencode-ai/ui/animated-number"
-import { Checkbox } from "@opencode-ai/ui/checkbox"
 import { DockTray } from "@opencode-ai/ui/dock-surface"
 import { IconButton } from "@opencode-ai/ui/icon-button"
 import { useSpring } from "@opencode-ai/ui/motion-spring"
 import { TextReveal } from "@opencode-ai/ui/text-reveal"
 import { TextStrikethrough } from "@opencode-ai/ui/text-strikethrough"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
-import { Index, createEffect, createMemo } from "solid-js"
+import { For, Index, createEffect, createMemo } from "solid-js"
 import { Dynamic } from "solid-js/web"
 import { createStore } from "solid-js/store"
 import { useLanguage } from "@/context/language"
@@ -15,31 +14,6 @@ import { useSettings } from "@/context/settings"
 
 const doneToken = "\u0000done\u0000"
 const totalToken = "\u0000total\u0000"
-
-function dot(status: Todo["status"]) {
-  if (status !== "in_progress") return undefined
-  return (
-    <svg
-      viewBox="0 0 12 12"
-      width="12"
-      height="12"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-      class="block"
-    >
-      <circle
-        cx="6"
-        cy="6"
-        r="3"
-        style={{
-          animation: "var(--animate-pulse-scale)",
-          "transform-origin": "center",
-          "transform-box": "fill-box",
-        }}
-      />
-    </svg>
-  )
-}
 
 export function SessionTodoDock(props: {
   todos: Todo[]
@@ -220,51 +194,54 @@ function TodoList(props: { todos: Todo[] }) {
   const [store, setStore] = createStore({
     stuck: false,
   })
+  const language = useLanguage()
+  const todos = createMemo(() => [
+    ...props.todos.filter((todo) => todo.status !== "completed" && todo.status !== "cancelled"),
+    ...props.todos.filter((todo) => todo.status === "completed" || todo.status === "cancelled"),
+  ])
 
   return (
     <div class="relative">
-      <div
+      <ol
+        aria-label={language.t("ui.tool.todos")}
         class="px-3 pb-11 flex flex-col gap-1.5 max-h-42 overflow-y-auto no-scrollbar"
         style={{ "overflow-anchor": "none" }}
         onScroll={(e) => {
           setStore("stuck", e.currentTarget.scrollTop > 0)
         }}
       >
-        <Index each={props.todos}>
+        <For each={todos()}>
           {(todo) => (
-            <Checkbox
-              readOnly
-              checked={todo().status === "completed"}
-              indeterminate={todo().status === "in_progress"}
-              data-in-progress={todo().status === "in_progress" ? "" : undefined}
-              data-state={todo().status}
-              icon={dot(todo().status)}
-              style={{
-                "--checkbox-align": "flex-start",
-                "--checkbox-offset": "1px",
-                transition: "opacity 220ms var(--tool-motion-ease, cubic-bezier(0.22, 1, 0.36, 1))",
-                opacity: todo().status === "pending" ? "0.94" : "1",
+            <li
+              data-component="agent-task-item"
+              data-in-progress={todo.status === "in_progress" ? "" : undefined}
+              data-state={todo.status}
+              classList={{
+                "flex items-start gap-3 rounded-lg border px-3 py-2 transition-[background-color,border-color,opacity,transform] duration-300": true,
+                "border-v2-border-border-muted bg-v2-background-bg-base": todo.status === "pending",
+                "border-v2-text-text-accent/40 bg-v2-text-text-accent/5 shadow-[0_0_20px_color-mix(in_srgb,var(--v2-text-text-accent)_8%,transparent)]":
+                  todo.status === "in_progress",
+                "border-v2-border-border-muted/60 bg-v2-background-bg-layer-01 opacity-70":
+                  todo.status === "completed" || todo.status === "cancelled",
               }}
             >
+              <TodoMarker status={todo.status} />
               <TextStrikethrough
-                active={todo().status === "completed" || todo().status === "cancelled"}
-                text={todo().content}
-                class="text-14-regular min-w-0 break-words"
+                active={todo.status === "completed" || todo.status === "cancelled"}
+                text={todo.content}
+                class="text-14-regular min-w-0 break-words pt-px"
                 style={{
                   "line-height": "var(--line-height-normal)",
-                  transition:
-                    "color 220ms var(--tool-motion-ease, cubic-bezier(0.22, 1, 0.36, 1)), opacity 220ms var(--tool-motion-ease, cubic-bezier(0.22, 1, 0.36, 1))",
                   color:
-                    todo().status === "completed" || todo().status === "cancelled"
-                      ? "var(--text-weak)"
-                      : "var(--text-strong)",
-                  opacity: todo().status === "pending" ? "0.92" : "1",
+                    todo.status === "completed" || todo.status === "cancelled"
+                      ? "var(--v2-text-text-muted)"
+                      : "var(--v2-text-text-base)",
                 }}
               />
-            </Checkbox>
+            </li>
           )}
-        </Index>
-      </div>
+        </For>
+      </ol>
       <div
         class="pointer-events-none absolute top-0 left-0 right-0 h-4 transition-opacity duration-150"
         style={{
@@ -273,5 +250,28 @@ function TodoList(props: { todos: Todo[] }) {
         }}
       />
     </div>
+  )
+}
+
+function TodoMarker(props: { status: Todo["status"] }) {
+  const finished = () => props.status === "completed" || props.status === "cancelled"
+  return (
+    <span
+      aria-hidden="true"
+      classList={{
+        "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border transition-[background-color,border-color,transform] duration-300": true,
+        "border-v2-border-border-muted": props.status === "pending",
+        "border-v2-text-text-accent bg-v2-text-text-accent/15": props.status === "in_progress",
+        "border-v2-text-text-accent bg-v2-text-text-accent text-v2-background-bg-base": finished(),
+      }}
+    >
+      {finished() ? (
+        <svg viewBox="0 0 12 12" class="size-3" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="m2.2 6.1 2.2 2.2 5-5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      ) : props.status === "in_progress" ? (
+        <span class="size-1.5 rounded-full bg-v2-text-text-accent animate-pulse motion-reduce:animate-none" />
+      ) : null}
+    </span>
   )
 }

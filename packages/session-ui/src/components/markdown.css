@@ -306,6 +306,31 @@
   unicode-bidi: plaintext;
 }
 
+[data-streaming-word] {
+  display: inline-block;
+  animation: markdown-streaming-word-in 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--streaming-word-delay, 0ms);
+}
+
+@keyframes markdown-streaming-word-in {
+  from {
+    opacity: 0;
+    filter: blur(1px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-streaming-word] {
+    animation: none;
+    filter: none;
+    opacity: 1;
+  }
+}
+
 body[data-new-layout] [data-component="markdown"] {
   [data-slot="markdown-copy-button"]::after {
     box-sizing: border-box;
