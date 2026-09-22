@@ -88,6 +88,34 @@ test("new chat follows the canonical session's project and survives reload", asy
   await expectDraftScope(page, projects[1].worktree)
 })
 
+test("home remains visibly reachable without the titlebar tab strip", async ({ page }) => {
+  await setup(page)
+  await page.goto(href(sessions[1].id))
+  await expectSessionTitle(page, sessions[1].title)
+
+  const sidebar = page.locator('[data-component="project-sidebar"]')
+  await sidebar.locator('[data-action="sidebar-home"]').click()
+
+  await expect(page).toHaveURL(/\/$/)
+  await expect(sidebar.getByRole("button", { name: "Home", exact: true })).toHaveAttribute("aria-current", "page")
+})
+
+test("open project is a labeled primary action distinct from new chat", async ({ page }) => {
+  await setup(page)
+  await page.goto(href(sessions[1].id))
+  await expectSessionTitle(page, sessions[1].title)
+
+  const sidebar = page.locator('[data-component="project-sidebar"]')
+  const openProject = sidebar.locator('[data-action="sidebar-open-project"]')
+  const newChat = sidebar.locator('[data-action="sidebar-new-chat"]')
+  await expect(openProject).toHaveText("Open project")
+  await expect(newChat).toHaveText("New chat")
+
+  await openProject.click()
+  await expect(page.getByRole("heading", { name: "Open project", exact: true })).toBeVisible()
+  await expect(page).toHaveURL(href(sessions[1].id))
+})
+
 test("shows recent project token activity", async ({ page }) => {
   const now = Date.now()
   const active = {

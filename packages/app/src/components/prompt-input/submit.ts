@@ -274,7 +274,12 @@ export function createPromptSubmit(input: PromptSubmitInput) {
     }
     return sdk()
       .api.session.interrupt({ sessionID })
-      .catch(() => {})
+      .catch((err) => {
+        showToast({
+          title: language.t("common.requestFailed"),
+          description: errorMessage(err),
+        })
+      })
   }
 
   const restoreCommentItems = (

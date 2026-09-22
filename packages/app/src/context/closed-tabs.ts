@@ -1,16 +1,13 @@
 import type { SessionTab, Tab } from "./tabs"
 
 export type ClosedTab = {
-  tab: SessionTab
+  tab: Tab
   index: number
 }
 
 const CLOSED_TAB_LIMIT = 25
 
-// Only session tabs are recorded; closing a draft tab deletes its persisted
-// state, so a reopened draft would come back empty anyway.
 export function pushClosedTab(stack: ClosedTab[], tab: Tab, index: number): ClosedTab[] {
-  if (tab.type !== "session") return stack
   return [...stack, { tab: { ...tab }, index }].slice(-CLOSED_TAB_LIMIT)
 }
 
@@ -27,7 +24,18 @@ export function takeClosedTab(stack: ClosedTab[], tabs: Tab[]): { entry?: Closed
 
 export function removeClosedTabs(stack: ClosedTab[], server: SessionTab["server"], sessionIDs: string[]) {
   const removed = new Set(sessionIDs)
-  return stack.filter((entry) => entry.tab.server !== server || !removed.has(entry.tab.sessionId))
+  return stack.filter(
+    (entry) => entry.tab.server !== server || entry.tab.type !== "session" || !removed.has(entry.tab.sessionId),
+  )
+}
+
+export function removeClosedServerTabs(stack: ClosedTab[], server: SessionTab["server"]) {
+  return {
+    draftIDs: stack.flatMap((entry) =>
+      entry.tab.type === "draft" && entry.tab.server === server ? [entry.tab.draftID] : [],
+    ),
+    stack: stack.filter((entry) => entry.tab.server !== server),
+  }
 }
 
 export function nextTabAfterClose(tabs: Tab[], index: number, active: boolean) {
@@ -35,6 +43,7 @@ export function nextTabAfterClose(tabs: Tab[], index: number, active: boolean) {
   return tabs[index + 1] ?? tabs[index - 1] ?? null
 }
 
-function isOpen(tabs: Tab[], tab: SessionTab) {
+function isOpen(tabs: Tab[], tab: Tab) {
+  if (tab.type === "draft") return tabs.some((item) => item.type === "draft" && item.draftID === tab.draftID)
   return tabs.some((item) => item.type === "session" && item.server === tab.server && item.sessionId === tab.sessionId)
 }

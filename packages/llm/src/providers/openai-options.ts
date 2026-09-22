@@ -16,6 +16,8 @@ export interface OpenAIOptionsInput {
   readonly include?: ReadonlyArray<OpenAIResponseIncludable>
   readonly textVerbosity?: TextVerbosity
   readonly serviceTier?: OpenAIServiceTier
+  /** Require OpenAI Responses-compatible strict function schemas for local tools. */
+  readonly strictToolSchemas?: boolean
 }
 
 export type OpenAIProviderOptionsInput = ProviderOptions & {
@@ -35,6 +37,7 @@ const openAIProviderOptions = (options: OpenAIOptionsInput | undefined): Provide
       include: options?.include,
       textVerbosity: options?.textVerbosity,
       serviceTier: options?.serviceTier,
+      strictToolSchemas: options?.strictToolSchemas,
     }),
   )
   if (Object.keys(openai).length === 0) return undefined

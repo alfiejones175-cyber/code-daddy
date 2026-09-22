@@ -27,7 +27,7 @@ const theme = {
 }
 
 describe("DiffViewerFileTree", () => {
-  test.skip("renders sorted hierarchical file rows", async () => {
+  test("renders sorted hierarchical file rows", async () => {
     const app = await testRender(
       () =>
         withTheme(() => (
@@ -51,7 +51,7 @@ describe("DiffViewerFileTree", () => {
 
     try {
       await renderOnceSettled(app)
-      const lines = visibleLines(app.captureCharFrame())
+      const lines = visibleLines(await captureSettledFrame(app))
 
       expect(lines).toEqual([
         "▾ a",
@@ -60,6 +60,7 @@ describe("DiffViewerFileTree", () => {
         "├─ ▾ b",
         "│  ├─ alpha.ts               ?",
         "│  └─ file.ts                ?",
+        "└─ z-file.ts                 ?",
       ])
     } finally {
       app.renderer.destroy()
@@ -133,7 +134,7 @@ describe("DiffViewerFileTree", () => {
           />
         )),
       ),
-    ).toEqual(["▸ src/config"])
+    ).toEqual(["▸ src/config", "└─ README.md                 ?"])
 
     expect(
       visibleLines(
@@ -148,7 +149,7 @@ describe("DiffViewerFileTree", () => {
           />
         )),
       ),
-    ).toEqual(["▾ src/config", "│  └─ tui.ts                 ?"])
+    ).toEqual(["▾ src/config", "│  └─ tui.ts                 ?", "└─ README.md                 ?"])
   })
 })
 
@@ -196,5 +197,5 @@ function visibleLines(frame: string) {
     .map((line) => line.trimEnd())
     .map((line) => line.replace(/^ ?│ ?/, "").replace(/[ │]*$/, ""))
     .map((line) => (line.startsWith(" ") ? line.slice(1) : line))
-    .filter((line) => line.length > 0 && !/^┌|^└|^─+$/.test(line))
+    .filter((line) => line.length > 0 && !/^[┌└]─+[┐┘]?$|^─+$/.test(line))
 }

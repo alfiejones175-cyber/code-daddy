@@ -1,5 +1,7 @@
 # Contributing to OpenCode
 
+For this private workspace's current priorities, feature status, and documentation ownership, start with the [development documentation map](/Users/alfredo/Documents/code-daddy/documentation/README.md) and [roadmap](/Users/alfredo/Documents/code-daddy/plans/README.md). English is the only required UI language; see the [language scope](/Users/alfredo/Documents/code-daddy/documentation/localization.md). Upstream contribution/public-release guidance below is reference material, not additional scope for this private app.
+
 We want to make it easy for you to contribute to OpenCode. Here are the most common type of changes that get merged:
 
 - Bug fixes
@@ -139,7 +141,7 @@ bun run --cwd packages/desktop package
 ```
 
 > [!NOTE]
-> If you make changes to the API or SDK (e.g. `packages/opencode/src/server/server.ts`), run `./script/generate.ts` to regenerate the SDK and related files.
+> For public Protocol or Server `HttpApi` changes, run `bun run generate` from `packages/client`; do not edit `src/generated` or `src/generated-effect` directly. To regenerate the legacy JavaScript SDK, run `./packages/sdk/js/script/build.ts` from the repository root. Follow [AGENTS.md](/Users/alfredo/Documents/code-daddy/AGENTS.md) for dependency boundaries and package-local checks.
 
 Please try to follow the [style guide](./AGENTS.md)
 

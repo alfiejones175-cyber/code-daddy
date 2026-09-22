@@ -286,15 +286,20 @@ export const ErrorPage: Component<ErrorPageProps> = (props) => {
           <h1 class="text-lg font-medium text-text-strong">{language.t("error.page.title")}</h1>
           <p class="text-sm text-text-weak">{language.t(errorDescriptionKey(props.error))}</p>
         </div>
-        <TextField
-          value={formattedError()}
-          readOnly
-          copyable
-          multiline
-          class="max-h-96 w-full font-mono text-xs no-scrollbar"
-          label={language.t("error.page.details.label")}
-          hideLabel
-        />
+        <details class="w-full rounded-md border border-border-weak-base bg-background-base">
+          <summary class="cursor-pointer px-3 py-2 text-sm text-text-weak select-none">
+            {language.t("error.page.details.label")}
+          </summary>
+          <TextField
+            value={formattedError()}
+            readOnly
+            copyable
+            multiline
+            class="max-h-96 w-full border-t border-border-weak-base font-mono text-xs no-scrollbar"
+            label={language.t("error.page.details.label")}
+            hideLabel
+          />
+        </details>
         <div class="flex flex-row items-center justify-center gap-3 flex-wrap max-w-64">
           <Button size="large" onClick={platform.restart}>
             {language.t("error.page.action.restart")}

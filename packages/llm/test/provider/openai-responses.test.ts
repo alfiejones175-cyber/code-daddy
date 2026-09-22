@@ -132,6 +132,237 @@ describe("OpenAI Responses route", () => {
     }),
   )
 
+  it.effect("opts into strict tool schemas when the projected schema is compatible", () =>
+    Effect.gen(function* () {
+      const prepared = yield* LLMClient.prepare<OpenAIResponses.OpenAIResponsesBody>(
+        LLM.updateRequest(request, {
+          providerOptions: { openai: { strictToolSchemas: true } },
+          tools: [
+            {
+              name: "lookup",
+              description: "Lookup data.",
+              inputSchema: {
+                type: "object",
+                properties: { query: { type: "string" } },
+                required: ["query"],
+                additionalProperties: false,
+              },
+            },
+          ],
+        }),
+      )
+
+      expect(prepared.body.tools).toEqual([
+        {
+          type: "function",
+          name: "lookup",
+          description: "Lookup data.",
+          strict: true,
+          parameters: {
+            type: "object",
+            properties: { query: { type: "string" } },
+            required: ["query"],
+            additionalProperties: false,
+          },
+        },
+      ])
+    }),
+  )
+
+  it.effect("rejects incompatible strict tool schemas before transport", () =>
+    Effect.gen(function* () {
+      const error = yield* LLMClient.prepare(
+        LLM.updateRequest(request, {
+          providerOptions: { openai: { strictToolSchemas: true } },
+          tools: [
+            {
+              name: "lookup",
+              description: "Lookup data.",
+              inputSchema: { type: "object", properties: { query: { type: "string" } } },
+            },
+          ],
+        }),
+      ).pipe(Effect.flip)
+
+      expect(error.message).toContain("OpenAI Responses strict tool schema for lookup: $.additionalProperties must be false")
+    }),
+  )
+
+  it.effect("rejects duplicate strict required entries before transport", () =>
+    Effect.gen(function* () {
+      const error = yield* LLMClient.prepare(
+        LLM.updateRequest(request, {
+          providerOptions: { openai: { strictToolSchemas: true } },
+          tools: [
+            {
+              name: "lookup",
+              description: "Lookup data.",
+              inputSchema: {
+                type: "object",
+                properties: { query: { type: "string" } },
+                required: ["query", "query"],
+                additionalProperties: false,
+              },
+            },
+          ],
+        }),
+      ).pipe(Effect.flip)
+
+      expect(error.message).toContain(
+        "OpenAI Responses strict tool schema for lookup: $.required must list every property exactly once",
+      )
+    }),
+  )
+
+  it.effect("rejects incompatible strict schemas nested in unions, arrays, and local references", () =>
+    Effect.gen(function* () {
+      const schemas = [
+        {
+          name: "union",
+          path: "$.properties.choice.anyOf[0].additionalProperties",
+          inputSchema: {
+            type: "object",
+            properties: {
+              choice: {
+                anyOf: [
+                  { type: "object", properties: { value: { type: "string" } }, required: ["value"] },
+                  { type: "string" },
+                ],
+              },
+            },
+            required: ["choice"],
+            additionalProperties: false,
+          },
+        },
+        {
+          name: "array",
+          path: "$.properties.items.items.additionalProperties",
+          inputSchema: {
+            type: "object",
+            properties: {
+              items: {
+                type: "array",
+                items: { type: "object", properties: { value: { type: "string" } }, required: ["value"] },
+              },
+            },
+            required: ["items"],
+            additionalProperties: false,
+          },
+        },
+        {
+          name: "reference",
+          path: "$.properties.node.$ref(#/$defs/Node).additionalProperties",
+          inputSchema: {
+            type: "object",
+            properties: { node: { $ref: "#/$defs/Node" } },
+            required: ["node"],
+            additionalProperties: false,
+            $defs: {
+              Node: { type: "object", properties: { value: { type: "string" } }, required: ["value"] },
+            },
+          },
+        },
+      ]
+      const errors = yield* Effect.forEach(schemas, (item) =>
+        LLMClient.prepare(
+          LLM.updateRequest(request, {
+            providerOptions: { openai: { strictToolSchemas: true } },
+            tools: [{ name: item.name, description: "Nested schema.", inputSchema: item.inputSchema }],
+          }),
+        ).pipe(Effect.flip),
+      )
+
+      errors.forEach((error, index) =>
+        expect(error.message).toContain(
+          `OpenAI Responses strict tool schema for ${schemas[index]!.name}: ${schemas[index]!.path} must be false`,
+        ),
+      )
+    }),
+  )
+
+  it.effect("accepts compatible strict schemas through local references", () =>
+    Effect.gen(function* () {
+      const prepared = yield* LLMClient.prepare<OpenAIResponses.OpenAIResponsesBody>(
+        LLM.updateRequest(request, {
+          providerOptions: { openai: { strictToolSchemas: true } },
+          tools: [
+            {
+              name: "lookup",
+              description: "Lookup data.",
+              inputSchema: {
+                type: "object",
+                properties: { node: { $ref: "#/$defs/Node" } },
+                required: ["node"],
+                additionalProperties: false,
+                $defs: {
+                  Node: {
+                    type: "object",
+                    properties: { value: { type: "string" } },
+                    required: ["value"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            },
+          ],
+        }),
+      )
+
+      expect(prepared.body.tools?.[0]).toMatchObject({ name: "lookup", strict: true })
+    }),
+  )
+
+  it.effect("accepts a compatible strict schema with root recursion", () =>
+    Effect.gen(function* () {
+      const prepared = yield* LLMClient.prepare<OpenAIResponses.OpenAIResponsesBody>(
+        LLM.updateRequest(request, {
+          providerOptions: { openai: { strictToolSchemas: true } },
+          tools: [
+            {
+              name: "tree",
+              description: "Build a tree.",
+              inputSchema: {
+                type: "object",
+                properties: {
+                  value: { type: "string" },
+                  children: { type: "array", items: { $ref: "#" } },
+                },
+                required: ["value", "children"],
+                additionalProperties: false,
+              },
+            },
+          ],
+        }),
+      )
+
+      expect(prepared.body.tools?.[0]).toMatchObject({ name: "tree", strict: true })
+    }),
+  )
+
+  it.effect("rejects unsupported strict schema composition before transport", () =>
+    Effect.gen(function* () {
+      const error = yield* LLMClient.prepare(
+        LLM.updateRequest(request, {
+          providerOptions: { openai: { strictToolSchemas: true } },
+          tools: [
+            {
+              name: "lookup",
+              description: "Lookup data.",
+              inputSchema: {
+                type: "object",
+                properties: { query: { type: "string", allOf: [{ type: "string" }] } },
+                required: ["query"],
+                additionalProperties: false,
+              },
+            },
+          ],
+        }),
+      ).pipe(Effect.flip)
+
+      expect(error.message).toContain("$.properties.query.allOf is not supported")
+    }),
+  )
+
   it.effect("lowers chronological system updates to escaped user wrappers in order", () =>
     Effect.gen(function* () {
       const prepared = yield* LLMClient.prepare<OpenAIResponses.OpenAIResponsesBody>(

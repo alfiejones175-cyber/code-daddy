@@ -2,6 +2,8 @@ import { beforeAll, beforeEach, describe, expect, mock, test } from "bun:test"
 import { createStore } from "solid-js/store"
 import type { Prompt, PromptStore } from "@/context/prompt"
 import type { ModelSelection } from "@/context/local"
+import { ServerScope } from "@/utils/server-scope"
+import { Worktree } from "@/utils/worktree"
 
 let createPromptSubmit: typeof import("./submit").createPromptSubmit
 
@@ -32,6 +34,8 @@ const sentPrompts: string[] = []
 const promptInputs: unknown[] = []
 const sentCommands: unknown[] = []
 const commands: Array<{ name: string }> = []
+const interruptedSessions: string[] = []
+const toasts: Array<{ title?: string; description?: string }> = []
 let serverSessionSyncs = 0
 
 let params: { id?: string } = {}
@@ -40,6 +44,7 @@ let selected = "/repo/worktree-a"
 let variant: string | undefined
 let permissionServer = "server-a"
 let createSessionGate: Promise<void> | undefined
+let interruptError: Error | undefined
 
 let promptValue: Prompt = [{ type: "text", content: "ls", start: 0, end: 2 }]
 const [promptStore, setPromptStore] = createStore<PromptStore>({
@@ -103,6 +108,10 @@ const clientFor = (directory: string) => {
         shell: async (input: { sessionID: string; id?: string; command: string }) => {
           sentShell.push(input)
         },
+        interrupt: async (input: { sessionID: string }) => {
+          interruptedSessions.push(input.sessionID)
+          if (interruptError) throw interruptError
+        },
       },
     },
     session: {
@@ -135,6 +144,13 @@ beforeAll(async () => {
   mock.module("@opencode-ai/ui/toast", () => ({
     Toast: { Region: () => null },
     showToast: () => 0,
+  }))
+
+  mock.module("@/utils/toast", () => ({
+    showToast: (toast: { title?: string; description?: string }) => {
+      toasts.push(toast)
+      return 0
+    },
   }))
 
   mock.module("@opencode-ai/core/util/encode", () => ({
@@ -291,6 +307,8 @@ beforeEach(() => {
   promptInputs.length = 0
   sentCommands.length = 0
   commands.length = 0
+  interruptedSessions.length = 0
+  toasts.length = 0
   promptValue = [{ type: "text", content: "ls", start: 0, end: 2 }]
   params = {}
   search = {}
@@ -300,8 +318,91 @@ beforeEach(() => {
   variant = undefined
   permissionServer = "server-a"
   createSessionGate = undefined
+  interruptError = undefined
   serverSessionSyncs = 0
   for (const key of Object.keys(storedSessions)) delete storedSessions[key]
+})
+
+describe("prompt interrupt", () => {
+  test("surfaces rejected session interrupts", async () => {
+    params = { id: "session-1" }
+    interruptError = new Error("interrupt unavailable")
+    const submit = createPromptSubmit({
+      prompt,
+      info: () => ({ id: "session-1" }),
+      imageAttachments: () => [],
+      commentCount: () => 0,
+      autoAccept: () => false,
+      mode: () => "normal",
+      working: () => true,
+      editor: () => undefined,
+      queueScroll: () => undefined,
+      promptLength: () => 0,
+      addToHistory: () => undefined,
+      resetHistoryNavigation: () => undefined,
+      setMode: () => undefined,
+      setPopover: () => undefined,
+    })
+
+    await submit.abort()
+
+    expect(interruptedSessions).toEqual(["session-1"])
+    expect(toasts).toEqual([{ title: "common.requestFailed", description: "interrupt unavailable" }])
+  })
+
+  test("does not notify when the session interrupt succeeds", async () => {
+    params = { id: "session-1" }
+    const submit = createPromptSubmit({
+      prompt,
+      info: () => ({ id: "session-1" }),
+      imageAttachments: () => [],
+      commentCount: () => 0,
+      autoAccept: () => false,
+      mode: () => "normal",
+      working: () => true,
+      editor: () => undefined,
+      queueScroll: () => undefined,
+      promptLength: () => 0,
+      addToHistory: () => undefined,
+      resetHistoryNavigation: () => undefined,
+      setMode: () => undefined,
+      setPopover: () => undefined,
+    })
+
+    await submit.abort()
+
+    expect(interruptedSessions).toEqual(["session-1"])
+    expect(toasts).toEqual([])
+  })
+
+  test("aborts a locally pending worktree prompt without interrupting the session", async () => {
+    params = { id: "session-1" }
+    Worktree.pending(ServerScope.local, "/repo/main")
+    const submit = createPromptSubmit({
+      prompt,
+      info: () => ({ id: "session-1" }),
+      imageAttachments: () => [],
+      commentCount: () => 0,
+      autoAccept: () => false,
+      mode: () => "normal",
+      working: () => true,
+      editor: () => undefined,
+      queueScroll: () => undefined,
+      promptLength: () => 0,
+      addToHistory: () => undefined,
+      resetHistoryNavigation: () => undefined,
+      setMode: () => undefined,
+      setPopover: () => undefined,
+    })
+
+    await submit.handleSubmit({ preventDefault: () => undefined } as unknown as Event)
+    await submit.abort()
+    Worktree.ready(ServerScope.local, "/repo/main")
+    await Bun.sleep(0)
+
+    expect(interruptedSessions).toEqual([])
+    expect(toasts).toEqual([])
+  })
 })
 
 describe("prompt submit worktree selection", () => {

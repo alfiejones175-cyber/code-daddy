@@ -9,7 +9,7 @@ import type { DraftStore } from "@/utils/draft-store"
 import type { DictationPlatform } from "@/utils/dictation"
 
 type PickerPaths = string | string[] | null
-type OpenDirectoryPickerOptions = { title?: string; multiple?: boolean }
+type OpenDirectoryPickerOptions = { title?: string; multiple?: boolean; defaultPath?: string }
 type OpenAttachmentPickerOptions = {
   title?: string
   multiple?: boolean

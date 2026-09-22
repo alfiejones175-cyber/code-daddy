@@ -1,0 +1,425 @@
+{
+  "createdAt": "2026-09-22T09:32:38.818Z",
+  "results": [
+    {
+      "ranges": [
+        [
+          "packages/session-ui/src/components/basic-tool.tsx",
+          323,
+          345
+        ],
+        [
+          "packages/session-ui/src/components/message-part.tsx",
+          1610,
+          1630
+        ]
+      ],
+      "input": {
+        "query": "Check the supplied narrow code claim against the exact source evidence. Treat code comments as claims to verify against implementation, not authoritative behavior. Do not infer runtime reachability that is not shown.",
+        "claim": "Unknown tools rendered through GenericTool have no output details even though the caller passes output.",
+        "passages": [
+          {
+            "id": "generic-output",
+            "text": "packages/session-ui/src/components/basic-tool.tsx:323-345\n323: export function GenericTool(props: {\n324:   tool: string\n325:   status?: string\n326:   hideDetails?: boolean\n327:   input?: Record<string, unknown>\n328: }) {\n329:   const i18n = useI18n()\n330: \n331:   return (\n332:     <BasicTool\n333:       icon=\"mcp\"\n334:       status={props.status}\n335:       trigger={{\n336:         title: i18n.t(\"ui.basicTool.called\", { tool: props.tool }),\n337:         subtitle: label(props.input),\n338:         args: args(props.input),\n339:       }}\n340:       hideDetails={props.hideDetails}\n341:     />\n342:   )\n343: }\n344: \n\npackages/session-ui/src/components/message-part.tsx:1610-1630\n1610:           <Match when={true}>\n1611:             <Dynamic\n1612:               component={render()}\n1613:               input={input()}\n1614:               tool={part().tool}\n1615:               sessionID={part().sessionID}\n1616:               metadata={partMetadata()}\n1617:               // @ts-expect-error\n1618:               output={part().state.output}\n1619:               status={part().state.status}\n1620:               hideDetails={props.hideDetails}\n1621:               defaultOpen={props.defaultOpen}\n1622:               open={controlledOpen()}\n1623:               onOpenChange={props.onToolOpenChange ? handleToolOpenChange : undefined}\n1624:               deferContent={props.deferToolContent}\n1625:               virtualizeDiff={props.virtualizeDiff}\n1626:               onContentRendered={props.onContentRendered}\n1627:             />\n1628:           </Match>\n1629:         </Switch>\n1630:       </div>"
+          }
+        ]
+      },
+      "result": {
+        "status": "ok",
+        "advisory": true,
+        "ranking": [
+          {
+            "id": "generic-output",
+            "score": 2.45,
+            "confidence": 0.45,
+            "probabilities": {
+              "0": 0.01,
+              "1": 0.05,
+              "2": 0.43,
+              "3": 0.51
+            },
+            "support": "insufficient_evidence",
+            "supportConfidence": 0.41,
+            "supportProbabilities": {
+              "insufficient_evidence": 0.61,
+              "contradicts": 0.12,
+              "supports": 0.27
+            }
+          }
+        ],
+        "model": "jev-1.13.0",
+        "questionVersion": "jev-pilot-2026-09-22",
+        "usage": {
+          "input_tokens": 1124,
+          "output_tokens": 75
+        },
+        "durationMs": 724
+      }
+    },
+    {
+      "ranges": [
+        [
+          "packages/session-ui/src/components/basic-tool.tsx",
+          299,
+          345
+        ]
+      ],
+      "input": {
+        "query": "Check the supplied narrow code claim against the exact source evidence. Treat code comments as claims to verify against implementation, not authoritative behavior. Do not infer runtime reachability that is not shown.",
+        "claim": "GenericTool args includes whole string values without a character limit; its slice only caps the number of arguments.",
+        "passages": [
+          {
+            "id": "generic-args",
+            "text": "packages/session-ui/src/components/basic-tool.tsx:299-345\n299:       </Show>\n300:     </Collapsible>\n301:   )\n302: }\n303: \n304: function label(input: Record<string, unknown> | undefined) {\n305:   const keys = [\"description\", \"query\", \"url\", \"filePath\", \"path\", \"pattern\", \"name\"]\n306:   return keys.map((key) => input?.[key]).find((value): value is string => typeof value === \"string\" && value.length > 0)\n307: }\n308: \n309: function args(input: Record<string, unknown> | undefined) {\n310:   if (!input) return []\n311:   const skip = new Set([\"description\", \"query\", \"url\", \"filePath\", \"path\", \"pattern\", \"name\"])\n312:   return Object.entries(input)\n313:     .filter(([key]) => !skip.has(key))\n314:     .flatMap(([key, value]) => {\n315:       if (typeof value === \"string\") return [`${key}=${value}`]\n316:       if (typeof value === \"number\") return [`${key}=${value}`]\n317:       if (typeof value === \"boolean\") return [`${key}=${value}`]\n318:       return []\n319:     })\n320:     .slice(0, 3)\n321: }\n322: \n323: export function GenericTool(props: {\n324:   tool: string\n325:   status?: string\n326:   hideDetails?: boolean\n327:   input?: Record<string, unknown>\n328: }) {\n329:   const i18n = useI18n()\n330: \n331:   return (\n332:     <BasicTool\n333:       icon=\"mcp\"\n334:       status={props.status}\n335:       trigger={{\n336:         title: i18n.t(\"ui.basicTool.called\", { tool: props.tool }),\n337:         subtitle: label(props.input),\n338:         args: args(props.input),\n339:       }}\n340:       hideDetails={props.hideDetails}\n341:     />\n342:   )\n343: }\n344: "
+          }
+        ]
+      },
+      "result": {
+        "status": "ok",
+        "advisory": true,
+        "ranking": [
+          {
+            "id": "generic-args",
+            "score": 2.98,
+            "confidence": 0.98,
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.01,
+              "3": 0.99
+            },
+            "support": "supports",
+            "supportConfidence": 0.96,
+            "supportProbabilities": {
+              "contradicts": 0.02,
+              "insufficient_evidence": 0.01,
+              "supports": 0.97
+            }
+          }
+        ],
+        "model": "jev-1.13.0",
+        "questionVersion": "jev-pilot-2026-09-22",
+        "usage": {
+          "input_tokens": 1152,
+          "output_tokens": 71
+        },
+        "durationMs": 248
+      }
+    },
+    {
+      "ranges": [
+        [
+          "packages/core/src/session.ts",
+          465,
+          472
+        ],
+        [
+          "packages/server/src/handlers/session.ts",
+          251,
+          299
+        ]
+      ],
+      "input": {
+        "query": "Check the supplied narrow code claim against the exact source evidence. Treat code comments as claims to verify against implementation, not authoritative behavior. Do not infer runtime reachability that is not shown.",
+        "claim": "V2 session compact and wait remain unavailable operations for existing sessions, with Server translating their errors into service-unavailable responses.",
+        "passages": [
+          {
+            "id": "v2-stubs",
+            "text": "packages/core/src/session.ts:465-472\n465:       compact: Effect.fn(\"V2Session.compact\")(function* (input) {\n466:         yield* result.get(input.sessionID)\n467:         return yield* new OperationUnavailableError({ operation: \"compact\" })\n468:       }),\n469:       wait: Effect.fn(\"V2Session.wait\")(function* (sessionID) {\n470:         yield* result.get(sessionID)\n471:         return yield* new OperationUnavailableError({ operation: \"wait\" })\n472:       }),\n\npackages/server/src/handlers/session.ts:251-299\n251:       )\n252:       .handle(\n253:         \"session.compact\",\n254:         Effect.fn(function* (ctx) {\n255:           yield* session.compact({ sessionID: ctx.params.sessionID }).pipe(\n256:             Effect.catchTag(\"Session.NotFoundError\", (error) =>\n257:               Effect.fail(\n258:                 new SessionNotFoundError({\n259:                   sessionID: error.sessionID,\n260:                   message: `Session not found: ${error.sessionID}`,\n261:                 }),\n262:               ),\n263:             ),\n264:             Effect.catchTag(\"Session.OperationUnavailableError\", (error) =>\n265:               Effect.fail(\n266:                 new ServiceUnavailableError({\n267:                   message: `Session ${error.operation} is not available yet`,\n268:                   service: `session.${error.operation}`,\n269:                 }),\n270:               ),\n271:             ),\n272:           )\n273:           return HttpApiSchema.NoContent.make()\n274:         }),\n275:       )\n276:       .handle(\n277:         \"session.wait\",\n278:         Effect.fn(function* (ctx) {\n279:           yield* session.wait(ctx.params.sessionID).pipe(\n280:             Effect.catchTag(\"Session.NotFoundError\", (error) =>\n281:               Effect.fail(\n282:                 new SessionNotFoundError({\n283:                   sessionID: error.sessionID,\n284:                   message: `Session not found: ${error.sessionID}`,\n285:                 }),\n286:               ),\n287:             ),\n288:             Effect.catchTag(\"Session.OperationUnavailableError\", (error) =>\n289:               Effect.fail(\n290:                 new ServiceUnavailableError({\n291:                   message: `Session ${error.operation} is not available yet`,\n292:                   service: `session.${error.operation}`,\n293:                 }),\n294:               ),\n295:             ),\n296:           )\n297:           return HttpApiSchema.NoContent.make()\n298:         }),\n299:       )"
+          }
+        ]
+      },
+      "result": {
+        "status": "ok",
+        "advisory": true,
+        "ranking": [
+          {
+            "id": "v2-stubs",
+            "score": 2.97,
+            "confidence": 0.97,
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.01,
+              "3": 0.99
+            },
+            "support": "supports",
+            "supportConfidence": 0.91,
+            "supportProbabilities": {
+              "contradicts": 0.01,
+              "supports": 0.9299999999999999,
+              "insufficient_evidence": 0.06
+            }
+          }
+        ],
+        "model": "jev-1.13.0",
+        "questionVersion": "jev-pilot-2026-09-22",
+        "usage": {
+          "input_tokens": 1322,
+          "output_tokens": 69
+        },
+        "durationMs": 352
+      }
+    },
+    {
+      "ranges": [
+        [
+          "packages/core/src/session/runner/llm.ts",
+          263,
+          315
+        ]
+      ],
+      "input": {
+        "query": "Check the supplied narrow code claim against the exact source evidence. Treat code comments as claims to verify against implementation, not authoritative behavior. Do not infer runtime reachability that is not shown.",
+        "claim": "The shown V2 provider event loop starts tool settlement in a FiberSet without a per-turn tool concurrency limit; the one-permit semaphore serializes event publication instead.",
+        "passages": [
+          {
+            "id": "v2-concurrency",
+            "text": "packages/core/src/session/runner/llm.ts:263-315\n263:       const withPublication = Semaphore.makeUnsafe(1).withPermit\n264:       const publish = (event: LLMEvent, outputPaths: ReadonlyArray<string> = []) =>\n265:         withPublication(publisher.publish(event, outputPaths))\n266:       let overflowFailure: ProviderErrorEvent | undefined\n267:       const sessionConfig = Config.latest(yield* config.entries(), \"session\")\n268:       const providerTimeouts = {\n269:         firstEventMs: sessionConfig?.first_event_timeout_ms ?? 300_000,\n270:         inactivityMs: sessionConfig?.inactivity_timeout_ms ?? 300_000,\n271:       }\n272:       const providerStream = withProviderTimeouts(llm.stream(request), providerTimeouts).pipe(\n273:         Stream.runForEach((event) =>\n274:           Effect.gen(function* () {\n275:             if (overflowFailure || publisher.hasProviderError()) return\n276:             if (LLMEvent.is.providerError(event)) {\n277:               if (isContextOverflowFailure(event) && !publisher.hasAssistantStarted()) {\n278:                 overflowFailure = event\n279:                 return\n280:               }\n281:             }\n282:             yield* publish(event)\n283:             if (event.type !== \"tool-call\" || event.providerExecuted) return\n284:             if (!toolMaterialization) {\n285:               yield* withPublication(publisher.failUnsettledTools(\"Tools are disabled after the maximum agent steps\"))\n286:               return\n287:             }\n288:             needsContinuation = true\n289:             const assistantMessageID = yield* publisher.assistantMessageID(event.id)\n290:             yield* Effect.uninterruptibleMask((restore) =>\n291:               restore(\n292:                 toolMaterialization.settle({\n293:                   sessionID: session.id,\n294:                   agent: agent.id,\n295:                   assistantMessageID,\n296:                   call: event,\n297:                 }),\n298:               ).pipe(\n299:                 Effect.flatMap((settlement) =>\n300:                   publish(\n301:                     LLMEvent.toolResult({\n302:                       id: event.id,\n303:                       name: event.name,\n304:                       result: settlement.result,\n305:                       output: settlement.output,\n306:                     }),\n307:                     settlement.outputPaths ?? [],\n308:                   ),\n309:                 ),\n310:               ),\n311:             ).pipe(FiberSet.run(toolFibers))\n312:           }),\n313:         ),\n314:         Effect.ensuring(withPublication(publisher.flush())),\n315:       )"
+          }
+        ]
+      },
+      "result": {
+        "status": "ok",
+        "advisory": true,
+        "ranking": [
+          {
+            "id": "v2-concurrency",
+            "score": 2.96,
+            "confidence": 0.96,
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0.03,
+              "3": 0.97
+            },
+            "support": "supports",
+            "supportConfidence": 0.66,
+            "supportProbabilities": {
+              "contradicts": 0.15,
+              "insufficient_evidence": 0.07,
+              "supports": 0.78
+            }
+          }
+        ],
+        "model": "jev-1.13.0",
+        "questionVersion": "jev-pilot-2026-09-22",
+        "usage": {
+          "input_tokens": 1354,
+          "output_tokens": 71
+        },
+        "durationMs": 269
+      }
+    },
+    {
+      "ranges": [
+        [
+          "packages/llm/src/protocols/openai-responses.ts",
+          245,
+          270
+        ],
+        [
+          "packages/llm/test/provider/openai-responses.test.ts",
+          110,
+          135
+        ]
+      ],
+      "input": {
+        "query": "Check the supplied narrow code claim against the exact source evidence. Treat code comments as claims to verify against implementation, not authoritative behavior. Do not infer runtime reachability that is not shown.",
+        "claim": "OpenAI Responses tool preparation always sets strict to false for the shown function tools; direct callers cannot opt into strict schemas here.",
+        "passages": [
+          {
+            "id": "strict-schemas",
+            "text": "packages/llm/src/protocols/openai-responses.ts:245-270\n245: \n246: interface ReasoningStreamItem {\n247:   readonly encryptedContent: string | null | undefined\n248:   // Keyed by OpenAI's numeric `summary_index`. JS object keys coerce to\n249:   // strings, but typing the map as `Record<number, ...>` documents intent\n250:   // and matches the wire field.\n251:   readonly summaryParts: Readonly<Record<number, ReasoningSummaryStatus>>\n252: }\n253: \n254: const invalid = ProviderShared.invalidRequest\n255: \n256: // =============================================================================\n257: // Request Lowering\n258: // =============================================================================\n259: const lowerTool = (tool: ToolDefinition, inputSchema: JsonSchema): OpenAIResponsesTool => ({\n260:   type: \"function\",\n261:   name: tool.name,\n262:   description: tool.description,\n263:   parameters: ToolSchemaProjection.openAI(inputSchema),\n264:   // TODO: Read this from OpenAI-specific tool options so direct LLM callers can opt into strict schemas.\n265:   strict: false,\n266: })\n267: \n268: const lowerToolChoice = (toolChoice: NonNullable<LLMRequest[\"toolChoice\"]>) =>\n269:   ProviderShared.matchToolChoice(\"OpenAI Responses\", toolChoice, {\n270:     auto: () => \"auto\" as const,\n\npackages/llm/test/provider/openai-responses.test.ts:110-135\n110:           ],\n111:         }),\n112:       )\n113: \n114:       expect(prepared.body.tools).toEqual([\n115:         {\n116:           type: \"function\",\n117:           name: \"read\",\n118:           description: \"Read a path or resource.\",\n119:           strict: false,\n120:           parameters: {\n121:             type: \"object\",\n122:             properties: {\n123:               path: { type: \"string\" },\n124:               reference: { type: \"string\" },\n125:               limit: { type: \"integer\", maximum: 2000 },\n126:               resource: { type: \"string\" },\n127:             },\n128:             additionalProperties: false,\n129:           },\n130:         },\n131:       ])\n132:     }),\n133:   )\n134: \n135:   it.effect(\"lowers chronological system updates to escaped user wrappers in order\", () =>"
+          }
+        ]
+      },
+      "result": {
+        "status": "ok",
+        "advisory": true,
+        "ranking": [
+          {
+            "id": "strict-schemas",
+            "score": 2.89,
+            "confidence": 0.89,
+            "probabilities": {
+              "0": 0.01,
+              "1": 0.01,
+              "2": 0.06,
+              "3": 0.92
+            },
+            "support": "supports",
+            "supportConfidence": 0.21,
+            "supportProbabilities": {
+              "contradicts": 0.42,
+              "supports": 0.47,
+              "insufficient_evidence": 0.11
+            }
+          }
+        ],
+        "model": "jev-1.13.0",
+        "questionVersion": "jev-pilot-2026-09-22",
+        "usage": {
+          "input_tokens": 1283,
+          "output_tokens": 73
+        },
+        "durationMs": 314
+      }
+    },
+    {
+      "ranges": [
+        [
+          "packages/tui/test/cli/tui/diff-viewer-file-tree.test.tsx",
+          29,
+          72
+        ]
+      ],
+      "input": {
+        "query": "Check the supplied narrow code claim against the exact source evidence. Treat code comments as claims to verify against implementation, not authoritative behavior. Do not infer runtime reachability that is not shown.",
+        "claim": "The sorted hierarchical file row rendering test is explicitly skipped; its ordering assertions do not execute during the normal suite.",
+        "passages": [
+          {
+            "id": "skipped-diff-test",
+            "text": "packages/tui/test/cli/tui/diff-viewer-file-tree.test.tsx:29-72\n29: describe(\"DiffViewerFileTree\", () => {\n30:   test.skip(\"renders sorted hierarchical file rows\", async () => {\n31:     const app = await testRender(\n32:       () =>\n33:         withTheme(() => (\n34:           <DiffViewerFileTree\n35:             width={32}\n36:             files={[\n37:               { file: \"z-file.ts\" },\n38:               { file: \"b/file.ts\" },\n39:               { file: \"a/zeta.ts\" },\n40:               { file: \"b/alpha.ts\" },\n41:               { file: \"a/alpha.ts\" },\n42:             ]}\n43:             loading={false}\n44:             error={undefined}\n45:             theme={theme}\n46:             focused={true}\n47:           />\n48:         )),\n49:       { width: 40, height: 20 },\n50:     )\n51: \n52:     try {\n53:       await renderOnceSettled(app)\n54:       const lines = visibleLines(app.captureCharFrame())\n55: \n56:       expect(lines).toEqual([\n57:         \"▾ a\",\n58:         \"│  ├─ alpha.ts               ?\",\n59:         \"│  └─ zeta.ts                ?\",\n60:         \"├─ ▾ b\",\n61:         \"│  ├─ alpha.ts               ?\",\n62:         \"│  └─ file.ts                ?\",\n63:       ])\n64:     } finally {\n65:       app.renderer.destroy()\n66:     }\n67:   })\n68: \n69:   test(\"keeps loading and error quiet while rendering an empty settled state\", async () => {\n70:     const loading = await renderFrame(() => (\n71:       <DiffViewerFileTree width={32} files={[]} loading={true} error={undefined} theme={theme} />\n72:     ))"
+          }
+        ]
+      },
+      "result": {
+        "status": "ok",
+        "advisory": true,
+        "ranking": [
+          {
+            "id": "skipped-diff-test",
+            "score": 3,
+            "confidence": 1,
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "3": 1
+            },
+            "support": "supports",
+            "supportConfidence": 1,
+            "supportProbabilities": {
+              "contradicts": 0,
+              "supports": 1,
+              "insufficient_evidence": 0
+            }
+          }
+        ],
+        "model": "jev-1.13.0",
+        "questionVersion": "jev-pilot-2026-09-22",
+        "usage": {
+          "input_tokens": 1086,
+          "output_tokens": 73
+        },
+        "durationMs": 312
+      }
+    },
+    {
+      "ranges": [
+        [
+          "packages/console/app/src/routes/black/workspace.tsx",
+          26,
+          46
+        ],
+        [
+          "packages/console/app/src/routes/black/workspace.tsx",
+          180,
+          212
+        ]
+      ],
+      "input": {
+        "query": "Check the supplied narrow code claim against the exact source evidence. Treat code comments as claims to verify against implementation, not authoritative behavior. Do not infer runtime reachability that is not shown.",
+        "claim": "The BlackWorkspace component uses fabricated workspace IDs and navigates to routes built from those IDs.",
+        "passages": [
+          {
+            "id": "fake-workspaces",
+            "text": "packages/console/app/src/routes/black/workspace.tsx:26-46\n26:   // TODO: Frank, replace with real workspaces\n27:   const workspaces = [\n28:     { id: \"wrk_123\", n: 1 },\n29:     { id: \"wrk_456\", n: 2 },\n30:     { id: \"wrk_789\", n: 3 },\n31:     { id: \"wrk_111\", n: 4 },\n32:     { id: \"wrk_222\", n: 5 },\n33:     { id: \"wrk_333\", n: 6 },\n34:     { id: \"wrk_444\", n: 7 },\n35:     { id: \"wrk_555\", n: 8 },\n36:   ].map((workspace) => ({\n37:     ...workspace,\n38:     name: i18n.t(\"black.workspace.name\", { n: workspace.n }),\n39:   }))\n40: \n41:   let listRef: HTMLUListElement | undefined\n42: \n43:   const { active, setActive, onKeyDown } = createList({\n44:     items: () => workspaces.map((w) => w.id),\n45:     initialActive: workspaces[0]?.id ?? null,\n46:     handleTab: true,\n\npackages/console/app/src/routes/black/workspace.tsx:180-212\n180:         </div>\n181:         <section data-slot=\"select-workspace\">\n182:           <p data-slot=\"select-workspace-title\">{i18n.t(\"black.workspace.selectPlan\")}</p>\n183:           <ul\n184:             ref={listRef}\n185:             data-slot=\"workspaces\"\n186:             tabIndex={0}\n187:             onKeyDown={(e) => {\n188:               if (e.key === \"Enter\" && active()) {\n189:                 navigate(`/black/workspace/${active()}`)\n190:               } else if (e.key === \"Tab\") {\n191:                 e.preventDefault()\n192:                 onKeyDown(e)\n193:               } else {\n194:                 onKeyDown(e)\n195:               }\n196:             }}\n197:           >\n198:             <For each={workspaces}>\n199:               {(workspace) => (\n200:                 <li\n201:                   data-slot=\"workspace\"\n202:                   data-id={workspace.id}\n203:                   data-active={active() === workspace.id}\n204:                   onMouseEnter={() => setActive(workspace.id)}\n205:                   onClick={() => navigate(`/black/workspace/${workspace.id}`)}\n206:                 >\n207:                   <span data-slot=\"selected-icon\">[*]</span>\n208:                   <a href={`/black/workspace/${workspace.id}`}>{workspace.name}</a>\n209:                 </li>\n210:               )}\n211:             </For>\n212:           </ul>"
+          }
+        ]
+      },
+      "result": {
+        "status": "ok",
+        "advisory": true,
+        "ranking": [
+          {
+            "id": "fake-workspaces",
+            "score": 3,
+            "confidence": 1,
+            "probabilities": {
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "3": 1
+            },
+            "support": "supports",
+            "supportConfidence": 0.99,
+            "supportProbabilities": {
+              "contradicts": 0,
+              "supports": 1,
+              "insufficient_evidence": 0
+            }
+          }
+        ],
+        "model": "jev-1.13.0",
+        "questionVersion": "jev-pilot-2026-09-22",
+        "usage": {
+          "input_tokens": 1360,
+          "output_tokens": 73
+        },
+        "durationMs": 334
+      }
+    },
+    {
+      "ranges": [
+        [
+          "packages/llm/src/schema/messages.ts",
+          90,
+          112
+        ]
+      ],
+      "input": {
+        "query": "Check the supplied narrow code claim against the exact source evidence. Treat code comments as claims to verify against implementation, not authoritative behavior. Do not infer runtime reachability that is not shown.",
+        "claim": "The shown ToolOutput.toResultValue implementation rejects unresolved URI content with an error.",
+        "passages": [
+          {
+            "id": "uri-negative-control",
+            "text": "packages/llm/src/schema/messages.ts:90-112\n90:   {\n91:     make: (structured: unknown, content: ReadonlyArray<ToolContent> = []): ToolOutput => ({ structured, content }),\n92:     fromResultValue: (result: ToolResultValue): ToolOutput | undefined => {\n93:       switch (result.type) {\n94:         case \"json\":\n95:           return { structured: result.value, content: [] }\n96:         case \"text\":\n97:           return { structured: {}, content: [{ type: \"text\", text: toolResultText(result.value) }] }\n98:         case \"content\":\n99:           return { structured: {}, content: result.value }\n100:         case \"error\":\n101:           return undefined\n102:       }\n103:     },\n104:     toResultValue: (output: ToolOutput): ToolResultValue => {\n105:       if (output.content.length === 0) return { type: \"json\", value: output.structured }\n106:       if (output.content.length === 1 && output.content[0]?.type === \"text\")\n107:         return { type: \"text\", value: output.content[0].text }\n108:       return { type: \"content\", value: output.content }\n109:     },\n110:   },\n111: )\n112: "
+          }
+        ]
+      },
+      "result": {
+        "status": "ok",
+        "advisory": true,
+        "ranking": [
+          {
+            "id": "uri-negative-control",
+            "score": 2.18,
+            "confidence": 0.18,
+            "probabilities": {
+              "0": 0.13,
+              "1": 0.13,
+              "2": 0.17,
+              "3": 0.57
+            },
+            "support": "insufficient_evidence",
+            "supportConfidence": 0.51,
+            "supportProbabilities": {
+              "contradicts": 0.32,
+              "supports": 0.01,
+              "insufficient_evidence": 0.67
+            }
+          }
+        ],
+        "model": "jev-1.13.0",
+        "questionVersion": "jev-pilot-2026-09-22",
+        "usage": {
+          "input_tokens": 922,
+          "output_tokens": 75
+        },
+        "durationMs": 296
+      }
+    }
+  ]
+}

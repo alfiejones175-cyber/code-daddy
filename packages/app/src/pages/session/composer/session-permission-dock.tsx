@@ -7,6 +7,7 @@ import { useLanguage } from "@/context/language"
 import { useSDK } from "@/context/sdk"
 import { useServerProtocol } from "@/context/server-sdk"
 import { useSync } from "@/context/sync"
+import { pluginPermissionDescription } from "./session-permission-description"
 
 export function SessionPermissionDock(props: {
   request: PermissionRequest
@@ -19,6 +20,8 @@ export function SessionPermissionDock(props: {
   const protocol = useServerProtocol()
 
   const toolDescription = () => {
+    const plugin = pluginPermissionDescription(props.request)
+    if (plugin) return language.t(plugin.key, plugin.params)
     const key = `settings.permissions.tool.${props.request.permission}.description`
     const value = language.t(key as Parameters<typeof language.t>[0])
     if (value === key) return ""

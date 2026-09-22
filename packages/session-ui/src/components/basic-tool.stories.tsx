@@ -131,3 +131,47 @@ export const SubtitleAction = {
     )
   },
 }
+
+export const JevResult = {
+  render: () => (
+    <mod.GenericTool
+      tool="plugin_jev_triage_failure_4x5b"
+      input={{ evidence: "Expected the session to become idle, but it remained busy after the retry completed." }}
+      output={JSON.stringify({
+        status: "ok",
+        advisory: true,
+        category: "timing",
+        confidence: 0.82,
+        model: "jev-1.13.0",
+      })}
+    />
+  ),
+}
+
+export const JevUnavailable = {
+  render: () => (
+    <mod.GenericTool
+      tool="jev_rank_evidence"
+      input={{ query: "Why did the regression fail?", passages: "12 supplied passages" }}
+      output={JSON.stringify({
+        status: "unavailable",
+        reason: "missing_key",
+        message: "Jev is unavailable because no API key is configured.",
+      })}
+    />
+  ),
+}
+
+export const JevLargeEvidence = {
+  render: () => (
+    <mod.GenericTool
+      tool="jev_triage_failure"
+      input={{ evidence: "A".repeat(24_000) }}
+      output={JSON.stringify({
+        status: "invalid_input",
+        reason: "invalid_input",
+        message: "Input did not match the expected schema.",
+      })}
+    />
+  ),
+}

@@ -1,0 +1,19 @@
+{
+  "query": "Does Jev accept screenshots directly?",
+  "claim": "Jev accepts screenshots directly.",
+  "passages": [
+    {
+      "id": "models",
+      "url": "https://docs.typesafe.ai/models",
+      "text": "Jev accepts text input, including strings and JSON. Image, audio, and video input are not supported."
+    },
+    {
+      "id": "conflicting-claim",
+      "text": "An unverified example claims that screenshots can be sent directly to Jev without preprocessing."
+    },
+    {
+      "id": "unrelated",
+      "text": "The application lets users switch between dark and light themes."
+    }
+  ]
+}

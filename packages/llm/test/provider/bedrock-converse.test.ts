@@ -566,6 +566,22 @@ describe("Bedrock Converse route", () => {
     }),
   )
 
+  it.effect("rejects HTTPS media URIs before sending the provider request", () =>
+    Effect.gen(function* () {
+      const error = yield* LLMClient.prepare(
+        LLM.request({
+          id: "req_https_image",
+          model,
+          messages: [
+            Message.user([{ type: "media", mediaType: "image/png", data: "https://files.example.test/pixel.png" }]),
+          ],
+        }),
+      ).pipe(Effect.flip)
+
+      expect(error.message).toContain("Bedrock Converse does not support media URI scheme https")
+    }),
+  )
+
   it.effect("rejects unsupported document media types", () =>
     Effect.gen(function* () {
       const error = yield* LLMClient.prepare(

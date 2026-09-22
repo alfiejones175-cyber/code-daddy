@@ -16,6 +16,7 @@ interface DialogSelectDirectoryProps {
   multiple?: boolean
   onSelect: (result: string | string[] | null) => void
   server: ServerConnection.Any
+  start?: string
 }
 
 const RECENT_PROJECT_LIMIT = 5
@@ -74,7 +75,12 @@ export function DialogSelectDirectory(props: DialogSelectDirectoryProps) {
 
   const home = createMemo(() => sync.data.path.home || fallbackPath()?.home || "")
   const start = createMemo(
-    () => sync.data.path.home || sync.data.path.directory || fallbackPath()?.home || fallbackPath()?.directory,
+    () =>
+      props.start ||
+      sync.data.path.home ||
+      sync.data.path.directory ||
+      fallbackPath()?.home ||
+      fallbackPath()?.directory,
   )
 
   const directories = createDirectorySearch({

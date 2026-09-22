@@ -1,4 +1,4 @@
-import { createEffect, Suspense, type ParentProps } from "solid-js"
+import { onMount, Suspense, type ParentProps } from "solid-js"
 import { createStore } from "solid-js/store"
 import { createMediaQuery } from "@solid-primitives/media"
 import { useLayout } from "@/context/layout"
@@ -19,7 +19,7 @@ export default function NewLayout(props: ParentProps) {
   const modal = () => compact() && layout.mobileSidebar.opened()
   const [state, setState] = createStore({ debugTools: true })
 
-  createEffect(() => setV2Toast(true))
+  onMount(() => setV2Toast(true))
 
   const update: TitlebarUpdate = {
     version: () => {

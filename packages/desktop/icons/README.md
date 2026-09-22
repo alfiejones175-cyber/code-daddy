@@ -3,16 +3,18 @@
 ## Code Daddy
 
 The local `dev` app uses the Santa coding logo in `code-daddy/santa-coding.png`.
-To regenerate its macOS icon, Dock PNG, and other desktop icon sizes on macOS,
-run these commands from `packages/desktop`:
+macOS uses the opaque, full-bleed `code-daddy/macos.png` master for its ICNS and
+Dock icon so modern macOS does not wrap the already-rounded artwork in a pale
+compatibility plate. To regenerate the desktop icon sizes on macOS, run these
+commands from `packages/desktop`:
 
 ```bash
 bun scripts/generate-code-daddy-icons.ts
 bun scripts/copy-icons.ts dev
 ```
 
-The source already includes the rounded tile, inset, and transparency. Preserve
-those when resizing; adding another mask or inset would shrink the Dock artwork.
+Keep `macos.png` at 1024×1024 and fully opaque. The system applies the final Mac
+icon enclosure, so do not add transparent padding or another outer mask.
 
 ## Original channel icons
 

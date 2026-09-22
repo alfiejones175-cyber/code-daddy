@@ -10,7 +10,14 @@ import { uuid } from "@/utils/uuid"
 import { SessionTabsRemovedDetail } from "@/components/titlebar-session-events"
 import { sessionHref } from "@/utils/session-route"
 import { createTabMemory } from "./tab-memory"
-import { nextTabAfterClose, pushClosedTab, removeClosedTabs, takeClosedTab, type ClosedTab } from "./closed-tabs"
+import {
+  nextTabAfterClose,
+  pushClosedTab,
+  removeClosedServerTabs,
+  removeClosedTabs,
+  takeClosedTab,
+  type ClosedTab,
+} from "./closed-tabs"
 import { createDraftPromptSession, type PromptModel } from "./prompt-state"
 import { migrateTabs } from "./tab-migration"
 
@@ -152,7 +159,7 @@ export const { use: useTabs, provider: TabsProvider } = createSimpleContext({
       navigate(href)
     }
 
-    const removeTab = (index: number) => {
+    const removeTab = (index: number, removeDraft = true) => {
       const tab = store[index]
       if (!tab) return
       const key = tabKey(tab)
@@ -173,7 +180,7 @@ export const { use: useTabs, provider: TabsProvider } = createSimpleContext({
       }).finally(() => closing.delete(key))
       memory.remove(key)
       removeInfo(key)
-      if (draftID) removeDraftPersisted(draftID)
+      if (draftID && removeDraft) removeDraftPersisted(draftID)
     }
 
     const actions = {
@@ -253,8 +260,8 @@ export const { use: useTabs, provider: TabsProvider } = createSimpleContext({
       closeTab(index: number) {
         const tab = store[index]
         if (!tab) return
-        if (tab.type === "session") updateClosed((stack) => pushClosedTab(stack, tab, index))
-        removeTab(index)
+        updateClosed((stack) => pushClosedTab(stack, tab, index))
+        removeTab(index, false)
       },
       reopenClosedTab() {
         if (!closedReady()) {
@@ -285,7 +292,11 @@ export const { use: useTabs, provider: TabsProvider } = createSimpleContext({
         if (index !== -1) removeTab(index)
       },
       removeServer(key: ServerConnection.Key) {
-        updateClosed((stack) => stack.filter((entry) => entry.tab.server !== key))
+        updateClosed((stack) => {
+          const result = removeClosedServerTabs(stack, key)
+          for (const draftID of result.draftIDs) removeDraftPersisted(draftID)
+          return result.stack
+        })
         const drafts = store.flatMap((tab) => (tab.type === "draft" && tab.server === key ? [tab.draftID] : []))
         const removed = store.filter((tab) => tab.server === key).map(tabKey)
         setStore((tabs) => tabs.filter((tab) => tab.server !== key))

@@ -26,10 +26,12 @@ import { pathKey } from "@/utils/path-key"
 import { normalizeSessionInfo } from "@/utils/session"
 import { sessionHref } from "@/utils/session-route"
 import { sessionTitle } from "@/utils/session-title"
+import { showToast } from "@/utils/toast"
 import { sessionPermissionRequest, sessionQuestionRequest } from "../session/composer/session-request-tree"
 import {
   compareSessionTime,
   displayName,
+  errorMessage,
   getProjectAvatarSource,
   homeProjectDirectories,
   sortedRootSessions,
@@ -192,6 +194,11 @@ export function ProjectSidebar() {
     void tabs.newDraft({ server: ServerConnection.key(conn), directory: dir }, "")
     if (compact()) close()
   }
+  const goHome = () => {
+    if (layout.route().type === "home") return
+    tabs.toggleHome({ home: false })
+    if (compact()) close()
+  }
   const openSettings = (connections = false) => {
     const conn = connection()
     if (conn) global.settings.server.set(ServerConnection.key(conn))
@@ -342,6 +349,18 @@ export function ProjectSidebar() {
             <Icon name="new-session" size="small" />
           </button>
         </TooltipV2>
+        <TooltipV2 value={language.t("home.title")} placement="right">
+          <button
+            type="button"
+            data-action={opened() ? undefined : "sidebar-home"}
+            class="sidebar-icon sidebar-rail-action"
+            aria-label={language.t("home.title")}
+            aria-current={layout.route().type === "home" ? "page" : undefined}
+            onClick={goHome}
+          >
+            <Icon name="dot-grid" size="small" />
+          </button>
+        </TooltipV2>
         <div class="sidebar-rail-spacer" />
         <TooltipV2 value={language.t("command.project.open")} placement="right">
           <button
@@ -388,11 +407,23 @@ export function ProjectSidebar() {
             >
               <Icon name="chevron-left" size="small" />
             </button>
+            <TooltipV2 value={language.t("home.title")} placement="bottom">
+              <button
+                type="button"
+                class="sidebar-icon"
+                data-action={opened() ? "sidebar-home" : undefined}
+                aria-label={language.t("home.title")}
+                aria-current={layout.route().type === "home" ? "page" : undefined}
+                onClick={goHome}
+              >
+                <Icon name="dot-grid" size="small" />
+              </button>
+            </TooltipV2>
             <TooltipV2 value={language.t("command.project.open")} placement="bottom">
               <button
                 type="button"
                 class="sidebar-icon"
-                data-action={opened() ? "sidebar-open-project" : undefined}
+                data-action={opened() ? "sidebar-open-project-icon" : undefined}
                 aria-label={language.t("command.project.open")}
                 disabled={!connection()}
                 onClick={chooseProject}
@@ -402,16 +433,28 @@ export function ProjectSidebar() {
             </TooltipV2>
           </div>
         </div>
-        <button
-          type="button"
-          data-action={opened() ? "sidebar-new-chat" : undefined}
-          class="sidebar-new-chat"
-          onClick={() => newChat()}
-          disabled={!connection()}
-        >
-          <Icon name="plus" size="small" />
-          <span>{language.t("sidebar.newChat")}</span>
-        </button>
+        <div class="sidebar-primary-actions">
+          <button
+            type="button"
+            data-action={opened() ? "sidebar-new-chat" : undefined}
+            class="sidebar-primary-action"
+            onClick={() => newChat()}
+            disabled={!connection()}
+          >
+            <Icon name="new-session" size="small" />
+            <span>{language.t("sidebar.newChat")}</span>
+          </button>
+          <button
+            type="button"
+            data-action={opened() ? "sidebar-open-project" : undefined}
+            class="sidebar-primary-action"
+            onClick={chooseProject}
+            disabled={!connection()}
+          >
+            <Icon name="folder-add-left" size="small" />
+            <span>{language.t("command.project.open")}</span>
+          </button>
+        </div>
         <div data-component="sidebar-current-project" class="sidebar-current-project" title={directory()}>
           {current() ? displayName(current()!) : language.t("sidebar.noProject")}
         </div>
@@ -616,14 +659,16 @@ function ProjectGroup(props: {
           </span>
           <Icon name="chevron-down" size="small" class="sidebar-chevron" classList={{ collapsed: !state.expanded }} />
         </button>
-        <button
-          type="button"
-          class="sidebar-icon sidebar-project-new"
-          aria-label={language.t("sidebar.newChat")}
-          onClick={props.newChat}
-        >
-          <Icon name="plus" size="small" />
-        </button>
+        <TooltipV2 value={language.t("sidebar.newChat")} placement="top">
+          <button
+            type="button"
+            class="sidebar-icon sidebar-project-new"
+            aria-label={language.t("sidebar.newChat")}
+            onClick={props.newChat}
+          >
+            <Icon name="new-session" size="small" />
+          </button>
+        </TooltipV2>
       </div>
       <div id={id} hidden={!state.expanded} class="sidebar-project-chats">
         <For each={drafts()}>
@@ -822,6 +867,11 @@ function SidebarDraft(props: { draft: Extract<Tab, { type: "draft" }>; context: 
     const route = layout.route()
     return route.type === "draft" && route.draftID === props.draft.draftID
   }
+  const close = () => {
+    const index = tabs.store.findIndex((tab) => tab.type === "draft" && tab.draftID === props.draft.draftID)
+    if (index === -1) return
+    tabs.closeTab(index)
+  }
   return (
     <div class="sidebar-chat-row" data-selected={active()}>
       <span class="sidebar-disclosure" aria-hidden="true">
@@ -837,6 +887,21 @@ function SidebarDraft(props: { draft: Extract<Tab, { type: "draft" }>; context: 
       >
         <span class="sidebar-chat-title">{title()}</span>
       </A>
+      <TooltipV2 value={language.t("common.close")} placement="top">
+        <button
+          type="button"
+          class="sidebar-chat-action"
+          data-action="draft-close"
+          aria-label={language.t("common.close")}
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            close()
+          }}
+        >
+          <Icon name="close-small" size="small" />
+        </button>
+      </TooltipV2>
     </div>
   )
 }
@@ -850,12 +915,14 @@ function SidebarSession(props: {
 }) {
   const language = useLanguage()
   const notification = useNotification()
+  const tabs = useTabs()
   const id = createUniqueId()
   const [state, setState] = createStore({
     expanded: false,
     loading: false,
     loaded: false,
     failed: false,
+    archiving: false,
     cursor: undefined as string | undefined,
     latest: undefined as SessionMessageInfo | undefined,
   })
@@ -924,6 +991,24 @@ function SidebarSession(props: {
     return language.t("notification.session.responseReady.title")
   }
   const unread = () => notification.ensureServerState(key()).session.unseenCount(props.session.id) > 0
+  const archive = async () => {
+    if (state.archiving) return
+    setState("archiving", true)
+    await props.context.sdk.client.session
+      .update({
+        sessionID: props.session.id,
+        directory: props.session.directory,
+        time: { archived: Date.now() },
+      })
+      .then(() => tabs.removeSessionTab({ server: key(), sessionId: props.session.id }))
+      .catch((cause) =>
+        showToast({
+          title: language.t("common.requestFailed"),
+          description: errorMessage(cause, language.t("common.requestFailed")),
+        }),
+      )
+      .finally(() => setState("archiving", false))
+  }
   const load = async (cursor?: string) => {
     if (state.loading) return
     setState({ loading: true, failed: false })
@@ -1006,6 +1091,24 @@ function SidebarSession(props: {
           sessions={known()}
           titleID={`${id}-title`}
         />
+        <Show when={props.ancestors.length === 0}>
+          <TooltipV2 value={language.t("common.archive")} placement="top">
+            <button
+              type="button"
+              class="sidebar-chat-action"
+              data-action="session-archive"
+              aria-label={language.t("common.archive")}
+              disabled={state.archiving}
+              onClick={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                void archive()
+              }}
+            >
+              <Icon name="archive" size="small" />
+            </button>
+          </TooltipV2>
+        </Show>
       </div>
       <Show when={state.expanded}>
         <div id={id} class="sidebar-child-chats">

@@ -24,8 +24,10 @@ function pickGrey(primitives: Record<string, V2ColorValue>, background: HexColor
     const hex = greyHex(primitives, step)
     return hex && contrastRatio(hex, background) >= minContrast
   })
-  if (matches.length === 0) return target
-  return matches.reduce((best, step) => (Math.abs(step - target) < Math.abs(best - target) ? step : best))
+  if (matches.length === 0) {
+    return contrastRatio("#000000", background) >= contrastRatio("#ffffff", background) ? "#000000" : "#ffffff"
+  }
+  return greyRef(matches.reduce((best, step) => (Math.abs(step - target) < Math.abs(best - target) ? step : best)))
 }
 
 export function mapV2Foreground(
@@ -49,11 +51,11 @@ export function mapV2Foreground(
   return {
     "v2-text-text-base": isDark ? blend("#ffffff", body, 0.9) : shift(body, { l: -0.07, c: 1.04 }),
     "v2-text-text-muted": overrides["text-weak"] ?? shift(body, { l: isDark ? -0.11 : 0.11, c: 0.9 }),
-    "v2-text-text-faint": shift(body, { l: isDark ? -0.2 : 0.21, c: isDark ? 0.78 : 0.72 }),
-    "v2-icon-icon-base": greyRef(pickGrey(primitives, bgBase, 7, isDark ? 400 : 800)),
-    "v2-icon-icon-muted": greyRef(pickGrey(primitives, bgBase, 3, 600)),
-    "v2-icon-icon-inverse": greyRef(pickGrey(primitives, bgInverse, 7, inverseTarget)),
-    "v2-icon-icon-contrast": greyRef(pickGrey(primitives, bgContrast, 7, 100)),
+    "v2-text-text-faint": pickGrey(primitives, bgBase, 4.5, isDark ? 500 : 700),
+    "v2-icon-icon-base": pickGrey(primitives, bgBase, 7, isDark ? 400 : 800),
+    "v2-icon-icon-muted": pickGrey(primitives, bgBase, 3, 600),
+    "v2-icon-icon-inverse": pickGrey(primitives, bgInverse, 7, inverseTarget),
+    "v2-icon-icon-contrast": pickGrey(primitives, bgContrast, 7, 100),
     "v2-icon-icon-accent": isDark ? "var(--v2-blue-400)" : "var(--v2-blue-600)",
     "v2-icon-icon-accent-hover": isDark ? "var(--v2-blue-300)" : "var(--v2-blue-700)",
   }

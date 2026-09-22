@@ -34,6 +34,7 @@ export interface Settings {
     editToolPartsExpanded: boolean
     showCustomAgents: boolean
     mobileTitlebarPosition: "top" | "bottom"
+    defaultProjectsFolder?: string
     newLayoutDesigns?: boolean
     layoutTransitionEligible?: boolean
     agentVisibilityInitialized?: boolean
@@ -195,6 +196,7 @@ const defaultSettings: Settings = {
     editToolPartsExpanded: false,
     showCustomAgents: false,
     mobileTitlebarPosition: "top",
+    defaultProjectsFolder: "",
   },
   appearance: {
     fontSize: 14,
@@ -428,6 +430,13 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         ),
         setMobileTitlebarPosition(value: "top" | "bottom") {
           setStore("general", "mobileTitlebarPosition", value)
+        },
+        defaultProjectsFolder: withFallback(
+          () => store.general?.defaultProjectsFolder,
+          defaultSettings.general.defaultProjectsFolder ?? "",
+        ),
+        setDefaultProjectsFolder(value: string) {
+          setStore("general", "defaultProjectsFolder", value.trim())
         },
         newLayoutDesigns,
         setNewLayoutDesigns(value: boolean) {

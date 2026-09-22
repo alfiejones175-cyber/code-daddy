@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test"
 import { createRoot, getOwner, onCleanup } from "solid-js"
 import { createTabMemory } from "./tab-memory"
-import { nextTabAfterClose, pushClosedTab, removeClosedTabs, takeClosedTab, type ClosedTab } from "./closed-tabs"
+import {
+  nextTabAfterClose,
+  pushClosedTab,
+  removeClosedServerTabs,
+  removeClosedTabs,
+  takeClosedTab,
+  type ClosedTab,
+} from "./closed-tabs"
 import type { SessionTab, Tab } from "./tabs"
 import { migrateTabs } from "./tab-migration"
 import type { ServerConnection } from "./server"
@@ -59,10 +66,26 @@ describe("closed tab stack", () => {
     expect(stack).toEqual([{ tab: sessionTab("a"), index: 2 }])
   })
 
-  test("ignores draft tabs", () => {
+  test("records drafts so they can be reopened with their persisted state", () => {
     const draft: Tab = { type: "draft", draftID: "d1", server, directory: "/tmp" }
 
-    expect(pushClosedTab([], draft, 0)).toEqual([])
+    expect(pushClosedTab([], draft, 0)).toEqual([{ tab: draft, index: 0 }])
+  })
+
+  test("reopens the most recently closed draft", () => {
+    const draft: Tab = { type: "draft", draftID: "d1", server, directory: "/tmp" }
+    const result = takeClosedTab(pushClosedTab([], draft, 0), [])
+
+    expect(result.entry).toEqual({ tab: draft, index: 0 })
+    expect(result.stack).toEqual([])
+  })
+
+  test("drops a reopened draft from the closed stack", () => {
+    const draft: Tab = { type: "draft", draftID: "d1", server, directory: "/tmp" }
+    const result = takeClosedTab(pushClosedTab([], draft, 0), [draft])
+
+    expect(result.entry).toBeUndefined()
+    expect(result.stack).toEqual([])
   })
 
   test("caps the stack size", () => {
@@ -72,8 +95,8 @@ describe("closed tab stack", () => {
     )
 
     expect(stack).toHaveLength(25)
-    expect(stack[0]?.tab.sessionId).toBe("s5")
-    expect(stack.at(-1)?.tab.sessionId).toBe("s29")
+    expect(stack[0]?.tab).toEqual(sessionTab("s5"))
+    expect(stack.at(-1)?.tab).toEqual(sessionTab("s29"))
   })
 
   test("pops the most recently closed tab", () => {
@@ -83,7 +106,7 @@ describe("closed tab stack", () => {
     ]
     const result = takeClosedTab(stack, [])
 
-    expect(result.entry?.tab.sessionId).toBe("b")
+    expect(result.entry).toEqual({ tab: sessionTab("b"), index: 1 })
     expect(result.stack).toEqual([{ tab: sessionTab("a"), index: 0 }])
   })
 
@@ -94,7 +117,7 @@ describe("closed tab stack", () => {
     ]
     const result = takeClosedTab(stack, [sessionTab("b")])
 
-    expect(result.entry?.tab.sessionId).toBe("a")
+    expect(result.entry).toEqual({ tab: sessionTab("a"), index: 0 })
     expect(result.stack).toEqual([])
   })
 
@@ -113,6 +136,23 @@ describe("closed tab stack", () => {
     ]
 
     expect(removeClosedTabs(stack, server, ["a"])).toEqual([{ tab: sessionTab("b"), index: 1 }])
+  })
+
+  test("returns closed draft state to clean up with a removed server", () => {
+    const draft: Tab = { type: "draft", draftID: "d1", server, directory: "/tmp" }
+    const other = "remote\nhttp://localhost:4097" as ServerConnection.Key
+    const otherDraft: Tab = { type: "draft", draftID: "d2", server: other, directory: "/tmp" }
+    const result = removeClosedServerTabs(
+      [
+        { tab: draft, index: 0 },
+        { tab: sessionTab("a"), index: 1 },
+        { tab: otherDraft, index: 2 },
+      ],
+      server,
+    )
+
+    expect(result.draftIDs).toEqual(["d1"])
+    expect(result.stack).toEqual([{ tab: otherDraft, index: 2 }])
   })
 
   test("does not navigate when a background tab closes", () => {

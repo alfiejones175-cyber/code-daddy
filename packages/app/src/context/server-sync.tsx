@@ -536,7 +536,6 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
       setStore: existing[1],
       push: queue.push,
       retainedLimit: sessionMeta.get(key)?.limit,
-      sessionContent: false,
       permission: session.data.permission,
       loadLsp() {},
     })
@@ -631,7 +630,6 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
         if (children.active(directory)) queue.push(directory)
       },
       retainedLimit: sessionMeta.get(key)?.limit,
-      sessionContent: false,
       permission: session.data.permission,
       vcsCache: children.vcsCache.get(key),
       loadLsp: () => {

@@ -1,4 +1,4 @@
-import type { IntegrationMethod, IntegrationOauthConnectOutput } from "@opencode-ai/client/promise"
+import type { IntegrationOauthConnectOutput } from "@opencode-ai/client/promise"
 import { Button } from "@opencode-ai/ui/button"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { Dialog } from "@opencode-ai/ui/dialog"
@@ -40,9 +40,15 @@ import { popularProviders, useProviders } from "@/hooks/use-providers"
 import { CustomProviderForm } from "./dialog-custom-provider"
 import { decode64 } from "@/utils/base64"
 import { ProviderConnectionStatus } from "./provider-connection-status"
+import {
+  providerConnectMethods,
+  providerOAuthAutoCode,
+  shouldAutoSelectProviderConnectMethod,
+  type ProviderConnectMethod,
+} from "./provider-connect-state"
 
 const CUSTOM_ID = "_custom"
-type ConnectMethod = Extract<IntegrationMethod, { type: "key" | "oauth" }>
+type ConnectMethod = ProviderConnectMethod
 
 export function useProviderConnectController(options: { onBack?: () => void } = {}) {
   const [store, setStore] = createStore({ selected: undefined as string | undefined })
@@ -424,7 +430,7 @@ function ProviderConnection(props: {
       label: language.t("provider.connect.method.apiKey"),
     },
   ])
-  const [integration] = createResource(
+  const [integration, integrationActions] = createResource(
     () => ({ provider: props.provider, directory: directory() }),
     (input) =>
       serverSDK()
@@ -432,22 +438,25 @@ function ProviderConnection(props: {
           integrationID: input.provider,
           location: input.directory ? { directory: input.directory } : undefined,
         })
-        .then((result) => result.data),
+        .then((result) => ({ data: result.data, error: undefined }))
+        .catch((error) => ({ data: undefined, error })),
   )
   const provider = createMemo(
     () =>
       providers.all().get(props.provider) ??
       serverSync().data.provider.all.get(props.provider) ?? {
         id: props.provider,
-        name: integration.latest?.name ?? props.provider,
+        name: integration.latest?.data?.name ?? props.provider,
       },
   )
   const loading = createMemo(() => integration.loading)
+  const lookupFailed = createMemo(() => integration.latest?.error !== undefined)
   const methods = createMemo<ConnectMethod[]>(() => {
-    const values = integration.latest?.methods.filter(
-      (method): method is ConnectMethod => method.type === "key" || method.type === "oauth",
-    )
-    return values?.length ? values : fallback()
+    return providerConnectMethods({
+      legacy: protocol() === "v1",
+      methods: integration.latest?.data?.methods,
+      fallback: fallback(),
+    })
   })
   const [store, setStore] = createStore({
     methodIndex: undefined as undefined | number,
@@ -455,6 +464,7 @@ function ProviderConnection(props: {
     promptInputs: undefined as undefined | Record<string, string>,
     state: "pending" as undefined | "pending" | "complete" | "error" | "prompt",
     error: undefined as string | undefined,
+    retry: undefined as undefined | "connect" | "refresh",
   })
 
   onCleanup(() => {
@@ -472,7 +482,7 @@ function ProviderConnection(props: {
     | { type: "auth.inputs"; inputs: Record<string, string> }
     | { type: "auth.pending" }
     | { type: "auth.complete"; authorization: IntegrationOauthConnectOutput["data"] }
-    | { type: "auth.error"; error: string }
+    | { type: "auth.error"; error: string; retry?: "connect" | "refresh" }
 
   function cancelAuthorization() {
     const authorization = store.authorization
@@ -499,6 +509,7 @@ function ProviderConnection(props: {
           draft.promptInputs = undefined
           draft.state = undefined
           draft.error = undefined
+          draft.retry = undefined
           return
         }
         if (action.type === "method.reset") {
@@ -507,32 +518,38 @@ function ProviderConnection(props: {
           draft.promptInputs = undefined
           draft.state = undefined
           draft.error = undefined
+          draft.retry = undefined
           return
         }
         if (action.type === "auth.prompt") {
           draft.state = "prompt"
           draft.error = undefined
+          draft.retry = undefined
           return
         }
         if (action.type === "auth.inputs") {
           draft.promptInputs = action.inputs
           draft.state = undefined
           draft.error = undefined
+          draft.retry = undefined
           return
         }
         if (action.type === "auth.pending") {
           draft.state = "pending"
           draft.error = undefined
+          draft.retry = undefined
           return
         }
         if (action.type === "auth.complete") {
           draft.state = "complete"
           draft.authorization = action.authorization
           draft.error = undefined
+          draft.retry = undefined
           return
         }
         draft.state = "error"
         draft.error = action.error
+        draft.retry = action.retry ?? "connect"
       }),
     )
   }
@@ -767,7 +784,7 @@ function ProviderConnection(props: {
   createEffect(() => {
     if (auto) return
     if (loading()) return
-    if (methods().length === 1) {
+    if (shouldAutoSelectProviderConnectMethod(methods())) {
       auto = true
       void selectMethod(0)
     }
@@ -775,9 +792,20 @@ function ProviderConnection(props: {
 
   async function complete() {
     alive.completed = true
-    await serverSync()
+    dispatch({ type: "auth.pending" })
+    const result = await serverSync()
       .refreshProviders()
-      .catch(() => undefined)
+      .then(() => ({ ok: true as const }))
+      .catch((error) => ({ ok: false as const, error }))
+    if (!alive.value) return
+    if (!result.ok) {
+      dispatch({
+        type: "auth.error",
+        error: formatError(result.error, language.t("common.requestFailed")),
+        retry: "refresh",
+      })
+      return
+    }
     dialog.close()
     showToast({
       variant: "success",
@@ -1116,13 +1144,7 @@ function ProviderConnection(props: {
   }
 
   function OAuthAutoView() {
-    const code = createMemo(() => {
-      const instructions = store.authorization?.instructions
-      if (instructions?.includes(":")) {
-        return instructions.split(":").pop()?.trim()
-      }
-      return instructions
-    })
+    const code = createMemo(() => providerOAuthAutoCode(store.authorization?.instructions))
 
     onMount(() => {
       const poll = async () => {
@@ -1165,15 +1187,21 @@ function ProviderConnection(props: {
           <ExternalLink href={store.authorization!.url}>
             {language.t("provider.connect.oauth.auto.visit.link")}
           </ExternalLink>
-          {language.t("provider.connect.oauth.auto.visit.suffix", { provider: provider().name })}
+          <Show when={code()}>
+            {language.t("provider.connect.oauth.auto.visit.suffix", { provider: provider().name })}
+          </Show>
         </div>
-        <TextField
-          label={language.t("provider.connect.oauth.auto.confirmationCode")}
-          class="font-mono"
-          value={code()}
-          readOnly
-          copyable
-        />
+        <Show when={code()} fallback={<div class="text-14-regular text-text-base">{store.authorization?.instructions}</div>}>
+          {(value) => (
+            <TextField
+              label={language.t("provider.connect.oauth.auto.confirmationCode")}
+              class="font-mono"
+              value={value()}
+              readOnly
+              copyable
+            />
+          )}
+        </Show>
         <div class="text-14-regular text-text-base flex items-center gap-4">
           <Spinner />
           <span>{language.t("provider.connect.status.waiting")}</span>
@@ -1219,6 +1247,21 @@ function ProviderConnection(props: {
                 </div>
               </div>
             </Match>
+            <Match when={lookupFailed()}>
+              <div class="flex flex-col items-start gap-3 px-3 text-14-regular text-text-base">
+                <div class="flex items-center gap-x-2" role="alert">
+                  <Icon name="circle-ban-sign" class="text-icon-critical-base" />
+                  <span>
+                    {language.t("provider.connect.status.failed", {
+                      error: formatError(integration.latest?.error, language.t("common.requestFailed")),
+                    })}
+                  </span>
+                </div>
+                <Button variant="secondary" onClick={() => void integrationActions.refetch()}>
+                  {language.t("common.retry")}
+                </Button>
+              </div>
+            </Match>
             <Match when={store.methodIndex === undefined}>
               <MethodSelection />
             </Match>
@@ -1242,6 +1285,10 @@ function ProviderConnection(props: {
                 <Button
                   variant="secondary"
                   onClick={() => {
+                    if (store.retry === "refresh") {
+                      void complete()
+                      return
+                    }
                     const index = store.methodIndex
                     if (index !== undefined) void selectMethod(index)
                   }}

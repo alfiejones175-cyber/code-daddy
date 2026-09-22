@@ -1,0 +1,68 @@
+{
+  "status": "ok",
+  "advisory": true,
+  "ranking": [
+    {
+      "id": "models",
+      "url": "https://docs.typesafe.ai/models",
+      "score": 2.99,
+      "confidence": 0.99,
+      "probabilities": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 1
+      },
+      "support": "contradicts",
+      "supportConfidence": 1,
+      "supportProbabilities": {
+        "contradicts": 1,
+        "supports": 0,
+        "insufficient_evidence": 0
+      }
+    },
+    {
+      "id": "conflicting-claim",
+      "score": 1.86,
+      "confidence": 0.44,
+      "probabilities": {
+        "0": 0.01,
+        "1": 0.33,
+        "2": 0.45,
+        "3": 0.21
+      },
+      "support": "insufficient_evidence",
+      "supportConfidence": 0.5,
+      "supportProbabilities": {
+        "contradicts": 0.09,
+        "supports": 0.24,
+        "insufficient_evidence": 0.67
+      }
+    },
+    {
+      "id": "unrelated",
+      "score": 0.02,
+      "confidence": 0.98,
+      "probabilities": {
+        "0": 1,
+        "1": 0,
+        "2": 0,
+        "3": 0
+      },
+      "support": "insufficient_evidence",
+      "supportConfidence": 1,
+      "supportProbabilities": {
+        "contradicts": 0,
+        "supports": 0,
+        "insufficient_evidence": 1
+      }
+    }
+  ],
+  "model": "jev-1.13.0",
+  "questionVersion": "jev-pilot-2026-09-22",
+  "usage": {
+    "input_tokens": 1096,
+    "output_tokens": 215
+  },
+  "durationMs": 798
+}

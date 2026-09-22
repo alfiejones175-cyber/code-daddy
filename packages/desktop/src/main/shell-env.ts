@@ -99,3 +99,10 @@ export function mergeShellEnv(shell: Record<string, string> | null, env: Record<
     ...env,
   }
 }
+
+export function correctProviderEnv(env: Record<string, string | undefined>) {
+  const key = env.OPENAI_API_KEY
+  if (!key?.startsWith("sk-or-v1-")) return
+  env.OPENROUTER_API_KEY ??= key
+  delete env.OPENAI_API_KEY
+}

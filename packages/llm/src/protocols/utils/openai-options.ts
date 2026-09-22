@@ -85,6 +85,8 @@ export const serviceTier = (request: LLMRequest) => {
   return typeof value === "string" && SERVICE_TIERS.has(value) ? (value as OpenAIServiceTier) : undefined
 }
 
+export const strictToolSchemas = (request: LLMRequest) => options(request)?.strictToolSchemas === true
+
 export const instructions = (request: LLMRequest) => {
   const value = options(request)?.instructions
   return typeof value === "string" ? value : undefined

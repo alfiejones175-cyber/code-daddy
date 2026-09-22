@@ -406,6 +406,7 @@ describe("OpenAI Chat route", () => {
   for (const [name, media] of [
     ["mismatched data URL MIME", { mediaType: "image/png", data: "data:image/jpeg;base64,/9j/" }],
     ["malformed base64", { mediaType: "image/png", data: "not-base64" }],
+    ["HTTPS media URI", { mediaType: "image/png", data: "https://files.example.test/pixel.png" }],
     ["unsupported SVG", { mediaType: "image/svg+xml", data: "PHN2Zz4=" }],
   ] as const)
     it.effect(`rejects ${name}`, () =>
@@ -413,7 +414,7 @@ describe("OpenAI Chat route", () => {
         const error = yield* LLMClient.prepare(
           LLM.request({ model, messages: [Message.user({ type: "media", ...media })] }),
         ).pipe(Effect.flip)
-        expect(error.message).toMatch(/does not support|does not match|valid base64/)
+        expect(error.message).toMatch(/does not support|does not match|valid base64|media URI scheme https/)
       }),
     )
 

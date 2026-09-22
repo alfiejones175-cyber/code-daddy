@@ -137,6 +137,19 @@ describe("createServerProjects", () => {
     })
   })
 
+  test("opens a normalized directory once and reports whether it was newly opened", () => {
+    createRoot((dispose) => {
+      const [scope] = createSignal(ServerScope.local)
+      const [store, setStore] = createStore({ projects: {}, lastProject: {}, recentlyClosed: {} })
+      const projects = createServerProjects({ scope, store, setStore })
+
+      expect(projects.open("/repo")).toBe(true)
+      expect(projects.open("/repo/")).toBe(false)
+      expect(projects.list()).toEqual([{ worktree: "/repo", expanded: true }])
+      dispose()
+    })
+  })
+
   test("remove drops a project without recording it as recently closed", () => {
     createRoot((dispose) => {
       const [scope] = createSignal(ServerScope.local)
@@ -147,6 +160,80 @@ describe("createServerProjects", () => {
       projects.remove("/repo/subdir")
       expect(projects.list()).toEqual([])
       expect(projects.recentlyClosed()).toEqual([])
+      dispose()
+    })
+  })
+
+  test("removes a project through a normalized path alias", () => {
+    createRoot((dispose) => {
+      const [scope] = createSignal(ServerScope.local)
+      const [store, setStore] = createStore({ projects: {}, lastProject: {}, recentlyClosed: {} })
+      const projects = createServerProjects({ scope, store, setStore })
+
+      projects.open("/repo")
+      projects.remove("/repo/")
+      expect(projects.list()).toEqual([])
+      expect(projects.recentlyClosed()).toEqual([])
+      dispose()
+    })
+  })
+
+  test("removes a Windows project through a separator alias", () => {
+    createRoot((dispose) => {
+      const [scope] = createSignal(ServerScope.local)
+      const [store, setStore] = createStore({ projects: {}, lastProject: {}, recentlyClosed: {} })
+      const projects = createServerProjects({ scope, store, setStore })
+
+      projects.open("C:\\repo")
+      projects.remove("C:/repo/")
+      expect(projects.list()).toEqual([])
+      dispose()
+    })
+  })
+
+  test("closes a project through a normalized path alias", () => {
+    createRoot((dispose) => {
+      const [scope] = createSignal(ServerScope.local)
+      const [store, setStore] = createStore({ projects: {}, lastProject: {}, recentlyClosed: {} })
+      const projects = createServerProjects({ scope, store, setStore })
+
+      projects.open("/repo")
+      projects.close("/repo/")
+      expect(projects.list()).toEqual([])
+      expect(projects.recentlyClosed()).toEqual(["/repo/"])
+      dispose()
+    })
+  })
+
+  test("expands and collapses a project through a normalized path alias", () => {
+    createRoot((dispose) => {
+      const [scope] = createSignal(ServerScope.local)
+      const [store, setStore] = createStore({ projects: {}, lastProject: {}, recentlyClosed: {} })
+      const projects = createServerProjects({ scope, store, setStore })
+
+      projects.open("/repo")
+      projects.collapse("/repo/")
+      expect(projects.list()).toEqual([{ worktree: "/repo", expanded: false }])
+
+      projects.expand("/repo/")
+      expect(projects.list()).toEqual([{ worktree: "/repo", expanded: true }])
+      dispose()
+    })
+  })
+
+  test("moves a project through a normalized path alias", () => {
+    createRoot((dispose) => {
+      const [scope] = createSignal(ServerScope.local)
+      const [store, setStore] = createStore({ projects: {}, lastProject: {}, recentlyClosed: {} })
+      const projects = createServerProjects({ scope, store, setStore })
+
+      projects.open("/repo")
+      projects.open("/other")
+      projects.move("/repo/", 0)
+      expect(projects.list()).toEqual([
+        { worktree: "/repo", expanded: true },
+        { worktree: "/other", expanded: true },
+      ])
       dispose()
     })
   })

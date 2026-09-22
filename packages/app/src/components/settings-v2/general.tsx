@@ -10,6 +10,7 @@ import { usePlatform } from "@/context/platform"
 import { useUpdaterAction } from "../updater-action"
 import { useSettings } from "@/context/settings"
 import { ExternalLink } from "../external-link"
+import { getFilename } from "@opencode-ai/core/util/path"
 import { SettingsListV2 } from "./parts/list"
 import { SettingsRowV2 } from "./parts/row"
 import { LayoutRetirementNotice, LayoutTransitionToggle } from "./interface-transition"
@@ -299,6 +300,19 @@ export const SettingsGeneralV2: Component<{
     void update.catch(() => setPinchZoom(!checked))
   }
 
+  const chooseProjectsFolder = () => {
+    if (platform.platform !== "desktop") return
+    void platform
+      .openDirectoryPickerDialog({
+        title: language.t("settings.general.row.projectsFolder.dialogTitle"),
+        defaultPath: settings.general.defaultProjectsFolder() || undefined,
+      })
+      .then((result) => {
+        const directory = Array.isArray(result) ? result[0] : result
+        if (directory) settings.general.setDefaultProjectsFolder(directory)
+      })
+  }
+
   const InterfaceSection = () => (
     <LayoutTransitionToggle
       title={language.t("settings.general.row.newInterface.title")}
@@ -332,6 +346,39 @@ export const SettingsGeneralV2: Component<{
         <PermissionScopeSetting controller={permissionScope} />
 
         <ShellSetting controller={shell} />
+
+        <Show when={desktop()}>
+          <SettingsRowV2
+            title={language.t("settings.general.row.projectsFolder.title")}
+            description={language.t("settings.general.row.projectsFolder.description")}
+          >
+            <div class="flex min-w-0 items-center justify-end gap-1.5">
+              <ButtonV2
+                size="normal"
+                variant="neutral"
+                data-action="settings-projects-folder"
+                title={settings.general.defaultProjectsFolder() || undefined}
+                onClick={chooseProjectsFolder}
+              >
+                <span class="max-w-[180px] truncate">
+                  {settings.general.defaultProjectsFolder()
+                    ? getFilename(settings.general.defaultProjectsFolder())
+                    : language.t("settings.general.row.projectsFolder.choose")}
+                </span>
+              </ButtonV2>
+              <Show when={settings.general.defaultProjectsFolder()}>
+                <ButtonV2
+                  size="normal"
+                  variant="ghost-muted"
+                  data-action="settings-projects-folder-reset"
+                  onClick={() => settings.general.setDefaultProjectsFolder("")}
+                >
+                  {language.t("settings.general.row.projectsFolder.reset")}
+                </ButtonV2>
+              </Show>
+            </div>
+          </SettingsRowV2>
+        </Show>
 
         <SettingsRowV2
           title={language.t("settings.general.row.reasoningSummaries.title")}

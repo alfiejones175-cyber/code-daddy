@@ -4,7 +4,7 @@ import { usePlatform } from "@/context/platform"
 import { useSettings } from "@/context/settings"
 import { lazy } from "solid-js"
 import { DialogSelectDirectory } from "./dialog-select-directory"
-import { directoryPickerKind } from "./directory-picker-policy"
+import { directoryPickerKind, directoryPickerStart } from "./directory-picker-policy"
 
 const DialogSelectDirectoryV2 = lazy(() =>
   import("./dialog-select-directory-v2").then((module) => ({ default: module.DialogSelectDirectoryV2 })),
@@ -14,6 +14,7 @@ type DirectoryPickerInput = {
   server: ServerConnection.Any
   title?: string
   multiple?: boolean
+  start?: string
   onSelect: (result: string | string[] | null) => void
 }
 
@@ -23,8 +24,14 @@ export function useDirectoryPicker() {
   const dialog = useDialog()
 
   return (input: DirectoryPickerInput) => {
+    const start = directoryPickerStart(
+      input.start,
+      ServerConnection.local(input.server) ? settings.general.defaultProjectsFolder() : "",
+    )
     if (directoryPickerKind(platform.platform, input.server) === "native" && platform.platform === "desktop") {
-      void platform.openDirectoryPickerDialog({ title: input.title, multiple: input.multiple }).then(input.onSelect)
+      void platform
+        .openDirectoryPickerDialog({ title: input.title, multiple: input.multiple, defaultPath: start })
+        .then(input.onSelect)
       return
     }
 
@@ -37,9 +44,9 @@ export function useDirectoryPicker() {
       if (!selected) input.onSelect(null)
     }
     if (platform.platform === "desktop" && settings.general.newLayoutDesigns()) {
-      dialog.show(() => <DialogSelectDirectoryV2 {...input} onSelect={onSelect} />, cancel)
+      void dialog.show(() => <DialogSelectDirectoryV2 {...input} start={start} onSelect={onSelect} />, cancel)
       return
     }
-    dialog.show(() => <DialogSelectDirectory {...input} onSelect={onSelect} />, cancel)
+    void dialog.show(() => <DialogSelectDirectory {...input} start={start} onSelect={onSelect} />, cancel)
   }
 }

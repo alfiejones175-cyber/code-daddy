@@ -972,6 +972,13 @@ export const dict = {
   "settings.general.row.shell.description": "Shell used by the terminal and agent tools",
   "settings.general.row.shell.autoDefault": "Auto (Default)",
   "settings.general.row.shell.terminalOnly": "terminal only",
+  "settings.general.row.projectsFolder.title": "Default projects folder",
+  "settings.general.row.projectsFolder.description":
+    "Project pickers open here first. Existing projects are not moved.",
+  "settings.general.row.projectsFolder.choose": "Choose folder",
+  "settings.general.row.projectsFolder.change": "Change",
+  "settings.general.row.projectsFolder.reset": "Reset",
+  "settings.general.row.projectsFolder.dialogTitle": "Choose default projects folder",
   "settings.general.row.appearance.title": "Appearance",
   "settings.general.row.appearance.description": "Customise how OpenCode looks on your device",
   "settings.general.row.colorScheme.title": "Color scheme",
@@ -1177,6 +1184,13 @@ export const dict = {
   "settings.permissions.tool.external_directory.description": "Access files outside the project directory",
   "settings.permissions.tool.doom_loop.title": "Doom Loop",
   "settings.permissions.tool.doom_loop.description": "Detect repeated tool calls with identical input",
+  "permission.plugin.jev.triage.description":
+    "The supplied test-failure excerpt will be sent to TypeSafe Jev for an advisory classification.",
+  "permission.plugin.jev.rank.description":
+    "Your research question and supplied passages will be sent to TypeSafe Jev for advisory ranking.",
+  "permission.plugin.destinationData.description": "{{data}} will be sent to {{destination}}.",
+  "permission.plugin.destination.description": "This plugin may send requested data to {{destination}}.",
+  "permission.plugin.generic.description": "This plugin will receive the requested data.",
 
   "session.delete.failed.title": "Failed to delete session",
   "session.delete.title": "Delete session",

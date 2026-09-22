@@ -72,7 +72,7 @@ import { SessionTable } from "../sql"
  *   - [x] Durably record each tool call before side effects begin.
  *   - [x] Authorize and execute recorded local calls through a core-owned registry hook.
  *   - [x] Persist typed success, failure, and provider-executed tool outcomes.
- *   - [x] Start each recorded local call eagerly and await all settlements before continuation.
+ *   - [x] Admit a bounded number of local calls, execute them with bounded concurrency, and await settlement before continuation.
  *   - [ ] Add scoped runtime context, progress updates, attachment normalization,
  *     plugins, and cancellation settlement.
  *   - [x] Reload projected history and start the next explicit provider turn after local tool results.
@@ -89,7 +89,8 @@ import { SessionTable } from "../sql"
  *
  * The current slice loads V2 history, translates it, resolves a model through a core service, and persists one
  * provider turn. Registry definitions are advertised, local tool calls are settled durably, and an
- * explicit loop starts the next provider turn after local settlement. Configured agent step limits bound the loop.
+ * explicit loop starts the next provider turn after local settlement. Configured agent step limits and per-turn
+ * tool admission bound the loop.
  */
 
 const layer = Layer.effect(
@@ -185,6 +186,11 @@ const layer = Layer.effect(
       const agent = yield* agents.select(session.agent)
       const initialized = yield* SessionContextEpoch.initialize(db, loadSystemContext(agent), session.id)
       const toolFibers = yield* FiberSet.make<void, ToolOutputStore.Error>()
+      const sessionConfig = Config.latest(yield* config.entries(), "session")
+      const toolConcurrency = sessionConfig?.tool_concurrency ?? 4
+      const toolCallLimit = sessionConfig?.tool_call_limit ?? 16
+      const toolSemaphore = yield* Semaphore.make(toolConcurrency)
+      let admittedToolCalls = 0
       let needsContinuation = false
       let currentStep = step
       if (promotion) {
@@ -264,7 +270,6 @@ const layer = Layer.effect(
       const publish = (event: LLMEvent, outputPaths: ReadonlyArray<string> = []) =>
         withPublication(publisher.publish(event, outputPaths))
       let overflowFailure: ProviderErrorEvent | undefined
-      const sessionConfig = Config.latest(yield* config.entries(), "session")
       const providerTimeouts = {
         firstEventMs: sessionConfig?.first_event_timeout_ms ?? 300_000,
         inactivityMs: sessionConfig?.inactivity_timeout_ms ?? 300_000,
@@ -287,14 +292,30 @@ const layer = Layer.effect(
             }
             needsContinuation = true
             const assistantMessageID = yield* publisher.assistantMessageID(event.id)
-            yield* Effect.uninterruptibleMask((restore) =>
-              restore(
-                toolMaterialization.settle({
-                  sessionID: session.id,
-                  agent: agent.id,
-                  assistantMessageID,
-                  call: event,
+            if (admittedToolCalls >= toolCallLimit) {
+              yield* publish(
+                LLMEvent.toolResult({
+                  id: event.id,
+                  name: event.name,
+                  result: {
+                    type: "error",
+                    value: `Tool call limit reached for this provider turn (${toolCallLimit})`,
+                  },
                 }),
+              )
+              return
+            }
+            admittedToolCalls++
+            yield* Effect.uninterruptibleMask((restore) =>
+              toolSemaphore.withPermit(
+                restore(
+                  toolMaterialization.settle({
+                    sessionID: session.id,
+                    agent: agent.id,
+                    assistantMessageID,
+                    call: event,
+                  }),
+                ),
               ).pipe(
                 Effect.flatMap((settlement) =>
                   publish(

@@ -75,6 +75,8 @@ let activeToolExecutions = 0
 let maxActiveToolExecutions = 0
 let firstEventTimeoutMs = 300_000
 let inactivityTimeoutMs = 300_000
+let toolConcurrency = 4
+let toolCallLimit = 16
 const client = Layer.succeed(
   LLMClient.Service,
   LLMClient.Service.of({
@@ -227,6 +229,8 @@ const config = Layer.succeed(
             session: new ConfigSession.Info({
               first_event_timeout_ms: firstEventTimeoutMs,
               inactivity_timeout_ms: inactivityTimeoutMs,
+              tool_concurrency: toolConcurrency,
+              tool_call_limit: toolCallLimit,
             }),
           }),
         }),
@@ -339,6 +343,8 @@ const setup = Effect.gen(function* () {
   maxActiveToolExecutions = 0
   firstEventTimeoutMs = 300_000
   inactivityTimeoutMs = 300_000
+  toolConcurrency = 4
+  toolCallLimit = 16
   yield* db
     .insert(ProjectTable)
     .values({ id: Project.ID.global, worktree: AbsolutePath.make("/project"), sandboxes: [] })
@@ -1714,7 +1720,7 @@ describe("SessionRunnerLLM", () => {
     }),
   )
 
-  it.effect("starts recorded local tools eagerly and awaits settlement before continuing", () =>
+  it.effect("bounds recorded local tool execution and awaits settlement before continuing", () =>
     Effect.gen(function* () {
       yield* setup
       const session = yield* SessionV2.Service
@@ -1724,6 +1730,7 @@ describe("SessionRunnerLLM", () => {
       executions.length = 0
       toolExecutionGate = yield* Deferred.make<void>()
       toolExecutionsStarted = yield* Deferred.make<void>()
+      toolExecutionsReady = 4
       const providerGate = yield* Deferred.make<void>()
       response = []
       responses = undefined
@@ -1746,13 +1753,13 @@ describe("SessionRunnerLLM", () => {
       const run = yield* session.resume(sessionID).pipe(Effect.forkChild)
       yield* Deferred.await(toolExecutionsStarted)
 
-      expect(executions).toHaveLength(5)
-      expect(maxActiveToolExecutions).toBe(5)
+      expect(executions).toHaveLength(4)
+      expect(maxActiveToolExecutions).toBe(4)
       expect(yield* session.context(sessionID)).toMatchObject([
         { type: "user", text: "Echo five times" },
         {
           type: "assistant",
-          content: Array.from({ length: 5 }, (_, index) => ({
+          content: Array.from({ length: 4 }, (_, index) => ({
             type: "tool",
             id: `call-echo-${index}`,
             state: { status: "running", input: { text: `${index}` } },
@@ -1770,8 +1777,51 @@ describe("SessionRunnerLLM", () => {
       toolExecutionsStarted = undefined
 
       expect(executions).toHaveLength(5)
-      expect(maxActiveToolExecutions).toBe(5)
+      expect(maxActiveToolExecutions).toBe(4)
       expect(requests).toHaveLength(2)
+    }),
+  )
+
+  it.effect("durably rejects tool calls over the provider-turn admission limit", () =>
+    Effect.gen(function* () {
+      yield* setup
+      toolCallLimit = 2
+      const session = yield* SessionV2.Service
+      yield* session.prompt({ sessionID, prompt: Prompt.make({ text: "Echo three times" }), resume: false })
+
+      requests.length = 0
+      executions.length = 0
+      responses = [
+        [
+          LLMEvent.stepStart({ index: 0 }),
+          ...Array.from({ length: 3 }, (_, index) =>
+            LLMEvent.toolCall({ id: `call-limited-${index}`, name: "echo", input: { text: `${index}` } }),
+          ),
+          LLMEvent.stepFinish({ index: 0, reason: "tool-calls" }),
+          LLMEvent.finish({ reason: "tool-calls" }),
+        ],
+        [LLMEvent.stepStart({ index: 1 }), LLMEvent.stepFinish({ index: 1, reason: "stop" }), LLMEvent.finish({ reason: "stop" })],
+      ]
+
+      yield* session.resume(sessionID)
+
+      expect(executions).toEqual(["0", "1"])
+      expect(requests).toHaveLength(2)
+      const assistant = (yield* session.context(sessionID)).find(
+        (message) => message.type === "assistant" && message.finish === "tool-calls",
+      )
+      expect(assistant).toMatchObject({
+        type: "assistant",
+        content: [
+          { type: "tool", id: "call-limited-0", state: { status: "completed" } },
+          { type: "tool", id: "call-limited-1", state: { status: "completed" } },
+          {
+            type: "tool",
+            id: "call-limited-2",
+            state: { status: "error", error: { message: "Tool call limit reached for this provider turn (2)" } },
+          },
+        ],
+      })
     }),
   )
 
@@ -3091,6 +3141,69 @@ describe("SessionRunnerLLM", () => {
               state: { status: "error", error: { type: "unknown", message: "Tool execution interrupted" } },
             },
           ],
+        },
+      ])
+    }),
+  )
+
+  it.effect("interrupts semaphore-queued tools without starting their side effects", () =>
+    Effect.gen(function* () {
+      yield* setup
+      toolConcurrency = 1
+      toolExecutionGate = yield* Deferred.make<void>()
+      toolExecutionsStarted = yield* Deferred.make<void>()
+      toolExecutionsReady = 1
+      const session = yield* SessionV2.Service
+      yield* session.prompt({ sessionID, prompt: Prompt.make({ text: "Interrupt queued tools" }), resume: false })
+      executions.length = 0
+      responseStream = Stream.concat(
+        Stream.fromIterable([
+          LLMEvent.stepStart({ index: 0 }),
+          ...Array.from({ length: 3 }, (_, index) =>
+            LLMEvent.toolCall({ id: `call-queued-${index}`, name: "echo", input: { text: `${index}` } }),
+          ),
+        ]),
+        Stream.never,
+      )
+
+      const run = yield* session.resume(sessionID).pipe(Effect.forkChild)
+      yield* Deferred.await(toolExecutionsStarted)
+      while (
+        !(yield* session.context(sessionID)).some(
+          (message) => message.type === "assistant" && message.content.filter((part) => part.type === "tool").length === 3,
+        )
+      )
+        yield* Effect.yieldNow
+      yield* session.interrupt(sessionID)
+      toolExecutionGate = undefined
+      toolExecutionsStarted = undefined
+
+      expect(yield* Fiber.await(run)).toMatchObject({ _tag: "Failure" })
+      expect(executions).toEqual(["0"])
+      expect(maxActiveToolExecutions).toBe(1)
+      expect(activeToolExecutions).toBe(0)
+      expect(yield* session.context(sessionID)).toMatchObject([
+        { type: "user", text: "Interrupt queued tools" },
+        {
+          type: "assistant",
+          content: Array.from({ length: 3 }, (_, index) => ({
+            type: "tool",
+            id: `call-queued-${index}`,
+            state: { status: "error", error: { type: "unknown", message: "Tool execution interrupted" } },
+          })),
+        },
+      ])
+
+      yield* replaySessionProjection(sessionID)
+      expect(yield* session.context(sessionID)).toMatchObject([
+        { type: "user", text: "Interrupt queued tools" },
+        {
+          type: "assistant",
+          content: Array.from({ length: 3 }, (_, index) => ({
+            type: "tool",
+            id: `call-queued-${index}`,
+            state: { status: "error" },
+          })),
         },
       ])
     }),

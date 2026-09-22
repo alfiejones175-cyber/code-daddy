@@ -1,0 +1,178 @@
+{
+  "reviewDate": "2026-09-22",
+  "startingCommit": "fe1e39f7c03567a0931849d524e1bc5fb5b45f03",
+  "branch": "dev",
+  "scope": "Broad workspace inventory with focused source and test review; not an exhaustive audit of all packages.",
+  "concurrentEdits": true,
+  "runtime": {
+    "platform": "macOS",
+    "bunObserved": "1.4.2",
+    "bunPinned": "1.3.14"
+  },
+  "rawLogs": "/tmp/code-daddy-review-zQLBIT",
+  "sourceChangesByReviewer": [],
+  "tests": [
+    {
+      "package": "app",
+      "command": "bun run test:unit",
+      "pass": 767,
+      "fail": 1,
+      "note": "Latest rerun; localization parity fails. Earlier run passed 764 with the same failing test."
+    },
+    {
+      "package": "app",
+      "command": "bun run test:browser",
+      "pass": 42,
+      "fail": 0,
+      "note": "Happy DOM browser conditions, not Chromium."
+    },
+    {
+      "package": "app",
+      "command": "PLAYWRIGHT_PORT=4477 bunx playwright test e2e/regression/project-sidebar.spec.ts e2e/regression/capabilities.spec.ts --grep 'new chat follows|home remains|open project is|switching projects|active conversation stays|sandbox conversation|usage distinguishes|native task state|child follow-up|Providers shows|keyboard collapse|provider loading failure|permission request explains' --workers=1 --reporter=line --output=/tmp/code-daddy-review-zQLBIT/e2e-results",
+      "pass": 13,
+      "fail": 0,
+      "seconds": 21.4,
+      "note": "Synthetic fixtures, isolated Vite server, desktop viewport 1280x800; completed before later concurrent edits."
+    },
+    {
+      "package": "desktop",
+      "command": "bun test src --only-failures",
+      "pass": 71,
+      "fail": 0
+    },
+    {
+      "package": "core",
+      "command": "bun test test/session-prompt.test.ts test/session-run-coordinator.test.ts test/session-provider-timeout.test.ts test/session-provider-transport.test.ts test/tool-task.test.ts test/task-location.test.ts test/plugin/jev.test.ts test/permission.test.ts --only-failures",
+      "pass": 80,
+      "fail": 0
+    },
+    {
+      "package": "schema",
+      "command": "bun test --only-failures",
+      "pass": 13,
+      "fail": 2,
+      "note": "Event manifest counts and positional definition identity."
+    },
+    {
+      "package": "protocol",
+      "command": "bun test --only-failures",
+      "pass": 4,
+      "fail": 0
+    },
+    {
+      "package": "server",
+      "command": "bun test --only-failures",
+      "pass": 2,
+      "fail": 0
+    },
+    {
+      "package": "client",
+      "command": "bun test --only-failures",
+      "pass": 15,
+      "fail": 1,
+      "note": "Expected public API group list omits server.project and server.mcp."
+    },
+    {
+      "package": "jev",
+      "command": "bun test",
+      "pass": 22,
+      "fail": 0,
+      "note": "Local fixtures, no live TypeSafe calls."
+    },
+    {
+      "package": "session-ui",
+      "command": "bun run test",
+      "pass": 84,
+      "fail": 0
+    },
+    {
+      "package": "ui",
+      "command": "bun run test",
+      "pass": 28,
+      "fail": 0
+    },
+    {
+      "package": "tui",
+      "command": "bun run test",
+      "pass": 194,
+      "skip": 1,
+      "fail": 0
+    }
+  ],
+  "typechecks": {
+    "command": "bun typecheck",
+    "cwd": "Each package directory",
+    "passed": [
+      "app",
+      "desktop",
+      "core",
+      "schema",
+      "protocol",
+      "server",
+      "client",
+      "jev",
+      "session-ui",
+      "ui",
+      "tui"
+    ]
+  },
+  "build": {
+    "package": "app",
+    "command": "bun run build",
+    "passed": true,
+    "seconds": 14.61,
+    "mainChunkKB": 2800.74,
+    "mainChunkGzipKB": 833.4,
+    "note": "Large-chunk warnings. Earlier source snapshot; not a native installer build."
+  },
+  "turboDryRun": {
+    "command": "bunx turbo run test --dry=json",
+    "runnableTestTasks": [
+      "@opencode-ai/app#test",
+      "@opencode-ai/core#test",
+      "@opencode-ai/function#test",
+      "@opencode-ai/session-ui#test",
+      "@opencode-ai/ui#test",
+      "opencode#test"
+    ],
+    "testBearingTopLevelPackagesAbsent": [
+      "cli",
+      "client",
+      "codemode",
+      "desktop",
+      "effect-drizzle-sqlite",
+      "enterprise",
+      "http-recorder",
+      "httpapi-codegen",
+      "jev",
+      "llm",
+      "protocol",
+      "schema",
+      "sdk-next",
+      "server",
+      "tui"
+    ]
+  },
+  "savedScreenshotsInspected": [
+    "plans/validation/spectrum-sidebar-desktop-dark.png",
+    "plans/validation/spectrum-sidebar-compact.png",
+    "plans/validation/spectrum-team-activity-desktop.png"
+  ],
+  "earlierEnvironmentObservation": {
+    "rootFile": "jev.env",
+    "initiallyUntrackedAndUnignored": true,
+    "initiallyContainedNonemptyNonplaceholderApiKeySetting": true,
+    "secretValueDisclosed": false,
+    "existsAtFinalCheck": false,
+    "removedByReviewer": false
+  },
+  "unverified": [
+    "Full legacy/core/provider suites",
+    "Live provider authentication, entitlement and billing",
+    "Signed native installer, upgrade and rollback",
+    "Native window and dictation acceptance",
+    "All themes and accessibility states",
+    "Latest concurrent source changes under all earlier checks",
+    "Production performance on representative hardware"
+  ]
+}

@@ -4,6 +4,13 @@
 - The default branch in this repo is `dev`.
 - Local `main` ref may not exist; use `dev` or `origin/dev` for diffs.
 
+## Local Product Scope
+
+- This customized OpenCode app is for the owner and a few friends, not a public product launch.
+- English is the only required UI language. Do not expand or repair non-English translations unless explicitly requested. Keep the existing English dictionary and typed copy APIs; removing inherited locale infrastructure is not required.
+- Prioritize working provider access, Jev review, reliable sessions, and preserving local data. Public distribution and multilingual acceptance are outside the current scope.
+- Read `documentation/localization.md` for language/test scope and `plans/README.md` for current priorities.
+
 ## Branch Names
 
 Use a short branch name of at most three words, separated by hyphens. Do not use slashes or type prefixes such as `feat/` or `fix/`.

@@ -95,6 +95,21 @@ describe("keybind settings controller", () => {
     expect(state.changes).toEqual([["session.beta", "mod+x"]])
   })
 
+  test("lets Tab leave key capture without preventing focus navigation", () => {
+    const state = setup()
+    const event = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true })
+
+    state.controller.capture.toggle("session.alpha")
+    document.dispatchEvent(event)
+
+    expect(event.defaultPrevented).toBe(false)
+    expect(state.controller.capture.active()).toBeNull()
+    expect(state.suppression).toEqual([false, true])
+    expect(state.changes).toEqual([])
+
+    state.dispose()
+  })
+
   test("resets persisted overrides and reports success", () => {
     const state = setup({ "session.alpha": "none" })
 

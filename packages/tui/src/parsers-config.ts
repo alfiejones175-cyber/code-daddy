@@ -148,23 +148,14 @@ export default {
         highlights: [
           // NOTE: This nvim-treesitter query is currently broken, because the parser is not compatible with the query apparently.
           // "https://raw.githubusercontent.com/nvim-treesitter/nvim-treesitter/refs/heads/master/queries/html/highlights.scm",
-          "https://github.com/tree-sitter/tree-sitter-html/raw/refs/heads/master/queries/highlights.scm",
+          "https://raw.githubusercontent.com/tree-sitter/tree-sitter-html/v0.23.2/queries/highlights.scm",
         ],
-        // TODO: Injections not working for some reason
-        // injections: [
-        //   "https://github.com/tree-sitter/tree-sitter-html/raw/refs/heads/master/queries/injections.scm",
-        // ],
+        injections: [
+          "https://raw.githubusercontent.com/tree-sitter/tree-sitter-html/v0.23.2/queries/injections.scm",
+        ],
       },
-      // injectionMapping: {
-      //   nodeTypes: {
-      //     script_element: "javascript",
-      //     style_element: "css",
-      //   },
-      //   infoStringMap: {
-      //     javascript: "javascript",
-      //     css: "css",
-      //   },
-      // },
+      // OpenTUI's dependency patch honors injection.language on raw_text captures,
+      // so script and style bodies can select different parsers for the same node type.
     },
     {
       filetype: "vue",
@@ -217,7 +208,7 @@ export default {
       wasm: "https://github.com/tree-sitter/tree-sitter-css/releases/download/v0.25.0/tree-sitter-css.wasm",
       queries: {
         highlights: [
-          "https://raw.githubusercontent.com/nvim-treesitter/nvim-treesitter/refs/heads/master/queries/css/highlights.scm",
+          "https://raw.githubusercontent.com/tree-sitter/tree-sitter-css/v0.25.0/queries/highlights.scm",
         ],
       },
     },

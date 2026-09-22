@@ -303,21 +303,90 @@ export function BasicTool(props: BasicToolProps) {
 
 function label(input: Record<string, unknown> | undefined) {
   const keys = ["description", "query", "url", "filePath", "path", "pattern", "name"]
-  return keys.map((key) => input?.[key]).find((value): value is string => typeof value === "string" && value.length > 0)
+  return keys
+    .map((key) => input?.[key])
+    .find((value): value is string => typeof value === "string" && value.length > 0)
+    ?.slice(0, GENERIC_TOOL_PREVIEW_LIMIT)
 }
 
-function args(input: Record<string, unknown> | undefined) {
+export const GENERIC_TOOL_PREVIEW_LIMIT = 240
+export const GENERIC_TOOL_DISCLOSURE_LIMIT = 48_000
+
+export function genericToolArgs(
+  input: Record<string, unknown> | undefined,
+  payloadLabel: (input: { key: string; count: number }) => string,
+) {
   if (!input) return []
   const skip = new Set(["description", "query", "url", "filePath", "path", "pattern", "name"])
+  const payloads = new Set(["body", "content", "evidence", "text"])
   return Object.entries(input)
     .filter(([key]) => !skip.has(key))
     .flatMap(([key, value]) => {
-      if (typeof value === "string") return [`${key}=${value}`]
-      if (typeof value === "number") return [`${key}=${value}`]
-      if (typeof value === "boolean") return [`${key}=${value}`]
+      if (typeof value === "string") {
+        if (payloads.has(key)) return [payloadLabel({ key, count: value.length }).slice(0, GENERIC_TOOL_PREVIEW_LIMIT)]
+        const prefix = `${key}=`
+        return [
+          `${prefix.slice(0, GENERIC_TOOL_PREVIEW_LIMIT)}${value.slice(
+            0,
+            Math.max(0, GENERIC_TOOL_PREVIEW_LIMIT - prefix.length),
+          )}`,
+        ]
+      }
+      if (typeof value === "number") return [`${key}=${value}`.slice(0, GENERIC_TOOL_PREVIEW_LIMIT)]
+      if (typeof value === "boolean") return [`${key}=${value}`.slice(0, GENERIC_TOOL_PREVIEW_LIMIT)]
       return []
     })
     .slice(0, 3)
+}
+
+export function genericToolDetail(value: unknown, unavailable = "") {
+  try {
+    const text = stringifyToolValue(value)
+    return {
+      text: text.slice(0, GENERIC_TOOL_DISCLOSURE_LIMIT),
+      truncated: text.length > GENERIC_TOOL_DISCLOSURE_LIMIT,
+    }
+  } catch {
+    return {
+      text: unavailable,
+      truncated: false,
+    }
+  }
+}
+
+function stringifyToolValue(value: unknown) {
+  if (typeof value !== "string") return JSON.stringify(value, undefined, 2) ?? ""
+  try {
+    return JSON.stringify(JSON.parse(value), undefined, 2)
+  } catch {
+    return value
+  }
+}
+
+function jevResult(tool: string, output: unknown) {
+  if (!isJevTool(tool) || typeof output !== "string") return
+  try {
+    const parsed: unknown = JSON.parse(output)
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return
+    const result = parsed as Record<string, unknown>
+    const status = result.status
+    if (status !== "ok" && status !== "unavailable" && status !== "invalid_input") return
+    return {
+      status,
+      message: typeof result.message === "string" ? result.message : undefined,
+    }
+  } catch {
+    return
+  }
+}
+
+function isJevTool(tool: string) {
+  return (
+    tool === "jev_triage_failure" ||
+    tool === "jev_rank_evidence" ||
+    /^plugin_jev_triage_failure_[a-z0-9]{1,7}$/.test(tool) ||
+    /^plugin_jev_rank_evidence_[a-z0-9]{1,7}$/.test(tool)
+  )
 }
 
 export function GenericTool(props: {
@@ -325,19 +394,77 @@ export function GenericTool(props: {
   status?: string
   hideDetails?: boolean
   input?: Record<string, unknown>
+  output?: unknown
+  defaultOpen?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  deferContent?: boolean
 }) {
   const i18n = useI18n()
+  const result = () => jevResult(props.tool, props.output)
+  const output = () => genericToolDetail(props.output, i18n.t("ui.genericTool.unavailable"))
+  const input = () => genericToolDetail(props.input, i18n.t("ui.genericTool.unavailable"))
+  const subtitle = () => {
+    const state = result()
+    if (!state) return label(props.input)
+    if (state.status === "ok") return i18n.t("ui.genericTool.jev.completed")
+    if (state.status === "unavailable") return i18n.t("ui.genericTool.jev.unavailable")
+    return i18n.t("ui.genericTool.jev.invalidInput")
+  }
+  const args = () => {
+    const state = result()
+    const payloadLabel = (input: { key: string; count: number }) =>
+      i18n.t("ui.genericTool.characterCount", { name: input.key, count: input.count })
+    if (!state?.message) return genericToolArgs(props.input, payloadLabel)
+    return [state.message.slice(0, GENERIC_TOOL_PREVIEW_LIMIT), ...genericToolArgs(props.input, payloadLabel)].slice(0, 3)
+  }
 
   return (
     <BasicTool
       icon="mcp"
       status={props.status}
+      defaultOpen={props.defaultOpen}
+      open={props.open}
+      onOpenChange={props.onOpenChange}
+      defer={props.deferContent}
       trigger={{
-        title: i18n.t("ui.basicTool.called", { tool: props.tool }),
-        subtitle: label(props.input),
-        args: args(props.input),
+        title: isJevTool(props.tool)
+          ? i18n.t("ui.genericTool.jev.title")
+          : i18n.t("ui.basicTool.called", { tool: props.tool }),
+        subtitle: subtitle(),
+        args: args(),
       }}
       hideDetails={props.hideDetails}
-    />
+    >
+      <div data-component="generic-tool-output">
+        <Show when={result()}>
+          {(state) => (
+            <p data-slot="generic-tool-result">
+              <Show when={state().status === "ok"}>{i18n.t("ui.genericTool.jev.completed")}</Show>
+              <Show when={state().status === "unavailable"}>{i18n.t("ui.genericTool.jev.unavailable")}</Show>
+              <Show when={state().status === "invalid_input"}>{i18n.t("ui.genericTool.jev.invalidInput")}</Show>
+            </p>
+          )}
+        </Show>
+        <Show when={props.output !== undefined}>
+          <section data-slot="generic-tool-detail">
+            <span>{i18n.t("ui.genericTool.output")}</span>
+            <pre>{output().text}</pre>
+            <Show when={output().truncated}>
+              <p>{i18n.t("ui.genericTool.truncated", { limit: GENERIC_TOOL_DISCLOSURE_LIMIT })}</p>
+            </Show>
+          </section>
+        </Show>
+        <Show when={props.input && Object.keys(props.input).length > 0}>
+          <section data-slot="generic-tool-detail">
+            <span>{i18n.t("ui.genericTool.input")}</span>
+            <pre>{input().text}</pre>
+            <Show when={input().truncated}>
+              <p>{i18n.t("ui.genericTool.truncated", { limit: GENERIC_TOOL_DISCLOSURE_LIMIT })}</p>
+            </Show>
+          </section>
+        </Show>
+      </div>
+    </BasicTool>
   )
 }

@@ -168,6 +168,15 @@ export const dict: Record<string, string> = {
   "ui.tool.skill": "Skill",
 
   "ui.basicTool.called": "Called `{{tool}}`",
+  "ui.genericTool.input": "Input",
+  "ui.genericTool.output": "Output",
+  "ui.genericTool.characterCount": "{{name}} · {{count}} characters",
+  "ui.genericTool.truncated": "Showing the first {{limit}} characters.",
+  "ui.genericTool.unavailable": "Details are unavailable.",
+  "ui.genericTool.jev.title": "Jev",
+  "ui.genericTool.jev.completed": "Jev advisory result",
+  "ui.genericTool.jev.unavailable": "Jev unavailable",
+  "ui.genericTool.jev.invalidInput": "Input needs attention",
   "ui.toolErrorCard.failed": "Failed",
   "ui.toolErrorCard.copyError": "Copy error",
 

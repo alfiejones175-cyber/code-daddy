@@ -26,6 +26,7 @@ import { FSUtil } from "@opencode-ai/core/fs-util"
 import { isRecord } from "@/util/record"
 import { optional } from "@opencode-ai/core/schema"
 import { ProviderTransform } from "./transform"
+import { SourcePolicy } from "./source-policy"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { ModelStatus } from "./model-status"
@@ -1587,7 +1588,7 @@ const layer = Layer.effect(
           const apiKey = provider.env.map((item) => envs[item]).find(Boolean)
           if (!apiKey) continue
           mergeProvider(providerID, {
-            source: "env",
+            ...SourcePolicy.patch({ source: "env", existing: !!providers[providerID] }),
             key: provider.env.length === 1 ? apiKey : undefined,
           })
         }
@@ -1599,7 +1600,7 @@ const layer = Layer.effect(
           if (disabled.has(providerID)) continue
           if (provider.type === "api") {
             mergeProvider(providerID, {
-              source: "api",
+              ...SourcePolicy.patch({ source: "api", existing: !!providers[providerID] }),
               key: provider.key,
             })
           }
@@ -1622,7 +1623,10 @@ const layer = Layer.effect(
             ),
           )
           const opts = options ?? {}
-          const patch: Partial<Info> = providers[providerID] ? { options: opts } : { source: "custom", options: opts }
+          const patch: Partial<Info> = {
+            ...SourcePolicy.patch({ source: "custom", existing: !!providers[providerID] }),
+            options: opts,
+          }
           mergeProvider(providerID, patch)
         }
 
@@ -1639,7 +1643,10 @@ const layer = Layer.effect(
             if (result.vars) varsLoaders[providerID] = result.vars
             if (result.discoverModels) discoveryLoaders[providerID] = result.discoverModels
             const opts = result.options ?? {}
-            const patch: Partial<Info> = providers[providerID] ? { options: opts } : { source: "custom", options: opts }
+            const patch: Partial<Info> = {
+              ...SourcePolicy.patch({ source: "custom", existing: !!providers[providerID] }),
+              options: opts,
+            }
             mergeProvider(providerID, patch)
           }
         }
@@ -1647,7 +1654,7 @@ const layer = Layer.effect(
         // load config - re-apply with updated data
         for (const [id, provider] of configProviders) {
           const providerID = ProviderV2.ID.make(id)
-          const partial: Partial<Info> = { source: "config" }
+          const partial: Partial<Info> = SourcePolicy.patch({ source: "config", existing: !!providers[providerID] })
           if (provider.env) partial.env = provider.env
           if (provider.name) partial.name = provider.name
           if (provider.options) partial.options = provider.options

@@ -120,6 +120,7 @@ export function createFileTreeStore(options: TreeStoreOptions) {
         options.onError(e.message)
       })
       .finally(() => {
+        if (inflight.get(dir) !== promise) return
         inflight.delete(dir)
       })
 

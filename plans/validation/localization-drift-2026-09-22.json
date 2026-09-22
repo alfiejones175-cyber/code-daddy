@@ -1,0 +1,1885 @@
+{
+  "date": "2026-09-22",
+  "command": "bun run script/translate-app.ts all --dry-run",
+  "helper": "script/translate-app.ts:findDrift",
+  "localeCount": 61,
+  "sharedMissingAppKeys": [
+    "workspaceTools.title",
+    "workspaceTools.description",
+    "workspaceTools.browser",
+    "workspaceTools.xcode",
+    "workspaceTools.browserDescription",
+    "workspaceTools.xcodeDescription",
+    "workspaceTools.url",
+    "workspaceTools.urlPlaceholder",
+    "workspaceTools.prepareNavigate",
+    "workspaceTools.prepareScreenshot",
+    "workspaceTools.prepareConsole",
+    "workspaceTools.prepareInspect",
+    "workspaceTools.prepareBuild",
+    "workspaceTools.prepareTest",
+    "workspaceTools.setup",
+    "workspaceTools.unavailable",
+    "workspaceTools.invalidUrl",
+    "workspaceTools.evidence",
+    "workspaceTools.noEvidence",
+    "workspaceTools.editPrompt",
+    "workspaceTools.prompt.navigate",
+    "workspaceTools.prompt.screenshot",
+    "workspaceTools.prompt.console",
+    "workspaceTools.prompt.inspect",
+    "workspaceTools.prompt.build",
+    "workspaceTools.prompt.test",
+    "recovery.title",
+    "recovery.description",
+    "recovery.resume",
+    "recovery.resuming",
+    "recovery.failed",
+    "team.title",
+    "team.updated",
+    "team.description",
+    "team.empty",
+    "team.more",
+    "team.newTask",
+    "team.task",
+    "team.agent",
+    "team.model",
+    "team.inheritModel",
+    "team.turnBudget",
+    "team.budgetHint",
+    "team.prepare",
+    "team.delegatePrompt",
+    "team.status.running",
+    "team.status.waiting",
+    "team.status.failed",
+    "team.status.complete",
+    "team.status.idle",
+    "capabilities.title",
+    "capabilities.description",
+    "capabilities.chooseProject",
+    "capabilities.legacy",
+    "capabilities.loadFailed",
+    "capabilities.browser",
+    "capabilities.xcode",
+    "capabilities.browserDescription",
+    "capabilities.xcodeDescription",
+    "capabilities.xcodeDetected",
+    "capabilities.setup",
+    "capabilities.test",
+    "capabilities.reconnect",
+    "capabilities.tools",
+    "capabilities.state.configured",
+    "capabilities.state.connected",
+    "capabilities.state.available",
+    "capabilities.state.failed",
+    "capabilities.state.disabled",
+    "common.retry",
+    "providers.loadFailed",
+    "providers.signInExpired",
+    "permission.allowProject",
+    "permission.projectScope",
+    "review.prepareFeedback",
+    "review.feedbackPrompt",
+    "review.feedbackReady",
+    "settings.general.row.projectsFolder.title",
+    "settings.general.row.projectsFolder.description",
+    "settings.general.row.projectsFolder.choose",
+    "settings.general.row.projectsFolder.change",
+    "settings.general.row.projectsFolder.reset",
+    "settings.general.row.projectsFolder.dialogTitle",
+    "xcode.badge.ios",
+    "xcode.badge.package",
+    "xcode.status.missing",
+    "transcribe.start",
+    "transcribe.stop",
+    "transcribe.listening",
+    "transcribe.unsupported",
+    "transcribe.error",
+    "transcribe.starting",
+    "transcribe.stopping",
+    "transcribe.permission",
+    "transcribe.unavailable",
+    "transcribe.network",
+    "transcribe.no-speech",
+    "transcribe.busy",
+    "transcribe.failed",
+    "transcribe.permission.microphone",
+    "transcribe.permission.speech",
+    "sidebar.newChat",
+    "sidebar.showMore",
+    "sidebar.showLess",
+    "sidebar.toggle",
+    "sidebar.noProject"
+  ],
+  "locales": [
+    {
+      "locale": "zh",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "zht",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "ko",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "de",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "es",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "fr",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "da",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "ja",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "pl",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "ru",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "uk",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "bs",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "ar",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "no",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "br",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "th",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "tr",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "hi",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "nl",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "id",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "vi",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "it",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "ur",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "pa",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "az",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "fi",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "sv",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "am",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "bg",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "bn",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "ca",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "cs",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "dv",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "dz",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "el",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "et",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "fa",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "fo",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "hr",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "hu",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "hy",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "is",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "ka",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "km",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "lo",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "lt",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "lv",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "mk",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "mn",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "ms",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "my",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "ne",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "ro",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "si",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "sk",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "sl",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "sq",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "sr",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "tg",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "tk",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    },
+    {
+      "locale": "uz",
+      "domains": {
+        "app": {
+          "missing": 106,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "ui": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        },
+        "desktop": {
+          "missing": 0,
+          "extra": 0,
+          "placeholderMismatches": 0,
+          "additionalMissingKeys": [],
+          "extraKeys": [],
+          "placeholderKeys": []
+        }
+      }
+    }
+  ]
+}

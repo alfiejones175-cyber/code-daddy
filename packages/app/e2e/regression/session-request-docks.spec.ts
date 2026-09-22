@@ -104,6 +104,50 @@ test("shows a pending permission dock", async ({ page }) => {
   expect(request.postDataJSON()).toEqual({ reply: "once" })
 })
 
+test("explains legacy Jev evidence consent", async ({ page }) => {
+  await mockServer(page, {
+    protocol: "v1",
+    permissions: [
+      {
+        id: "permission-jev-legacy",
+        sessionID,
+        permission: "jev_triage_failure",
+        patterns: ["api.typesafe.ai"],
+        metadata: {},
+        always: ["api.typesafe.ai"],
+      },
+    ],
+  })
+
+  await page.goto(`/${base64Encode(directory)}/session/${sessionID}`)
+  await expectSessionTitle(page, title)
+  await expect(
+    page.getByText("The supplied test-failure excerpt will be sent to TypeSafe Jev for an advisory classification."),
+  ).toBeVisible()
+})
+
+test("explains checksum-scoped V2 Jev research consent", async ({ page }) => {
+  await mockServer(page, {
+    permissions: [
+      {
+        id: "permission-jev-v2",
+        sessionID,
+        action: "plugin.jev_rank_evidence_14s5b",
+        resources: ["plugin:jev_rank_evidence_14s5b"],
+        metadata: {},
+        save: ["plugin:jev_rank_evidence_14s5b"],
+      },
+    ],
+  })
+
+  await page.goto(`/${base64Encode(directory)}/session/${sessionID}`)
+  await expectSessionTitle(page, title)
+  await expect(
+    page.getByText("Your research question and supplied passages will be sent to TypeSafe Jev for advisory ranking."),
+  ).toBeVisible()
+  await expect(page.getByText("plugin.jev_rank_evidence_14s5b", { exact: true })).toHaveCount(0)
+})
+
 test("restores the draft caret before typing after a request dock closes", async ({ page }) => {
   const transport = await installSseTransport(page, {
     server: `http://${process.env.PLAYWRIGHT_SERVER_HOST ?? "127.0.0.1"}:${process.env.PLAYWRIGHT_SERVER_PORT ?? "4096"}`,
@@ -170,10 +214,11 @@ async function mockServer(
   requests: {
     permissions?: unknown[] | (() => unknown[])
     questions?: unknown[] | (() => unknown[])
+    protocol?: "v1" | "v2"
   },
 ) {
   await mockOpenCodeServer(page, {
-    protocol: "v2",
+    protocol: requests.protocol ?? "v2",
     directory,
     project: {
       id: projectID,

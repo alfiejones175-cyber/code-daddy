@@ -5,6 +5,7 @@ import path from "node:path"
 
 const root = path.resolve(import.meta.dir, "..")
 const source = path.join(root, "icons/code-daddy/santa-coding.png")
+const macSource = path.join(root, "icons/code-daddy/macos.png")
 const output = path.join(root, "icons/dev")
 const temporary = await mkdtemp(path.join(tmpdir(), "code-daddy-icons-"))
 const iconset = path.join(temporary, "Code Daddy.iconset")
@@ -18,12 +19,14 @@ const sizes = {
   "dock.png": 256,
   "icon.png": 512,
   "StoreLogo.png": 50,
-  ...Object.fromEntries([30, 44, 71, 89, 107, 142, 150, 284, 310].map((size) => [`Square${size}x${size}Logo.png`, size])),
+  ...Object.fromEntries(
+    [30, 44, 71, 89, 107, 142, 150, 284, 310].map((size) => [`Square${size}x${size}Logo.png`, size]),
+  ),
 }
 
 await Promise.all(
   Object.entries(sizes).map(([name, size]) =>
-    $`sips -z ${size} ${size} ${source} --out ${path.join(output, name)}`.quiet(),
+    $`sips -z ${size} ${size} ${name === "dock.png" ? macSource : source} --out ${path.join(output, name)}`.quiet(),
   ),
 )
 
@@ -31,14 +34,14 @@ await Promise.all(
   [16, 32, 128, 256, 512].flatMap((size) =>
     [1, 2].map((scale) => {
       const name = `icon_${size}x${size}${scale === 2 ? "@2x" : ""}.png`
-      return $`sips -z ${size * scale} ${size * scale} ${source} --out ${path.join(iconset, name)}`.quiet()
+      return $`sips -z ${size * scale} ${size * scale} ${macSource} --out ${path.join(iconset, name)}`.quiet()
     }),
   ),
 )
 await $`iconutil -c icns ${iconset} -o ${path.join(output, "icon.icns")}`.quiet()
 
-// ICO supports PNG entries; use the same 256px image as the Dock icon.
-const png = await Bun.file(path.join(output, "dock.png")).arrayBuffer()
+// ICO supports PNG entries; keep the transparent source for Windows.
+const png = await Bun.file(path.join(output, "128x128@2x.png")).arrayBuffer()
 const header = Buffer.alloc(22)
 header.writeUInt16LE(1, 2)
 header.writeUInt16LE(1, 4)

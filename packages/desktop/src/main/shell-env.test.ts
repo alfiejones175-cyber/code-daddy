@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 
-import { isNushell, mergeShellEnv, parseShellEnv, resolveUserShell } from "./shell-env"
+import { correctProviderEnv, isNushell, mergeShellEnv, parseShellEnv, resolveUserShell } from "./shell-env"
 
 describe("shell env", () => {
   test("parseShellEnv supports null-delimited pairs", () => {
@@ -32,6 +32,33 @@ describe("shell env", () => {
     expect(env.PATH).toBe("/desktop/path")
     expect(env.HOME).toBe("/tmp/home")
     expect(env.OPENCODE_CLIENT).toBe("desktop")
+  })
+
+  test("moves an OpenRouter key out of the OpenAI variable", () => {
+    const env = { OPENAI_API_KEY: "sk-or-v1-router", OTHER: "value" }
+
+    correctProviderEnv(env)
+
+    expect(env).toEqual({ OPENROUTER_API_KEY: "sk-or-v1-router", OTHER: "value" })
+  })
+
+  test("preserves an explicit OpenRouter key while removing the crossed key", () => {
+    const env = {
+      OPENAI_API_KEY: "sk-or-v1-crossed",
+      OPENROUTER_API_KEY: "sk-or-v1-explicit",
+    }
+
+    correctProviderEnv(env)
+
+    expect(env).toEqual({ OPENROUTER_API_KEY: "sk-or-v1-explicit" })
+  })
+
+  test("does not alter a real OpenAI key", () => {
+    const env = { OPENAI_API_KEY: "sk-proj-openai" }
+
+    correctProviderEnv(env)
+
+    expect(env).toEqual({ OPENAI_API_KEY: "sk-proj-openai" })
   })
 
   test("resolveUserShell falls back to the login shell before /bin/sh", () => {

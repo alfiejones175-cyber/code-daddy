@@ -256,13 +256,103 @@ const invalid = ProviderShared.invalidRequest
 // =============================================================================
 // Request Lowering
 // =============================================================================
-const lowerTool = (tool: ToolDefinition, inputSchema: JsonSchema): OpenAIResponsesTool => ({
-  type: "function",
-  name: tool.name,
-  description: tool.description,
-  parameters: ToolSchemaProjection.openAI(inputSchema),
-  // TODO: Read this from OpenAI-specific tool options so direct LLM callers can opt into strict schemas.
-  strict: false,
+const strictToolSchemaIssue = (
+  schema: unknown,
+  path = "$",
+  root: unknown = schema,
+  visited = new Set<unknown>(),
+): string | undefined => {
+  if (!ProviderShared.isRecord(schema)) return `${path} must be an object schema`
+  if (visited.has(schema)) return undefined
+  visited.add(schema)
+
+  if (schema.$ref !== undefined) {
+    if (typeof schema.$ref !== "string") return `${path}.$ref must be a string`
+    const target = strictToolSchemaReference(root, schema.$ref)
+    if (target === undefined) return `${path}.$ref must resolve to a local schema`
+    const issue = strictToolSchemaIssue(target, `${path}.$ref(${schema.$ref})`, root, visited)
+    if (issue) return issue
+  }
+
+  const properties = schema.properties
+  if (path === "$" || schema.type === "object" || properties !== undefined) {
+    if (schema.type !== "object") return `${path} must declare type: object when it has properties`
+    if (!ProviderShared.isRecord(properties)) return `${path}.properties must be an object`
+    if (schema.additionalProperties !== false) return `${path}.additionalProperties must be false`
+    if (!Array.isArray(schema.required) || !schema.required.every((value) => typeof value === "string"))
+      return `${path}.required must list every property`
+    if (schema.required.length !== new Set(schema.required).size)
+      return `${path}.required must list every property exactly once`
+    const keys = Object.keys(properties).sort()
+    const required = [...schema.required].sort()
+    if (keys.length !== required.length || keys.some((key, index) => key !== required[index]))
+      return `${path}.required must list every property exactly once`
+    for (const key of keys) {
+      const issue = strictToolSchemaIssue(properties[key], `${path}.properties.${key}`, root, visited)
+      if (issue) return issue
+    }
+  }
+
+  for (const key of ["allOf", "oneOf", "not", "dependentRequired", "dependentSchemas", "if", "then", "else"])
+    if (schema[key] !== undefined) return `${path}.${key} is not supported by OpenAI Responses strict schemas`
+
+  if (schema.anyOf !== undefined) {
+    if (!Array.isArray(schema.anyOf) || schema.anyOf.length === 0)
+      return `${path}.anyOf must be a non-empty schema array`
+    for (const [index, variant] of schema.anyOf.entries()) {
+      const issue = strictToolSchemaIssue(variant, `${path}.anyOf[${index}]`, root, visited)
+      if (issue) return issue
+    }
+  }
+
+  for (const key of ["$defs", "definitions"] as const) {
+    if (schema[key] === undefined) continue
+    if (!ProviderShared.isRecord(schema[key])) return `${path}.${key} must be an object of schemas`
+    for (const [name, definition] of Object.entries(schema[key])) {
+      const issue = strictToolSchemaIssue(definition, `${path}.${key}.${name}`, root, visited)
+      if (issue) return issue
+    }
+  }
+
+  if (schema.items !== undefined) {
+    if (Array.isArray(schema.items)) return `${path}.items must be a schema object`
+    const issue = strictToolSchemaIssue(schema.items, `${path}.items`, root, visited)
+    if (issue) return issue
+  }
+  return undefined
+}
+
+const strictToolSchemaReference = (root: unknown, reference: string): unknown | undefined => {
+  if (reference === "#") return root
+  if (!reference.startsWith("#/")) return undefined
+  return reference
+    .slice(2)
+    .split("/")
+    .map((part) => part.replaceAll("~1", "/").replaceAll("~0", "~"))
+    .reduce<unknown | undefined>((value, part) => {
+      if (Array.isArray(value)) return /^(0|[1-9]\d*)$/.test(part) ? value[Number(part)] : undefined
+      if (!ProviderShared.isRecord(value)) return undefined
+      return value[part]
+    }, root)
+}
+
+const lowerTool = Effect.fn("OpenAIResponses.lowerTool")(function* (
+  tool: ToolDefinition,
+  inputSchema: JsonSchema,
+  strict: boolean,
+) {
+  const parameters = ToolSchemaProjection.openAI(inputSchema)
+  if (strict) {
+    const issue = strictToolSchemaIssue(parameters, "$")
+    if (issue) return yield* invalid(`OpenAI Responses strict tool schema for ${tool.name}: ${issue}`)
+  }
+  return {
+    type: "function" as const,
+    name: tool.name,
+    description: tool.description,
+    parameters,
+    strict,
+  } satisfies OpenAIResponsesTool
 })
 
 const lowerToolChoice = (toolChoice: NonNullable<LLMRequest["toolChoice"]>) =>
@@ -479,14 +569,19 @@ const fromRequest = Effect.fn("OpenAIResponses.fromRequest")(function* (request:
   const generation = request.generation
   const options = yield* lowerOptions(request)
   const toolSchemaCompatibility = request.model.compatibility?.toolSchema
+  const strictToolSchemas = OpenAIOptions.strictToolSchemas(request)
   return {
     model: request.model.id,
     input: yield* lowerMessages(request),
     tools:
       request.tools.length === 0
         ? undefined
-        : request.tools.map((tool) =>
-            lowerTool(tool, ToolSchemaProjection.modelCompatibility(tool.inputSchema, toolSchemaCompatibility)),
+        : yield* Effect.forEach(request.tools, (tool) =>
+            lowerTool(
+              tool,
+              ToolSchemaProjection.modelCompatibility(tool.inputSchema, toolSchemaCompatibility),
+              strictToolSchemas,
+            ),
           ),
     tool_choice: request.toolChoice ? yield* lowerToolChoice(request.toolChoice) : undefined,
     stream: true as const,

@@ -1,0 +1,5 @@
+Test: preserves login after refreshing the page
+Expected: the signed-in dashboard is visible after refresh.
+Observed: the app redirects to /login after refresh.
+Evidence: login returned HTTP 200, but the response did not set a session cookie.
+The same failure reproduces with a fresh browser context.

@@ -1,0 +1,18 @@
+diff --git a/parser.worker.js b/parser.worker.js
+index 1b7549e976c1bf97a950b008b249ce73c3395d5b..1bcf142efdd64f83614a1ac37cb44e42ee9aef1c 100644
+--- a/parser.worker.js
++++ b/parser.worker.js
+@@ -4033,10 +4033,10 @@ class ParserWorker {
+       const captureName = capture.name;
+       if (captureName === "injection.content" || captureName.includes("injection")) {
+         const nodeType = capture.node.type;
+-        let targetLanguage;
+-        if (injectionMapping?.nodeTypes && injectionMapping.nodeTypes[nodeType]) {
++        let targetLanguage = capture.setProperties?.["injection.language"];
++        if (!targetLanguage && injectionMapping?.nodeTypes && injectionMapping.nodeTypes[nodeType]) {
+           targetLanguage = injectionMapping.nodeTypes[nodeType];
+-        } else if (nodeType === "code_fence_content") {
++        } else if (!targetLanguage && nodeType === "code_fence_content") {
+           const parent = capture.node.parent;
+           if (parent) {
+             const infoString = parent.children.find((child) => child.type === "info_string");

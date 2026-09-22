@@ -128,12 +128,17 @@
 .sidebar-panel-close {
   display: none;
 }
-.sidebar-new-chat {
+.sidebar-primary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-block: 12px 10px;
+}
+.sidebar-primary-action {
   display: flex;
   align-items: center;
   gap: 8px;
   min-height: 38px;
-  margin-block: 12px 10px;
   padding-inline: 9px;
   border: 1px solid var(--v2-border-border-muted);
   border-radius: 7px;
@@ -141,6 +146,12 @@
   background: color-mix(in srgb, var(--v2-text-text-base) 5%, var(--v2-background-bg-deep));
   font-weight: 500;
   box-shadow: 0 1px 2px #00000008;
+  min-width: 0;
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 .sidebar-current-project {
   padding: 0 8px 8px;
@@ -264,6 +275,35 @@
   min-width: 0;
   min-height: 32px;
   padding-inline-end: 7px;
+}
+.sidebar-chat-action {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  color: var(--v2-icon-icon-muted);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 120ms ease,
+    color 120ms ease,
+    background-color 120ms ease;
+}
+.sidebar-chat-row:is(:hover, :focus-within) .sidebar-chat-action,
+.sidebar-chat-row[data-selected="true"] .sidebar-chat-action {
+  opacity: 1;
+  pointer-events: auto;
+}
+.sidebar-chat-action:hover,
+.sidebar-chat-action:focus-visible {
+  color: var(--v2-icon-icon-base);
+  background: var(--v2-overlay-simple-overlay-hover);
+}
+.sidebar-chat-action:disabled {
+  opacity: 0.45;
+  pointer-events: none;
 }
 .sidebar-chat-title {
   overflow: hidden;
@@ -421,7 +461,7 @@
   .sidebar-icon:hover,
   .sidebar-project-toggle:hover,
   .sidebar-chat-row:hover,
-  .sidebar-new-chat:hover,
+  .sidebar-primary-action:hover,
   .sidebar-connections:hover,
   .sidebar-app-usage:hover {
     background: color-mix(in srgb, var(--v2-text-text-base) 7%, var(--v2-background-bg-deep));
@@ -458,6 +498,12 @@
     transition: opacity 180ms ease;
   }
   .project-sidebar-scrim[data-active="true"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+@media (hover: none) {
+  .sidebar-chat-action {
     opacity: 1;
     pointer-events: auto;
   }

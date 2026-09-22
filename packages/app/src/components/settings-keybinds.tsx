@@ -213,6 +213,11 @@ function useKeyCapture(input: {
       const id = input.active()
       if (!id) return
 
+      if (event.key === "Tab" && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey) {
+        input.stop()
+        return
+      }
+
       event.preventDefault()
       event.stopPropagation()
       event.stopImmediatePropagation()
@@ -329,6 +334,11 @@ export function createKeybindSettingsController(
   const handle = (event: KeyboardEvent) => {
     const id = store.active
     if (!id) return
+
+    if (event.key === "Tab" && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey) {
+      stop()
+      return
+    }
 
     event.preventDefault()
     event.stopPropagation()

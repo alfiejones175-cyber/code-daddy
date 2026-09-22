@@ -1,3 +1,5 @@
+> **This development workspace:** start with the [documentation map](/Users/alfredo/Documents/code-daddy/documentation/README.md) and [current roadmap](/Users/alfredo/Documents/code-daddy/plans/README.md). This is a locally maintained OpenCode-based version, not an official OpenCode-team distribution. The local desktop development build is currently named Code Daddy. Installation and download links below refer to upstream OpenCode.
+
 <p align="center">
   <a href="https://opencode.ai">
     <picture>

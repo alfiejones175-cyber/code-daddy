@@ -1,8 +1,8 @@
 # Locale Glossaries
 
-Use this folder for locale-specific translation guidance that supplements `.opencode/agent/translator.md`.
+Use this folder for locale-specific translation guidance that supplements the [product translation prompt](/Users/alfredo/Documents/code-daddy/script/translate-app.md) and [localization workflow](/Users/alfredo/Documents/code-daddy/documentation/localization.md).
 
-The global glossary in `translator.md` remains the source of truth for shared do-not-translate terms (commands, code, paths, product names, etc.). These locale files capture community learnings about phrasing and terminology preferences.
+The product translation prompt and package instructions define shared preservation rules for commands, code, paths, product names, and placeholders. These locale files capture community learnings about phrasing and terminology preferences. The previously referenced `.opencode/agent/translator.md` is absent from this checkout; do not depend on it.
 
 ## File Naming
 

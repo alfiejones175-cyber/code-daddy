@@ -269,7 +269,8 @@ export const makeSessionGroup = <I extends HttpApiMiddleware.AnyId, S>(sessionLo
           OpenApi.annotations({
             identifier: "v2.session.compact",
             summary: "Compact session",
-            description: "Compact a session conversation.",
+            description:
+              "Experimental capability placeholder. Manual V2 compaction is not available yet and this endpoint returns 503 Service Unavailable.",
           }),
         ),
     )
@@ -284,7 +285,8 @@ export const makeSessionGroup = <I extends HttpApiMiddleware.AnyId, S>(sessionLo
           OpenApi.annotations({
             identifier: "v2.session.wait",
             summary: "Wait for session",
-            description: "Wait for a session agent loop to become idle.",
+            description:
+              "Experimental capability placeholder. Awaiting a V2 drain lifecycle is not available yet and this endpoint returns 503 Service Unavailable.",
           }),
         ),
     )

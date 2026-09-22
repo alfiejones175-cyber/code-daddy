@@ -110,6 +110,21 @@ function createServerCtx(
   const sdk = createServerSdkContext(conn, scope)
   const sync = createServerSyncContext(sdk)
 
+  const openProject = (directory: string) => {
+    if (!projects.open(directory)) return
+
+    const location = { directory }
+    void sdk.api.file
+      .list({ path: ".", location })
+      .then(async (files) => {
+        if (files.data.length > 0) return sdk.api.project.current({ location })
+        const result = await sdk.client.project.initGit({ directory })
+        return result.data ?? sdk.api.project.current({ location })
+      })
+      .then((project) => sync.child(directory, { bootstrap: false })[1]("project", project.id))
+      .catch(() => undefined)
+  }
+
   function enrich(project: { worktree: string; expanded: boolean }) {
     const [childStore] = sync.child(project.worktree, { bootstrap: false })
     const projectID = childStore.project
@@ -153,6 +168,7 @@ function createServerCtx(
     isLocal,
     projects: {
       ...projects,
+      open: openProject,
       list: projectsList,
       recentlyClosed: recentlyClosedList,
     },

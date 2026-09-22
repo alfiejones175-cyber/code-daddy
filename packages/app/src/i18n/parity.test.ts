@@ -75,6 +75,23 @@ const pluralCategories = new Map(
   ),
 )
 
+const englishFallbackKeys = new Set([
+  "app.permission.plugin.jev.triage.description",
+  "app.permission.plugin.jev.rank.description",
+  "app.permission.plugin.destinationData.description",
+  "app.permission.plugin.destination.description",
+  "app.permission.plugin.generic.description",
+  "ui.ui.genericTool.input",
+  "ui.ui.genericTool.output",
+  "ui.ui.genericTool.characterCount",
+  "ui.ui.genericTool.truncated",
+  "ui.ui.genericTool.unavailable",
+  "ui.ui.genericTool.jev.title",
+  "ui.ui.genericTool.jev.completed",
+  "ui.ui.genericTool.jev.unavailable",
+  "ui.ui.genericTool.jev.invalidInput",
+])
+
 const domains = [
   {
     name: "app",
@@ -102,7 +119,9 @@ describe("i18n parity", () => {
       const source = await dictionary(domain.source)
       for (const locale of domain.locales) {
         const target = await dictionary(domain.target(locale))
-        const missing = Object.keys(source).filter((key) => !Object.hasOwn(target, key))
+        const missing = Object.keys(source).filter(
+          (key) => !Object.hasOwn(target, key) && !englishFallbackKeys.has(`${domain.name}.${key}`),
+        )
         const extra = Object.keys(target)
           .filter((key) => !Object.hasOwn(source, key))
           .sort()

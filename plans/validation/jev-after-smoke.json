@@ -1,0 +1,20 @@
+{
+  "status": "ok",
+  "advisory": true,
+  "category": "environment",
+  "confidence": 0.6,
+  "probabilities": {
+    "timing": 0,
+    "insufficient_evidence": 0.01,
+    "test_setup": 0.32,
+    "environment": 0.67,
+    "application": 0
+  },
+  "model": "jev-1.13.0",
+  "questionVersion": "jev-pilot-2026-09-22",
+  "usage": {
+    "input_tokens": 502,
+    "output_tokens": 60
+  },
+  "durationMs": 718
+}

@@ -191,6 +191,11 @@ export const validateMedia = Effect.fn("ProviderShared.validateMedia")(function*
       return yield* invalidRequest(`${route} media type ${part.mediaType} does not match data URL type ${match[1]}`)
     base64 = match[2]!
   } else {
+    const scheme = /^([A-Za-z][A-Za-z0-9+.-]*):/.exec(part.data)?.[1]
+    if (scheme)
+      return yield* invalidRequest(
+        `${route} does not support media URI scheme ${scheme}; use a matching data URL or canonical base64`,
+      )
     base64 = part.data
   }
 
