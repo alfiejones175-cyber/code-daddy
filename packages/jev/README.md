@@ -1,8 +1,8 @@
 # Jev advisory tools
 
-This package adds failure triage and research ranking to Code Daddy's legacy and V2 plugin tools and provides a standalone Bun CLI. It sends only explicitly supplied evidence to TypeSafe. It does not execute actions, alter test pass/fail results, or replace your coding model.
+This package adds failure triage, research ranking, and completed-response review to Code Daddy's legacy and V2 plugin tools. It also provides a standalone Bun CLI for triage and ranking. It sends only explicitly supplied material to TypeSafe. It does not execute actions, alter test pass/fail results, or replace your coding model.
 
-For planned output review inside the app, see the [Jev integration roadmap](/Users/alfredo/Documents/code-daddy/plans/jev-integration.md). Output-review controls and automatic review are not implemented by the current commands below. The current direct TypeSafe setup remains unchanged while evaluation continues.
+The app has an explicit **Review response with Jev** action on completed assistant responses. Automatic review is not implemented. See the [Jev integration roadmap](../../plans/jev-integration.md) for evaluation and follow-up work.
 
 ## Put your API key here
 
@@ -53,7 +53,9 @@ bun run jev rank fixtures/research.json
 
 ## Use inside Code Daddy
 
-The repository's `.opencode/plugins/jev.ts` entry registers `jev_triage_failure` and `jev_rank_evidence` in legacy sessions. In V2 sessions, the tool names start with `plugin_jev_triage_failure_` and `plugin_jev_rank_evidence_` (the registry appends stable identifiers). Both use the same evaluator. Restart/reload the project's backend after installing the code so plugin discovery runs. Key changes do not require restart because settings are read per call.
+The repository's `.opencode/plugins/jev.ts` entry registers `jev_triage_failure`, `jev_rank_evidence`, and `jev_review_output` in legacy sessions. In V2 sessions, the tool names start with `plugin_jev_triage_failure_`, `plugin_jev_rank_evidence_`, and `plugin_jev_review_output_` (the registry appends stable identifiers). All use the same evaluator. Restart/reload the project's backend after installing the code so plugin discovery runs. Key changes do not require restart because settings are read per call.
+
+In the app, open a completed response's Jev review action, check or edit the requirement, and optionally paste a small test or source excerpt with a link. **Run review** sends that bundle to TypeSafe through the local backend. Four typed findings cover requirement fit, support for check claims, completion boundaries, and actionable error steps. Findings are advisory; the original response, supplied excerpt, and changed-file list remain visible separately. A saved result survives reload and becomes stale if the response text changes. **Address findings** appends an editable draft to the composer. The app does not run checks or collect repository evidence for you; add an actual excerpt when review of a check claim matters.
 
 Example requests:
 

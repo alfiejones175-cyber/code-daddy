@@ -6,7 +6,7 @@
 
 The API returned Jev results correctly, and the original audit read them. The app's fallback tool renderer discarded the output prop, so a user could not expand a Jev tool row to inspect its JSON. This display problem did not prevent the agent from receiving results.
 
-The fallback now displays bounded, escaped text/JSON and recognizable advisory-success, unavailable, and invalid-input states. A production-styled Chromium fixture displayed the **recorded live ranking response**, with click/Enter disclosure. At a 390px viewport, document width also measured 390px. See the [narrow screenshot](/Users/alfredo/Documents/code-daddy/plans/validation/jev-generic-tool-success-narrow.png).
+The fallback now displays bounded, escaped text/JSON and recognizable advisory-success, unavailable, and invalid-input states. A production-styled Chromium fixture displayed the **recorded live ranking response**, with click/Enter disclosure. At a 390px viewport, document width also measured 390px. See the [narrow screenshot](validation/jev-generic-tool-success-narrow.png).
 
 ## Recommendation closure
 
@@ -55,12 +55,12 @@ The full application/browser integration suite was not run. The isolated styled 
 
 ## Actual Jev review after changes
 
-Fresh live smoke and research ranking returned `status: ok` from `jev-1.13.0`: [smoke response](/Users/alfredo/Documents/code-daddy/plans/validation/jev-after-smoke.json), [ranking response](/Users/alfredo/Documents/code-daddy/plans/validation/jev-after-rank.json).
+Fresh live smoke and research ranking returned `status: ok` from `jev-1.13.0`: [smoke response](validation/jev-after-smoke.json), [ranking response](validation/jev-after-rank.json).
 
 Jev reviewed **12 narrow change claims** against selected current source excerpts. Final responses supported 8 claims and returned insufficient evidence for 4: generic output behavior, directory-reducer ownership, the sorted-tree regression, and complete strict-schema validation. Those inconclusive results were retained. Browser checks, deterministic tests, and source review provide the evidence for those changes; no Jev response is treated as a certification.
 
 There were 21 successful review requests across initial and combined-context passes, reporting 36,159 input tokens and 1,919 output tokens. The final reviewed source hashes matched the working files at verification. Live smoke/rank token usage is recorded separately in their response files.
 
-The [review record](/Users/alfredo/Documents/code-daddy/plans/validation/jev-fixes-review.json) includes exact claims, supplied excerpts, probabilities, source hashes, timestamps, and model metadata. The [review driver](/Users/alfredo/Documents/code-daddy/plans/validation/jev-fixes-review.ts) reuses unchanged successful checks and re-evaluates changed source. From the repository root: `bun plans/validation/jev-fixes-review.ts`. This sends bounded code excerpts to the configured Jev service.
+The [review record](validation/jev-fixes-review.json) includes exact claims, supplied excerpts, probabilities, source hashes, timestamps, and model metadata. The [review driver](validation/jev-fixes-review.ts) reuses unchanged successful checks and re-evaluates changed source. From the repository root: `bun plans/validation/jev-fixes-review.ts`. This sends bounded code excerpts to the configured Jev service.
 
-Detailed records: [UI](/Users/alfredo/Documents/code-daddy/plans/validation/jev-fixes-ui.md), [session/provider simplification](/Users/alfredo/Documents/code-daddy/plans/validation/jev-fixes-simplify.md), [Core/LLM](/Users/alfredo/Documents/code-daddy/plans/validation/jev-fixes-core.md), [independent Core review](/Users/alfredo/Documents/code-daddy/plans/validation/jev-fixes-core-review.md), [peripheral fixes and diagnostics](/Users/alfredo/Documents/code-daddy/plans/validation/jev-fixes-platform.md).
+Detailed records: [UI](validation/jev-fixes-ui.md), [session/provider simplification](validation/jev-fixes-simplify.md), [Core/LLM](validation/jev-fixes-core.md), [independent Core review](validation/jev-fixes-core-review.md), [peripheral fixes and diagnostics](validation/jev-fixes-platform.md).

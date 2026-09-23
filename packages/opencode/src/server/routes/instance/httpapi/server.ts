@@ -65,6 +65,7 @@ import { Ripgrep } from "@opencode-ai/core/ripgrep"
 import { SessionProjector } from "@opencode-ai/core/session/projector"
 import { SessionV2 } from "@opencode-ai/core/session"
 import { SessionExecution } from "@opencode-ai/core/session/execution"
+import { RoutineScheduler } from "@opencode-ai/core/routine/scheduler"
 import * as SessionExecutionLocal from "@opencode-ai/core/session/execution/local"
 import { lazy } from "@/util/lazy"
 import { CorsConfig, isAllowedCorsOrigin, type CorsOptions } from "@opencode-ai/server/cors"
@@ -89,6 +90,7 @@ import { experimentalHandlers } from "./handlers/experimental"
 import { fileHandlers } from "./handlers/file"
 import { globalHandlers } from "./handlers/global"
 import { instanceHandlers } from "./handlers/instance"
+import { jevReviewHandlers } from "./handlers/jev-review"
 import { mcpHandlers } from "./handlers/mcp"
 import { permissionHandlers } from "./handlers/permission"
 import { projectHandlers } from "./handlers/project"
@@ -157,6 +159,7 @@ const instanceApiRoutes = HttpApiBuilder.layer(InstanceHttpApi).pipe(
     experimentalHandlers,
     fileHandlers,
     instanceHandlers,
+    jevReviewHandlers,
     mcpHandlers,
     projectHandlers,
     projectCopyHandlers,
@@ -234,6 +237,7 @@ const app = LayerNode.group([
   Todo.node,
   Session.node,
   SessionProjector.node,
+  RoutineScheduler.node,
   SessionStatus.node,
   BackgroundJob.node,
   RuntimeFlags.node,
@@ -303,7 +307,10 @@ export function createRoutes(
     ),
     Layer.provide(locationServiceMapV2),
 
-    Layer.provide(AppNodeBuilderV1.build(app)),
+    Layer.provide(AppNodeBuilderV1.build(app, [
+      [LocationServiceMap.node, locationServiceMapV2],
+      [SessionExecution.node, SessionExecutionLocal.node],
+    ])),
     // Must stay last: layers provided later in this pipe build beneath earlier ones,
     // so Observability must come after every service graph. Otherwise eagerly forked
     // fibers (e.g. the ModelsDev background refresh) capture Effect's default stdout

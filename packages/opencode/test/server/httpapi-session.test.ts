@@ -23,6 +23,7 @@ import { HttpApiApp } from "../../src/server/routes/instance/httpapi/server"
 import * as HttpSessionError from "../../src/server/routes/instance/httpapi/handlers/session-errors"
 import { ExperimentalPaths } from "../../src/server/routes/instance/httpapi/groups/experimental"
 import { SessionPaths } from "../../src/server/routes/instance/httpapi/groups/session"
+import { JevReviewPath } from "../../src/server/routes/instance/httpapi/groups/jev-review"
 import { Session } from "@/session/session"
 import { MessageID, PartID, SessionID, type SessionID as SessionIDType } from "../../src/session/schema"
 import { Database } from "@opencode-ai/core/database/database"
@@ -235,6 +236,55 @@ afterEach(async () => {
 })
 
 describe("session HttpApi", () => {
+  it.instance(
+    "persists a response review and marks it stale when the response changes",
+    () => Effect.gen(function* () {
+      const test = yield* TestInstance
+      const previousKey = process.env.TYPESAFE_API_KEY
+      process.env.TYPESAFE_API_KEY = ""
+      yield* Effect.addFinalizer(() => Effect.sync(() => {
+        if (previousKey === undefined) delete process.env.TYPESAFE_API_KEY
+        else process.env.TYPESAFE_API_KEY = previousKey
+      }))
+      const svc = yield* Session.Service
+      const created = yield* createSession({ title: "review fixture" })
+      const user = yield* createTextMessage(created.id, "Fix login")
+      const message = yield* svc.updateMessage({
+        id: MessageID.ascending(),
+        role: "assistant",
+        sessionID: created.id,
+        parentID: user.info.id,
+        time: { created: Date.now(), completed: Date.now() },
+        modelID: ModelV2.ID.make("test"),
+        providerID: ProviderV2.ID.make("test"),
+        mode: "",
+        agent: "build",
+        path: { cwd: test.directory, root: test.directory },
+        cost: 0,
+        tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+      } as SessionV1.Info)
+      const part = yield* svc.updatePart({
+        id: PartID.ascending(),
+        sessionID: created.id,
+        messageID: message.id,
+        type: "text",
+        text: "Fixed login and ran the test.",
+      })
+      const path = pathFor(JevReviewPath, { sessionID: created.id, messageID: message.id })
+      const headers = { "x-opencode-directory": test.directory }
+      expect(yield* requestJson<{ status: string }>(path, { headers })).toMatchObject({ status: "not_reviewed" })
+      expect(yield* requestJson<{ status: string; review: { result: { status: string } } }>(path, {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ requirements: ["Fix login"], evidence: [] }),
+      })).toMatchObject({ status: "reviewed", review: { result: { status: "unavailable" } } })
+      expect(yield* requestJson<{ status: string }>(path, { headers })).toMatchObject({ status: "reviewed" })
+      yield* svc.updatePart({ ...part, text: "The response changed after review." })
+      expect(yield* requestJson<{ status: string }>(path, { headers })).toMatchObject({ status: "stale" })
+    }),
+    { git: true, config: { formatter: false, lsp: false } },
+  )
+
   it.effect("maps busy sessions to public session busy errors", () =>
     Effect.gen(function* () {
       const sessionID = SessionID.descending()

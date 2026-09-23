@@ -108,6 +108,14 @@ export type ProjectAppearanceError = {
 export const isProjectAppearanceError = (value: unknown): value is ProjectAppearanceError =>
   typeof value === "object" && value !== null && "name" in value && value["name"] === "ProjectAppearanceError"
 
+export type RoutineNotFoundError = {
+  readonly _tag: "RoutineNotFoundError"
+  readonly routineID: string
+  readonly message: string
+}
+export const isRoutineNotFoundError = (value: unknown): value is RoutineNotFoundError =>
+  typeof value === "object" && value !== null && "_tag" in value && value["_tag"] === "RoutineNotFoundError"
+
 export type HealthGetOutput = { readonly healthy: true }
 
 export type LocationGetInput = {
@@ -537,6 +545,164 @@ export type SessionsPromptOutput = {
   }
 }["data"]
 
+export type SessionsListQueuedInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
+
+export type SessionsListQueuedOutput = {
+  readonly data: ReadonlyArray<{ readonly id: string; readonly order: number; readonly text: string }>
+}["data"]
+
+export type SessionsCancelQueuedInput = {
+  readonly sessionID: { readonly sessionID: string; readonly messageID: string }["sessionID"]
+  readonly messageID: { readonly sessionID: string; readonly messageID: string }["messageID"]
+}
+
+export type SessionsCancelQueuedOutput = void
+
+export type SessionsGoalInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
+
+export type SessionsGoalOutput = {
+  readonly data: {
+    readonly objective: string
+    readonly acceptanceCriteria: ReadonlyArray<string>
+    readonly budget?: number | undefined
+    readonly status: "active" | "paused" | "blocked" | "completed"
+    readonly progress?: string | undefined
+    readonly blockers: ReadonlyArray<string>
+    readonly evidence?: string | undefined
+  } | null
+}["data"]
+
+export type SessionsSetGoalInput = {
+  readonly sessionID: { readonly sessionID: string }["sessionID"]
+  readonly objective: {
+    readonly objective: string
+    readonly acceptanceCriteria?: ReadonlyArray<string> | undefined
+    readonly budget?: number | undefined
+    readonly progress?: string | undefined
+    readonly blockers?: ReadonlyArray<string> | undefined
+    readonly evidence?: string | undefined
+  }["objective"]
+  readonly acceptanceCriteria?: {
+    readonly objective: string
+    readonly acceptanceCriteria?: ReadonlyArray<string> | undefined
+    readonly budget?: number | undefined
+    readonly progress?: string | undefined
+    readonly blockers?: ReadonlyArray<string> | undefined
+    readonly evidence?: string | undefined
+  }["acceptanceCriteria"]
+  readonly budget?: {
+    readonly objective: string
+    readonly acceptanceCriteria?: ReadonlyArray<string> | undefined
+    readonly budget?: number | undefined
+    readonly progress?: string | undefined
+    readonly blockers?: ReadonlyArray<string> | undefined
+    readonly evidence?: string | undefined
+  }["budget"]
+  readonly progress?: {
+    readonly objective: string
+    readonly acceptanceCriteria?: ReadonlyArray<string> | undefined
+    readonly budget?: number | undefined
+    readonly progress?: string | undefined
+    readonly blockers?: ReadonlyArray<string> | undefined
+    readonly evidence?: string | undefined
+  }["progress"]
+  readonly blockers?: {
+    readonly objective: string
+    readonly acceptanceCriteria?: ReadonlyArray<string> | undefined
+    readonly budget?: number | undefined
+    readonly progress?: string | undefined
+    readonly blockers?: ReadonlyArray<string> | undefined
+    readonly evidence?: string | undefined
+  }["blockers"]
+  readonly evidence?: {
+    readonly objective: string
+    readonly acceptanceCriteria?: ReadonlyArray<string> | undefined
+    readonly budget?: number | undefined
+    readonly progress?: string | undefined
+    readonly blockers?: ReadonlyArray<string> | undefined
+    readonly evidence?: string | undefined
+  }["evidence"]
+}
+
+export type SessionsSetGoalOutput = {
+  readonly data: {
+    readonly objective: string
+    readonly acceptanceCriteria: ReadonlyArray<string>
+    readonly budget?: number | undefined
+    readonly status: "active" | "paused" | "blocked" | "completed"
+    readonly progress?: string | undefined
+    readonly blockers: ReadonlyArray<string>
+    readonly evidence?: string | undefined
+  }
+}["data"]
+
+export type SessionsPauseGoalInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
+
+export type SessionsPauseGoalOutput = {
+  readonly data: {
+    readonly objective: string
+    readonly acceptanceCriteria: ReadonlyArray<string>
+    readonly budget?: number | undefined
+    readonly status: "active" | "paused" | "blocked" | "completed"
+    readonly progress?: string | undefined
+    readonly blockers: ReadonlyArray<string>
+    readonly evidence?: string | undefined
+  }
+}["data"]
+
+export type SessionsResumeGoalInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
+
+export type SessionsResumeGoalOutput = {
+  readonly data: {
+    readonly objective: string
+    readonly acceptanceCriteria: ReadonlyArray<string>
+    readonly budget?: number | undefined
+    readonly status: "active" | "paused" | "blocked" | "completed"
+    readonly progress?: string | undefined
+    readonly blockers: ReadonlyArray<string>
+    readonly evidence?: string | undefined
+  }
+}["data"]
+
+export type SessionsBlockGoalInput = {
+  readonly sessionID: { readonly sessionID: string }["sessionID"]
+  readonly blockers: { readonly blockers: ReadonlyArray<string>; readonly progress?: string | undefined }["blockers"]
+  readonly progress?: { readonly blockers: ReadonlyArray<string>; readonly progress?: string | undefined }["progress"]
+}
+
+export type SessionsBlockGoalOutput = {
+  readonly data: {
+    readonly objective: string
+    readonly acceptanceCriteria: ReadonlyArray<string>
+    readonly budget?: number | undefined
+    readonly status: "active" | "paused" | "blocked" | "completed"
+    readonly progress?: string | undefined
+    readonly blockers: ReadonlyArray<string>
+    readonly evidence?: string | undefined
+  }
+}["data"]
+
+export type SessionsCompleteGoalInput = {
+  readonly sessionID: { readonly sessionID: string }["sessionID"]
+  readonly evidence: { readonly evidence: string }["evidence"]
+}
+
+export type SessionsCompleteGoalOutput = {
+  readonly data: {
+    readonly objective: string
+    readonly acceptanceCriteria: ReadonlyArray<string>
+    readonly budget?: number | undefined
+    readonly status: "active" | "paused" | "blocked" | "completed"
+    readonly progress?: string | undefined
+    readonly blockers: ReadonlyArray<string>
+    readonly evidence?: string | undefined
+  }
+}["data"]
+
+export type SessionsClearGoalInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
+
+export type SessionsClearGoalOutput = { readonly data: null }["data"]
+
 export type SessionsCompactInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
 
 export type SessionsCompactOutput = void
@@ -831,6 +997,14 @@ export type SessionsHistoryOutput = {
           }
           readonly delivery: "steer" | "queue"
         }
+      }
+    | {
+        readonly id: string
+        readonly metadata?: { readonly [x: string]: JsonValue }
+        readonly type: "session.next.prompt.cancelled"
+        readonly durable?: { readonly aggregateID: string; readonly seq: number; readonly version: number }
+        readonly location?: { readonly directory: string; readonly workspaceID?: string }
+        readonly data: { readonly timestamp: number; readonly sessionID: string; readonly messageID: string }
       }
     | {
         readonly id: string
@@ -1289,6 +1463,14 @@ export type SessionsEventsOutput =
         }
         readonly delivery: "steer" | "queue"
       }
+    }
+  | {
+      readonly id: string
+      readonly metadata?: { readonly [x: string]: unknown }
+      readonly type: "session.next.prompt.cancelled"
+      readonly durable?: { readonly aggregateID: string; readonly seq: number; readonly version: number }
+      readonly location?: { readonly directory: string; readonly workspaceID?: string }
+      readonly data: { readonly timestamp: number; readonly sessionID: string; readonly messageID: string }
     }
   | {
       readonly id: string
@@ -3012,13 +3194,60 @@ export type ServerMcpReconnectOutput = {
 }
 
 export type ServerMcpPresetInput = {
-  readonly presetID: { readonly presetID: "browser" | "xcode" }["presetID"]
+  readonly presetID: { readonly presetID: "browser" | "xcode" | "openai-docs" | "github" }["presetID"]
   readonly location?: {
     readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
   }["location"]
 }
 
 export type ServerMcpPresetOutput = {
+  readonly location: {
+    readonly directory: string
+    readonly workspaceID?: string
+    readonly project: { readonly id: string; readonly directory: string }
+  }
+  readonly data: {
+    readonly id: string
+    readonly name: string
+    readonly transport: "local" | "remote"
+    readonly state: "configured" | "connected" | "available" | "failed" | "disabled"
+    readonly error?: string
+    readonly tools: ReadonlyArray<{ readonly name: string; readonly source: string; readonly description?: string }>
+  }
+}
+
+export type ServerMcpAddRemoteInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+  readonly name: { readonly name: string; readonly url: string }["name"]
+  readonly url: { readonly name: string; readonly url: string }["url"]
+}
+
+export type ServerMcpAddRemoteOutput = {
+  readonly location: {
+    readonly directory: string
+    readonly workspaceID?: string
+    readonly project: { readonly id: string; readonly directory: string }
+  }
+  readonly data: {
+    readonly id: string
+    readonly name: string
+    readonly transport: "local" | "remote"
+    readonly state: "configured" | "connected" | "available" | "failed" | "disabled"
+    readonly error?: string
+    readonly tools: ReadonlyArray<{ readonly name: string; readonly source: string; readonly description?: string }>
+  }
+}
+
+export type ServerMcpRemoveInput = {
+  readonly serverID: { readonly serverID: string }["serverID"]
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+}
+
+export type ServerMcpRemoveOutput = {
   readonly location: {
     readonly directory: string
     readonly workspaceID?: string
@@ -3056,3 +3285,111 @@ export type ServerMcpTestOutput = {
     readonly tools: ReadonlyArray<{ readonly name: string; readonly source: string; readonly description?: string }>
   }
 }
+
+export type ServerRoutineListInput = { readonly sessionID?: { readonly sessionID?: string | undefined }["sessionID"] }
+
+export type ServerRoutineListOutput = {
+  readonly data: ReadonlyArray<{
+    readonly id: string
+    readonly sessionID: string
+    readonly name: string
+    readonly prompt: string
+    readonly intervalMs: number
+    readonly status: "active" | "paused"
+    readonly nextRunAt: number
+    readonly time: { readonly created: number; readonly updated: number }
+  }>
+}["data"]
+
+export type ServerRoutineCreateInput = {
+  readonly sessionID: {
+    readonly sessionID: string
+    readonly name: string
+    readonly prompt: string
+    readonly intervalMs: number
+  }["sessionID"]
+  readonly name: {
+    readonly sessionID: string
+    readonly name: string
+    readonly prompt: string
+    readonly intervalMs: number
+  }["name"]
+  readonly prompt: {
+    readonly sessionID: string
+    readonly name: string
+    readonly prompt: string
+    readonly intervalMs: number
+  }["prompt"]
+  readonly intervalMs: {
+    readonly sessionID: string
+    readonly name: string
+    readonly prompt: string
+    readonly intervalMs: number
+  }["intervalMs"]
+}
+
+export type ServerRoutineCreateOutput = {
+  readonly data: {
+    readonly id: string
+    readonly sessionID: string
+    readonly name: string
+    readonly prompt: string
+    readonly intervalMs: number
+    readonly status: "active" | "paused"
+    readonly nextRunAt: number
+    readonly time: { readonly created: number; readonly updated: number }
+  }
+}["data"]
+
+export type ServerRoutinePauseInput = { readonly routineID: { readonly routineID: string }["routineID"] }
+
+export type ServerRoutinePauseOutput = {
+  readonly data: {
+    readonly id: string
+    readonly sessionID: string
+    readonly name: string
+    readonly prompt: string
+    readonly intervalMs: number
+    readonly status: "active" | "paused"
+    readonly nextRunAt: number
+    readonly time: { readonly created: number; readonly updated: number }
+  }
+}["data"]
+
+export type ServerRoutineResumeInput = { readonly routineID: { readonly routineID: string }["routineID"] }
+
+export type ServerRoutineResumeOutput = {
+  readonly data: {
+    readonly id: string
+    readonly sessionID: string
+    readonly name: string
+    readonly prompt: string
+    readonly intervalMs: number
+    readonly status: "active" | "paused"
+    readonly nextRunAt: number
+    readonly time: { readonly created: number; readonly updated: number }
+  }
+}["data"]
+
+export type ServerRoutineRemoveInput = { readonly routineID: { readonly routineID: string }["routineID"] }
+
+export type ServerRoutineRemoveOutput = void
+
+export type ServerRoutineRunsInput = {
+  readonly routineID: { readonly routineID: string }["routineID"]
+  readonly limit?: { readonly limit?: number | undefined }["limit"]
+}
+
+export type ServerRoutineRunsOutput = {
+  readonly data: ReadonlyArray<{
+    readonly id: string
+    readonly routineID: string
+    readonly sessionID: string
+    readonly messageID: string
+    readonly scheduledAt: number
+    readonly status: "claimed" | "admitted" | "failed" | "cancelled"
+    readonly admittedSeq?: number
+    readonly error?: string
+    readonly time: { readonly claimed: number; readonly updated: number }
+  }>
+}["data"]

@@ -32,10 +32,11 @@ const syncedDirectories: string[] = []
 const promotedDrafts: Array<{ draftID: string; server: string; sessionId: string }> = []
 const sentPrompts: string[] = []
 const promptInputs: unknown[] = []
+const queuedDrafts: unknown[] = []
 const sentCommands: unknown[] = []
 const commands: Array<{ name: string }> = []
 const interruptedSessions: string[] = []
-const toasts: Array<{ title?: string; description?: string }> = []
+const toasts: Array<{ variant?: string; title?: string; description?: string }> = []
 let serverSessionSyncs = 0
 
 let params: { id?: string } = {}
@@ -45,6 +46,8 @@ let variant: string | undefined
 let permissionServer = "server-a"
 let createSessionGate: Promise<void> | undefined
 let interruptError: Error | undefined
+let promptError: Error | undefined
+let serverProtocol: "v1" | "v2" = "v2"
 
 let promptValue: Prompt = [{ type: "text", content: "ls", start: 0, end: 2 }]
 const [promptStore, setPromptStore] = createStore<PromptStore>({
@@ -100,6 +103,11 @@ const clientFor = (directory: string) => {
         prompt: async (input: unknown) => {
           sentPrompts.push(directory)
           promptInputs.push(input)
+          if (promptError) {
+            const error = promptError
+            promptError = undefined
+            throw error
+          }
           return { data: undefined }
         },
         command: async (input: unknown) => {
@@ -198,6 +206,7 @@ beforeAll(async () => {
 
   mock.module("@/context/prompt", () => ({
     usePrompt: () => prompt,
+    isPromptEqual: (first: Prompt, second: Prompt) => JSON.stringify(first) === JSON.stringify(second),
   }))
 
   mock.module("@/context/layout", () => ({
@@ -212,6 +221,7 @@ beforeAll(async () => {
     useSDK: () => {
       const sdk = {
         scope: "local",
+        protocol: Promise.resolve(serverProtocol),
         directory: "/repo/main",
         client: rootClient,
         api: rootClient.api,
@@ -305,6 +315,7 @@ beforeEach(() => {
   promotedDrafts.length = 0
   sentPrompts.length = 0
   promptInputs.length = 0
+  queuedDrafts.length = 0
   sentCommands.length = 0
   commands.length = 0
   interruptedSessions.length = 0
@@ -319,6 +330,8 @@ beforeEach(() => {
   permissionServer = "server-a"
   createSessionGate = undefined
   interruptError = undefined
+  promptError = undefined
+  serverProtocol = "v2"
   serverSessionSyncs = 0
   for (const key of Object.keys(storedSessions)) delete storedSessions[key]
 })
@@ -593,6 +606,101 @@ describe("prompt submit worktree selection", () => {
     expect((promptInputs[0] as { legacyParts?: { id: string; type: string; text?: string }[] }).legacyParts).toEqual([
       { id: expect.stringMatching(/^prt_/), type: "text", text: "ls" },
     ])
+  })
+
+  test("queues a V2 follow-up durably without adding an optimistic message", async () => {
+    params = { id: "session-1" }
+    const submitted: string[] = []
+    const submit = createPromptSubmit({
+      prompt,
+      info: () => ({ id: "session-1" }),
+      imageAttachments: () => [],
+      commentCount: () => 0,
+      autoAccept: () => false,
+      mode: () => "normal",
+      working: () => true,
+      editor: () => undefined,
+      queueScroll: () => undefined,
+      promptLength: (value) => value.reduce((sum, part) => sum + ("content" in part ? part.content.length : 0), 0),
+      addToHistory: () => undefined,
+      resetHistoryNavigation: () => undefined,
+      setMode: () => undefined,
+      setPopover: () => undefined,
+      onQueueSubmitted: () => submitted.push("queued"),
+    })
+
+    await submit.handleQueue({ preventDefault: () => undefined } as unknown as Event)
+    await Bun.sleep(0)
+
+    expect(optimistic).toEqual([])
+    expect(promptInputs[0]).toMatchObject({ sessionID: "session-1", delivery: "queue", text: "ls" })
+    expect(submitted).toEqual(["queued"])
+    expect(toasts).toEqual([
+      {
+        variant: "success",
+        title: "prompt.toast.queued.title",
+        description: "prompt.toast.queued.description",
+      },
+    ])
+  })
+
+  test("keeps queued V1 follow-ups in the local queue", async () => {
+    params = { id: "session-1" }
+    serverProtocol = "v1"
+    const submit = createPromptSubmit({
+      prompt,
+      info: () => ({ id: "session-1" }),
+      imageAttachments: () => [],
+      commentCount: () => 0,
+      autoAccept: () => false,
+      mode: () => "normal",
+      working: () => true,
+      editor: () => undefined,
+      queueScroll: () => undefined,
+      promptLength: (value) => value.reduce((sum, part) => sum + ("content" in part ? part.content.length : 0), 0),
+      addToHistory: () => undefined,
+      resetHistoryNavigation: () => undefined,
+      setMode: () => undefined,
+      setPopover: () => undefined,
+      onQueue: (draft) => queuedDrafts.push(draft),
+    })
+
+    await submit.handleQueue({ preventDefault: () => undefined } as unknown as Event)
+
+    expect(queuedDrafts).toEqual([expect.objectContaining({ sessionID: "session-1" })])
+    expect(promptInputs).toEqual([])
+  })
+
+  test("reuses the admitted queue message ID after a transient delivery failure", async () => {
+    params = { id: "session-1" }
+    promptError = new Error("request timed out")
+    const submit = createPromptSubmit({
+      prompt,
+      info: () => ({ id: "session-1" }),
+      imageAttachments: () => [],
+      commentCount: () => 0,
+      autoAccept: () => false,
+      mode: () => "normal",
+      working: () => true,
+      editor: () => undefined,
+      queueScroll: () => undefined,
+      promptLength: (value) => value.reduce((sum, part) => sum + ("content" in part ? part.content.length : 0), 0),
+      addToHistory: () => undefined,
+      resetHistoryNavigation: () => undefined,
+      setMode: () => undefined,
+      setPopover: () => undefined,
+    })
+    const event = { preventDefault: () => undefined } as unknown as Event
+
+    await submit.handleQueue(event)
+    await Bun.sleep(0)
+    await submit.handleQueue(event)
+    await Bun.sleep(0)
+
+    expect(promptInputs).toHaveLength(2)
+    expect(promptInputs[0]).toMatchObject({ delivery: "queue" })
+    expect(promptInputs[1]).toMatchObject({ delivery: "queue" })
+    expect((promptInputs[1] as { id: string }).id).toBe((promptInputs[0] as { id: string }).id)
   })
 
   test("submits slash commands through the current session API", async () => {

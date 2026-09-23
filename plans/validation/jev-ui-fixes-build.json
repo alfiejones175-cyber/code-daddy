@@ -1,0 +1,100 @@
+{
+  "recordedAt": "2026-09-22T14:20:40.618587+00:00",
+  "baseCommit": "dc16b78ec0d7e7bf38da9b90fc1e536e2b4083fb",
+  "workingTree": "uncommitted UI fixes and documentation",
+  "channel": "dev",
+  "version": "1.18.31",
+  "build": "passed",
+  "package": "passed",
+  "installPath": "/Users/alfredo/Applications/Code Daddy.app",
+  "backupPath": "/Users/alfredo/Applications/Code Daddy.previous-20260922-161631.app",
+  "packagedAsarSha256": "7f0da4701902eff13f8685da9339b77d39e5ebd484d7529c958517f5bc2d9f28",
+  "installedAsarSha256": "7f0da4701902eff13f8685da9339b77d39e5ebd484d7529c958517f5bc2d9f28",
+  "startup": "passed; saved project, draft tabs, model selector and Settings appeared",
+  "nativeChecks": [
+    "13 named General switches",
+    "Settings accessible heading and container",
+    "visible manual rebuild/install update explanation"
+  ],
+  "liveProviderTurnTested": false,
+  "changedPackageFiles": [
+    {
+      "path": "packages/app/e2e/regression/remote-session-settings.spec.ts",
+      "sha256": "9c3460010707e0ed6f4d279c9fc1d58a31d6d73a44255bd51a02c4a39f729f67"
+    },
+    {
+      "path": "packages/app/e2e/regression/session-timeline-generic-tool.spec.ts",
+      "sha256": "18fb9653e4f0a61060c53fd3b9031c1cf7483ed542b3435fab5f4c28af1173da"
+    },
+    {
+      "path": "packages/app/src/components/prompt-input.tsx",
+      "sha256": "25abf8b1dd99d6667b3a3d9fcf262a39a5afadc3ceb6e3ff72818ee716ebe991"
+    },
+    {
+      "path": "packages/app/src/components/settings-general.tsx",
+      "sha256": "c47a616edf44d072b5941a461f8fb118cff823233f4d333aab4901350ad2a185"
+    },
+    {
+      "path": "packages/app/src/components/settings-v2/dialog-settings-v2.tsx",
+      "sha256": "61466d44a0ddf747c879650f7e686572d8333a6a3ebdf4af21ffe5015ba4fbbb"
+    },
+    {
+      "path": "packages/app/src/components/settings-v2/general.tsx",
+      "sha256": "4f9b90d7873480c2979a250c1137b3f5a439d53d92edfc5691c568ace8bdd4d9"
+    },
+    {
+      "path": "packages/app/src/components/settings-v2/interface-transition.tsx",
+      "sha256": "66eff9c1f3bce0206af15f6f6bbdc0189685d01e7ee4bf1755fd73f02596c431"
+    },
+    {
+      "path": "packages/app/src/components/settings-v2/settings-v2.css",
+      "sha256": "941c4e838ff415eeebb4b6024bb199b094d9277b33723af450a1d834ac1aceb4"
+    },
+    {
+      "path": "packages/app/src/components/updater-action.test.ts",
+      "sha256": "ddf0872e11beaf8cde45b0ef556e3740347d727bbe5e830be459ca9b023356bf"
+    },
+    {
+      "path": "packages/app/src/components/updater-action.ts",
+      "sha256": "b0ad96eb13afcc93cef4a6102a79024a86c337817341f42584057c997581e2c7"
+    },
+    {
+      "path": "packages/app/src/i18n/en.ts",
+      "sha256": "43e2c63567854f129b55bdcf04063ff1355d4f9f8fe924963145229d98babf51"
+    },
+    {
+      "path": "packages/app/src/i18n/parity.test.ts",
+      "sha256": "253c6a5ae3016c1f516d8269172887e4c34d6e16145c099a69a0a5996521cba3"
+    },
+    {
+      "path": "packages/app/test-browser/generic-tool-preview.tsx",
+      "sha256": "043ce3fbdd66ee43dc6a0f6d2a35453c324695c9ad79a68dd77487011d0f15d9"
+    },
+    {
+      "path": "packages/desktop/README.md",
+      "sha256": "14d0b01c4891043797926d72d666028abe4641eb2b64497eb697dc954c2c69e5"
+    },
+    {
+      "path": "packages/session-ui/src/components/basic-tool.stories.tsx",
+      "sha256": "e252ebc0431a8b04eed63cc34a6772e9826f88f6f90c9ed11a9c76ad87062c81"
+    },
+    {
+      "path": "packages/session-ui/src/components/basic-tool.test.ts",
+      "sha256": "e02cb4a25142deeb44d9953788f1c4978c123e58a4b3e1c408bd8e45fb7925e1"
+    },
+    {
+      "path": "packages/session-ui/src/components/basic-tool.tsx",
+      "sha256": "48d6a2eb69da1cfc6367b217acdcc77e0c6448817caa7de3d5b02dde46694a7f"
+    },
+    {
+      "path": "packages/session-ui/src/v2/components/prompt-input/index.tsx",
+      "sha256": "2ed0aff6ad1d1c87a04b8090c80114f28e7884159923b9bea60d7657ab43d976"
+    },
+    {
+      "path": "packages/ui/src/i18n/en.ts",
+      "sha256": "08a5381e343995f347255d78c0d39baf7a99086cf6bb31bb7b1a962892777a23"
+    }
+  ],
+  "jevRecordedSourceEntriesMatched": 12,
+  "jevUniqueSourceFilesMatched": 10
+}

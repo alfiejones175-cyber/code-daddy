@@ -4,7 +4,7 @@ Updated 22 September 2026 after the user clarified the app is for personal use a
 
 ## What changes
 
-- Remove the 61-locale translation backlog from active work. The old [audit snapshot](/Users/alfredo/Documents/code-daddy/plans/validation/localization-drift-2026-09-22.json) is historical evidence, not a list that must be completed.
+- Remove the 61-locale translation backlog from active work. The old [audit snapshot](../plans/validation/localization-drift-2026-09-22.json) is historical evidence, not a list that must be completed.
 - New features, including Jev review, need clear English copy, placeholders, accessible labels, and recovery messages. They do not need translated copies.
 - Keep the existing English dictionaries and typed `language.t(...)`, `language.plural(...)`, and native translation APIs. They already organize copy and fallback behavior; removing the infrastructure would create unnecessary work and complicate upstream changes.
 - Existing non-English dictionaries can remain as inherited assets without a completeness commitment. Do not translate, delete, or bulk-rewrite them merely to satisfy this scope change.
@@ -29,4 +29,4 @@ These only inspect dictionaries. A nonzero translation-drift result is expected 
 
 OpenCode provider access, Jev output review, session recovery, correct model/cost reporting, local-data preservation, and reliable builds for the actual machines used. English-only UI does not limit the programming languages, source files, or user documents the coding agent can handle.
 
-Use the [roadmap](/Users/alfredo/Documents/code-daddy/plans/README.md) for implementation priority. No public launch or mass distribution is planned.
+Use the [roadmap](../plans/README.md) for implementation priority. No public launch or mass distribution is planned.

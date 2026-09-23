@@ -22,6 +22,7 @@ import { Location } from "@opencode-ai/schema/location"
 import { Revert } from "@opencode-ai/schema/revert"
 import { SessionEvent } from "@opencode-ai/schema/session-event"
 import { SessionRecovery } from "@opencode-ai/schema/session-recovery"
+import { SessionGoal } from "@opencode-ai/schema/session-goal"
 
 const SessionsQueryFields = {
   parentID: Schema.NullOr(Session.ID).pipe(Schema.optional),
@@ -87,6 +88,12 @@ const SessionActive = Schema.Struct({
 }).annotate({ identifier: "SessionActive" })
 
 const SessionHistoryLimit = PositiveInt.check(Schema.isLessThanOrEqualTo(100))
+
+const SessionQueueItem = Schema.Struct({
+  id: SessionMessage.ID,
+  order: PositiveInt,
+  text: Schema.String,
+}).annotate({ identifier: "SessionQueueItem" })
 
 export const SessionHistoryQuery = Schema.Struct({
   limit: Schema.NumberFromString.pipe(Schema.decodeTo(SessionHistoryLimit), Schema.optional),
@@ -257,6 +264,102 @@ export const makeSessionGroup = <I extends HttpApiMiddleware.AnyId, S>(sessionLo
             description: "Durably admit one session input and schedule agent-loop execution unless resume is false.",
           }),
         ),
+    )
+    .add(
+      HttpApiEndpoint.get("session.queue.list", "/api/session/:sessionID/queue", {
+        params: { sessionID: Session.ID },
+        success: Schema.Struct({ data: Schema.Array(SessionQueueItem) }),
+        error: SessionNotFoundError,
+      })
+        .middleware(sessionLocationMiddleware)
+        .annotateMerge(
+          OpenApi.annotations({
+            identifier: "v2.session.queue.list",
+            summary: "List queued session prompts",
+            description: "Retrieve pending queued prompts in durable admission order.",
+          }),
+        ),
+    )
+    .add(
+      HttpApiEndpoint.delete("session.queue.cancel", "/api/session/:sessionID/queue/:messageID", {
+        params: { sessionID: Session.ID, messageID: SessionMessage.ID },
+        success: HttpApiSchema.NoContent,
+        error: [ConflictError, SessionNotFoundError],
+      })
+        .middleware(sessionLocationMiddleware)
+        .annotateMerge(
+          OpenApi.annotations({
+            identifier: "v2.session.queue.cancel",
+            summary: "Cancel queued session prompt",
+            description: "Cancel a pending queued prompt. Promoted and steering prompts cannot be cancelled.",
+          }),
+        ),
+    )
+    .add(
+      HttpApiEndpoint.get("session.goal.get", "/api/session/:sessionID/goal", {
+        params: { sessionID: Session.ID },
+        success: Schema.Struct({ data: Schema.NullOr(SessionGoal.Info) }),
+        error: SessionNotFoundError,
+      })
+        .middleware(sessionLocationMiddleware)
+        .annotateMerge(OpenApi.annotations({ identifier: "v2.session.goal.get", summary: "Get session goal" })),
+    )
+    .add(
+      HttpApiEndpoint.post("session.goal.set", "/api/session/:sessionID/goal", {
+        params: { sessionID: Session.ID },
+        payload: SessionGoal.Set,
+        success: Schema.Struct({ data: SessionGoal.Info }),
+        error: SessionNotFoundError,
+      })
+        .middleware(sessionLocationMiddleware)
+        .annotateMerge(OpenApi.annotations({ identifier: "v2.session.goal.set", summary: "Set session goal" })),
+    )
+    .add(
+      HttpApiEndpoint.post("session.goal.pause", "/api/session/:sessionID/goal/pause", {
+        params: { sessionID: Session.ID },
+        success: Schema.Struct({ data: SessionGoal.Info }),
+        error: [ConflictError, SessionNotFoundError],
+      })
+        .middleware(sessionLocationMiddleware)
+        .annotateMerge(OpenApi.annotations({ identifier: "v2.session.goal.pause", summary: "Pause session goal" })),
+    )
+    .add(
+      HttpApiEndpoint.post("session.goal.resume", "/api/session/:sessionID/goal/resume", {
+        params: { sessionID: Session.ID },
+        success: Schema.Struct({ data: SessionGoal.Info }),
+        error: [ConflictError, SessionNotFoundError],
+      })
+        .middleware(sessionLocationMiddleware)
+        .annotateMerge(OpenApi.annotations({ identifier: "v2.session.goal.resume", summary: "Resume session goal" })),
+    )
+    .add(
+      HttpApiEndpoint.post("session.goal.block", "/api/session/:sessionID/goal/block", {
+        params: { sessionID: Session.ID },
+        payload: SessionGoal.Block,
+        success: Schema.Struct({ data: SessionGoal.Info }),
+        error: [ConflictError, SessionNotFoundError],
+      })
+        .middleware(sessionLocationMiddleware)
+        .annotateMerge(OpenApi.annotations({ identifier: "v2.session.goal.block", summary: "Block session goal" })),
+    )
+    .add(
+      HttpApiEndpoint.post("session.goal.complete", "/api/session/:sessionID/goal/complete", {
+        params: { sessionID: Session.ID },
+        payload: SessionGoal.Complete,
+        success: Schema.Struct({ data: SessionGoal.Info }),
+        error: [ConflictError, SessionNotFoundError],
+      })
+        .middleware(sessionLocationMiddleware)
+        .annotateMerge(OpenApi.annotations({ identifier: "v2.session.goal.complete", summary: "Complete session goal" })),
+    )
+    .add(
+      HttpApiEndpoint.post("session.goal.clear", "/api/session/:sessionID/goal/clear", {
+        params: { sessionID: Session.ID },
+        success: Schema.Struct({ data: Schema.Null }),
+        error: SessionNotFoundError,
+      })
+        .middleware(sessionLocationMiddleware)
+        .annotateMerge(OpenApi.annotations({ identifier: "v2.session.goal.clear", summary: "Clear session goal" })),
     )
     .add(
       HttpApiEndpoint.post("session.compact", "/api/session/:sessionID/compact", {

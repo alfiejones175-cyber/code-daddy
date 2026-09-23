@@ -19,6 +19,7 @@ import { CredentialHandler } from "./handlers/credential"
 import { ProjectCopyHandler } from "./handlers/project-copy"
 import { ProjectHandler } from "./handlers/project"
 import { MCPHandler } from "./handlers/mcp"
+import { RoutineHandler } from "./handlers/routine"
 
 export const handlers = Layer.mergeAll(
   HealthHandler,
@@ -41,4 +42,5 @@ export const handlers = Layer.mergeAll(
   ProjectCopyHandler,
   ProjectHandler,
   MCPHandler,
+  RoutineHandler,
 )

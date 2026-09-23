@@ -14,6 +14,9 @@ describe("pluginPermissionDescription", () => {
     expect(pluginPermissionDescription(request("jev_rank_evidence"))).toEqual({
       key: "permission.plugin.jev.rank.description",
     })
+    expect(pluginPermissionDescription(request("jev_review_output"))).toEqual({
+      key: "permission.plugin.jev.review.description",
+    })
   })
 
   test("explains checksum-scoped V2 Jev permissions", () => {
@@ -22,6 +25,9 @@ describe("pluginPermissionDescription", () => {
     })
     expect(pluginPermissionDescription(request("plugin.jev_rank_evidence_14s5b"))).toEqual({
       key: "permission.plugin.jev.rank.description",
+    })
+    expect(pluginPermissionDescription(request("plugin.jev_review_output_14s5b"))).toEqual({
+      key: "permission.plugin.jev.review.description",
     })
     expect(pluginPermissionDescription(request("plugin.jev_triage_failure_other_extra"))).toEqual({
       key: "permission.plugin.generic.description",

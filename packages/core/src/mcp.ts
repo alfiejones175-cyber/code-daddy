@@ -57,7 +57,9 @@ export interface Interface {
   readonly disconnect: (id: MCP.ID) => Effect.Effect<MCP.Info>
   readonly reconnect: (id: MCP.ID) => Effect.Effect<MCP.Info>
   readonly test: (id: MCP.ID) => Effect.Effect<MCP.Info>
-  readonly preset: (id: "browser" | "xcode") => Effect.Effect<MCP.Info>
+  readonly preset: (id: "browser" | "xcode" | "openai-docs" | "github") => Effect.Effect<MCP.Info>
+  readonly addRemote: (input: { name: string; url: string }) => Effect.Effect<MCP.Info>
+  readonly remove: (id: MCP.ID) => Effect.Effect<MCP.Info>
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/v2/MCP") {}
@@ -391,7 +393,29 @@ const layer = Layer.effect(
           const server: Server =
             preset === "browser"
               ? new ConfigMCP.Local({ type: "local", command: ["npx", "-y", "@playwright/mcp", "--isolated"] })
-              : new ConfigMCP.Local({ type: "local", command: ["xcrun", "mcpbridge"] })
+              : preset === "xcode"
+                ? new ConfigMCP.Local({ type: "local", command: ["xcrun", "mcpbridge"] })
+                : preset === "openai-docs"
+                  ? new ConfigMCP.Remote({ type: "remote", url: "https://developers.openai.com/mcp" })
+                  : new ConfigMCP.Local({
+                      type: "local",
+                      command: [
+                        "docker",
+                        "run",
+                        "-i",
+                        "--rm",
+                        "-p",
+                        "127.0.0.1:8085:8085",
+                        "-e",
+                        "GITHUB_OAUTH_CALLBACK_PORT=8085",
+                        "-e",
+                        "GITHUB_READ_ONLY=1",
+                        "-e",
+                        "GITHUB_TOOLSETS=repos,issues,pull_requests,actions",
+                        "ghcr.io/github/github-mcp-server",
+                      ],
+                      timeout: new ConfigMCP.Timeout({ startup: 120_000 }),
+                    })
           const json = path.join(location.directory, "opencode.json")
           const jsonc = path.join(location.directory, "opencode.jsonc")
           const jsoncSource = yield* fs.readFileStringSafe(jsonc)
@@ -404,7 +428,7 @@ const layer = Layer.effect(
             return new MCP.Info({
               id,
               name: id,
-              transport: "local",
+              transport: server.type,
               state: "failed",
               error: `Cannot configure MCP preset because ${path.basename(filepath)} has invalid JSON`,
               tools: [],
@@ -417,7 +441,7 @@ const layer = Layer.effect(
             return new MCP.Info({
               id,
               name: id,
-              transport: "local",
+              transport: server.type,
               state: "configured",
               error: `MCP preset already exists in ${path.basename(filepath)}`,
               tools: [],
@@ -440,7 +464,117 @@ const layer = Layer.effect(
               new MCP.Info({
                 id: MCP.ID.make(preset),
                 name: preset,
-                transport: "local",
+                transport: preset === "openai-docs" ? "remote" : "local",
+                state: "failed",
+                error: errorText(error),
+                tools: [],
+              }),
+            ),
+          ),
+        ),
+      addRemote: (input) =>
+        Effect.gen(function* () {
+          const id = MCP.ID.make(input.name.trim())
+          const server = new ConfigMCP.Remote({ type: "remote", url: input.url.trim() })
+          if (!/^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(id))
+            return makeInfo(id, server, "failed", { error: "Invalid MCP server name" })
+          const url = URL.canParse(server.url) ? new URL(server.url) : undefined
+          if (
+            !url ||
+            !!url.username ||
+            !!url.password ||
+            (url.protocol !== "https:" &&
+              !(url.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)))
+          )
+            return makeInfo(id, server, "failed", { error: "Use an HTTPS URL, or HTTP on localhost" })
+          if (get(id)) return makeInfo(id, server, "failed", { error: "MCP server already exists" })
+          const json = path.join(location.directory, "opencode.json")
+          const jsonc = path.join(location.directory, "opencode.jsonc")
+          const jsoncSource = yield* fs.readFileStringSafe(jsonc)
+          const jsonSource = jsoncSource === undefined ? yield* fs.readFileStringSafe(json) : undefined
+          const filepath = jsoncSource === undefined ? json : jsonc
+          const source = jsoncSource ?? jsonSource ?? "{}\n"
+          const errors: ParseError[] = []
+          const current = parse(source, errors, { allowTrailingComma: true })
+          if (errors.length > 0)
+            return makeInfo(id, server, "failed", { error: `${path.basename(filepath)} has invalid JSON` })
+          const existing =
+            current &&
+            typeof current === "object" &&
+            (current as { mcp?: { servers?: Record<string, unknown> } }).mcp?.servers?.[id]
+          if (existing !== undefined) return makeInfo(id, server, "failed", { error: "MCP server already exists" })
+          yield* fs.writeWithDirs(
+            filepath,
+            applyEdits(
+              source,
+              modify(source, ["mcp", "servers", id], server, {
+                formattingOptions: { insertSpaces: true, tabSize: 2 },
+              }),
+            ),
+          )
+          const entry: Entry = { config: server, revision: 0, tools: [], info: makeInfo(id, server, "configured") }
+          entries.set(id, entry)
+          return yield* connect(id, entry)
+        }).pipe(
+          Effect.catch((error) =>
+            Effect.succeed(
+              makeInfo(MCP.ID.make(input.name), new ConfigMCP.Remote({ type: "remote", url: input.url }), "failed", {
+                error: errorText(error),
+              }),
+            ),
+          ),
+        ),
+      remove: (id) =>
+        Effect.gen(function* () {
+          const entry = get(id)
+          if (!entry) return unavailable(id)
+          const json = path.join(location.directory, "opencode.json")
+          const jsonc = path.join(location.directory, "opencode.jsonc")
+          const sources = yield* Effect.all([fs.readFileStringSafe(json), fs.readFileStringSafe(jsonc)])
+          const files = [
+            { filepath: json, source: sources[0] },
+            { filepath: jsonc, source: sources[1] },
+          ].filter((file): file is { filepath: string; source: string } => file.source !== undefined)
+          const configured = files.flatMap((file) => {
+            const errors: ParseError[] = []
+            const current = parse(file.source, errors, { allowTrailingComma: true })
+            if (errors.length > 0) return [{ ...file, error: `${path.basename(file.filepath)} has invalid JSON` }]
+            const server =
+              current &&
+              typeof current === "object" &&
+              (current as { mcp?: { servers?: Record<string, unknown> } }).mcp?.servers?.[id]
+            return server === undefined ? [] : [{ ...file }]
+          })
+          const invalid = configured.find((file) => "error" in file)
+          if (invalid && typeof invalid.error === "string")
+            return makeInfo(id, entry.config, "failed", { error: invalid.error })
+          if (configured.length === 0)
+            return makeInfo(id, entry.config, "failed", { error: "MCP server is not in the project config" })
+          yield* Effect.forEach(
+            configured,
+            (file) =>
+              fs.writeWithDirs(
+                file.filepath,
+                applyEdits(
+                  file.source,
+                  modify(file.source, ["mcp", "servers", id], undefined, {
+                    formattingOptions: { insertSpaces: true, tabSize: 2 },
+                  }),
+                ),
+              ),
+            { concurrency: 1 },
+          )
+          entry.revision += 1
+          yield* close(entry)
+          entries.delete(id)
+          return makeInfo(id, entry.config, "disabled")
+        }).pipe(
+          Effect.catch((error) =>
+            Effect.succeed(
+              new MCP.Info({
+                id,
+                name: id,
+                transport: get(id)?.config.type ?? "remote",
                 state: "failed",
                 error: errorText(error),
                 tools: [],

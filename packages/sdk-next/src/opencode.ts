@@ -2,6 +2,7 @@ import { OpenCode } from "@opencode-ai/client/effect"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { PermissionSaved } from "@opencode-ai/core/permission/saved"
+import { Routine } from "@opencode-ai/core/routine"
 import { ApplicationTools } from "@opencode-ai/core/tool/application-tools"
 import { createEmbeddedRoutes } from "@opencode-ai/server/routes"
 import { Context, Effect, Layer, Scope } from "effect"
@@ -11,7 +12,7 @@ export const create = Effect.fn("OpenCode.create")(function* () {
   const scope = yield* Scope.Scope
   const memoMap = yield* Layer.makeMemoMap
   const context = yield* Layer.buildWithMemoMap(
-    AppNodeBuilder.build(LayerNode.group([ApplicationTools.node, PermissionSaved.node])),
+    AppNodeBuilder.build(LayerNode.group([ApplicationTools.node, PermissionSaved.node, Routine.node])),
     memoMap,
     scope,
   )
@@ -29,9 +30,10 @@ export const create = Effect.fn("OpenCode.create")(function* () {
     ),
     (web) => Effect.promise(web.dispose),
   )
-  const fetch = Object.assign((input: RequestInfo | URL, init?: RequestInit) => web.handler(new Request(input, init)), {
-    preconnect: () => undefined,
-  }) satisfies typeof globalThis.fetch
+  const fetch = Object.assign(
+    (input: RequestInfo | URL, init?: RequestInit) => web.handler(new Request(input, init), context),
+    { preconnect: () => undefined },
+  ) satisfies typeof globalThis.fetch
   const client = yield* OpenCode.make({ baseUrl: "http://opencode.local" }).pipe(
     Effect.provide(FetchHttpClient.layer),
     Effect.provideService(FetchHttpClient.Fetch, fetch),

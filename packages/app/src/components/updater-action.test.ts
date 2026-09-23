@@ -22,5 +22,17 @@ describe("updaterAction", () => {
     expect(updaterAction({ status: "installing", version: "2.0.0" })).toEqual({
       label: "settings.updates.action.installing",
     })
+    expect(updaterAction({ status: "up-to-date" })).toEqual({
+      label: "settings.updates.action.checkNow",
+      run: "check",
+    })
+    expect(updaterAction({ status: "error", message: "network unavailable" })).toEqual({
+      label: "settings.updates.action.checkNow",
+      run: "check",
+    })
+    expect(updaterAction({ status: "disabled" })).toEqual({
+      label: "settings.updates.action.checkNow",
+      description: "settings.updates.row.check.disabledDescription",
+    })
   })
 })

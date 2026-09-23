@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test"
+import { describe, expect, test } from "bun:test"
 import path from "node:path"
 import { Effect, Layer } from "effect"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder"
@@ -12,6 +12,7 @@ import { SessionV2 } from "@opencode-ai/core/session"
 import { ToolRegistry } from "@opencode-ai/core/tool/registry"
 import { ToolOutputStore } from "@opencode-ai/core/tool-output-store"
 import { location } from "./fixture/location"
+import { tmpdir } from "./fixture/tmpdir"
 import { testEffect } from "./lib/effect"
 import { executeTool, toolIdentity, toolDefinitions } from "./lib/tool"
 import { AbsolutePath } from "@opencode-ai/core/schema"
@@ -22,7 +23,10 @@ type MCPServer = typeof ConfigMCP.Server.Type
 const permission = Layer.succeed(
   PermissionV2.Service,
   PermissionV2.Service.of({
-    assert: (input) => (input.sessionID === SessionV2.ID.make("ses_mcp_denied") ? Effect.fail(new PermissionV2.BlockedError({ rules: [] })) : Effect.void),
+    assert: (input) =>
+      input.sessionID === SessionV2.ID.make("ses_mcp_denied")
+        ? Effect.fail(new PermissionV2.BlockedError({ rules: [] }))
+        : Effect.void,
     ask: () => Effect.die("unused"),
     reply: () => Effect.die("unused"),
     get: () => Effect.die("unused"),
@@ -34,7 +38,7 @@ const locationLayer = Layer.succeed(
   Location.Service,
   Location.Service.of(location({ directory: AbsolutePath.make(process.cwd()) })),
 )
-const makeLayer = (server: MCPServer) => {
+const makeLayer = (server: MCPServer, directory?: AbsolutePath) => {
   const config = Layer.succeed(
     Config.Service,
     Config.Service.of({
@@ -47,17 +51,58 @@ const makeLayer = (server: MCPServer) => {
         ]),
     }),
   )
-  return AppNodeBuilder.build(LayerNode.group([MCP.node, ToolRegistry.node, ToolRegistry.toolsNode, ToolOutputStore.node]), [
-    [Config.node, config],
-    [Location.node, locationLayer],
-    [PermissionV2.node, permission],
-  ])
+  return AppNodeBuilder.build(
+    LayerNode.group([MCP.node, ToolRegistry.node, ToolRegistry.toolsNode, ToolOutputStore.node]),
+    [
+      [Config.node, config],
+      [
+        Location.node,
+        directory ? Layer.succeed(Location.Service, Location.Service.of(location({ directory }))) : locationLayer,
+      ],
+      [PermissionV2.node, permission],
+    ],
+  )
 }
-const layer = makeLayer(new ConfigMCP.Local({ type: "local", command: ["bun", serverPath], environment: { MCP_CALL_COUNT_FILE: countFile } }))
+const layer = makeLayer(
+  new ConfigMCP.Local({ type: "local", command: ["bun", serverPath], environment: { MCP_CALL_COUNT_FILE: countFile } }),
+)
 const it = testEffect(layer)
 const sessionID = SessionV2.ID.make("ses_mcp_adapter_test")
 
 describe("MCP adapter", () => {
+  test("adds and removes remote servers without replacing unrelated project settings", async () => {
+    await using tmp = await tmpdir()
+    await Bun.write(path.join(tmp.path, "opencode.jsonc"), '{"theme":"dark","mcp":{"servers":{}}}\n')
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const mcp = yield* MCP.Service
+        const added = yield* mcp.addRemote({ name: "example", url: "http://localhost:1/mcp" })
+        expect(String(added.id)).toBe("example")
+        expect((yield* mcp.list()).some((item) => item.id === "example")).toBe(true)
+        const configured = yield* Effect.promise(() => Bun.file(path.join(tmp.path, "opencode.jsonc")).json())
+        expect(configured.theme).toBe("dark")
+        expect(configured.mcp.servers.example.url).toBe("http://localhost:1/mcp")
+        yield* Effect.promise(() =>
+          Bun.write(
+            path.join(tmp.path, "opencode.json"),
+            JSON.stringify({ mcp: { servers: { example: configured.mcp.servers.example } } }),
+          ),
+        )
+        yield* Effect.promise(() => Bun.write(path.join(tmp.path, "opencode.jsonc"), '{"theme":"dark"}\n'))
+        const removed = yield* mcp.remove(added.id)
+        expect(removed.state).toBe("disabled")
+        const current = yield* Effect.promise(() => Bun.file(path.join(tmp.path, "opencode.jsonc")).json())
+        expect(current.theme).toBe("dark")
+        const json = yield* Effect.promise(() => Bun.file(path.join(tmp.path, "opencode.json")).json())
+        expect(json.mcp.servers.example).toBeUndefined()
+      }).pipe(
+        Effect.scoped,
+        Effect.provide(
+          makeLayer(new ConfigMCP.Local({ type: "local", command: ["bun", serverPath] }), AbsolutePath.make(tmp.path)),
+        ),
+      ),
+    )
+  })
   it.live("discovers schemas and executes text and image content over stdio", () =>
     Effect.gen(function* () {
       yield* Effect.promise(() => Bun.write(countFile, "0"))
@@ -75,7 +120,10 @@ describe("MCP adapter", () => {
       expect(echoDefinition?.inputSchema).toMatchObject({
         type: "object",
         required: ["message"],
-        properties: { message: { type: "string", minLength: 1, enum: ["hello", "world"] }, count: { minimum: 1, maximum: 3 } },
+        properties: {
+          message: { type: "string", minLength: 1, enum: ["hello", "world"] },
+          count: { minimum: 1, maximum: 3 },
+        },
       })
       const echo = yield* executeTool(registry, {
         sessionID,
@@ -101,7 +149,13 @@ describe("MCP adapter", () => {
       yield* mcp.disconnect(info!.id)
       expect((yield* mcp.list())[0]?.state).toBe("configured")
       expect((yield* toolDefinitions(registry)).map((tool) => tool.name)).toEqual([])
-      expect((yield* materialized.settle({ sessionID, ...toolIdentity, call: { type: "tool-call", id: "call-stale", name: info!.tools[0]!.name, input: { message: "hello" } } }))).toMatchObject({ result: { type: "error" } })
+      expect(
+        yield* materialized.settle({
+          sessionID,
+          ...toolIdentity,
+          call: { type: "tool-call", id: "call-stale", name: info!.tools[0]!.name, input: { message: "hello" } },
+        }),
+      ).toMatchObject({ result: { type: "error" } })
     }),
   )
 
@@ -129,7 +183,15 @@ describe("MCP adapter", () => {
         call: { type: "tool-call", id: "call-denied", name: echo, input: { message: "hello" } },
       })
       expect(denied).toMatchObject({ type: "error", value: expect.stringContaining("Permission denied") })
-      expect(Number(yield* Effect.promise(() => Bun.file(countFile).text().catch(() => "0")))).toBe(0)
+      expect(
+        Number(
+          yield* Effect.promise(() =>
+            Bun.file(countFile)
+              .text()
+              .catch(() => "0"),
+          ),
+        ),
+      ).toBe(0)
     }),
   )
 

@@ -1,7 +1,7 @@
 import { define } from "@opencode-ai/plugin/v2/effect"
 import { Effect } from "effect"
-import { rankEvidence, triageFailure } from "./evaluator"
-import { RankInput, RankResult, TriageInput, TriageResult } from "./schema"
+import { rankEvidence, reviewOutput, triageFailure } from "./evaluator"
+import { RankInput, RankResult, ReviewInput, ReviewResult, TriageInput, TriageResult } from "./schema"
 import { loadSettings } from "./settings"
 
 export default define({
@@ -30,6 +30,18 @@ export default define({
           output: RankResult,
           execute: (input) =>
             Effect.tryPromise(async (signal) => rankEvidence(input, { ...(await loadSettings()), signal })),
+        },
+      })
+      yield* host.tool.register({
+        review_output: {
+          description:
+            "Review one completed response against explicit requirements and small, redacted evidence excerpts. " +
+            "Returns typed advisory findings with source digests; it cannot establish that a test passed or approve actions. " +
+            "Use the actual project, session, and message IDs and do not send secrets.",
+          input: ReviewInput,
+          output: ReviewResult,
+          execute: (input) =>
+            Effect.tryPromise(async (signal) => reviewOutput(input, { ...(await loadSettings()), signal })),
         },
       })
     }),

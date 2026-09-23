@@ -16,6 +16,10 @@ function createPromptInputStoryRuntime() {
         event.preventDefault()
         state.reset()
       },
+      handleQueue(event: Event) {
+        event.preventDefault()
+        state.reset()
+      },
     },
   }
 }

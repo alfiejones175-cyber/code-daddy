@@ -10,7 +10,7 @@ import { useLanguage } from "@/context/language"
 import { useLayout } from "@/context/layout"
 import { useLocal, type ModelSelection } from "@/context/local"
 import { usePermission } from "@/context/permission"
-import { type ContextItem, type ImageAttachmentPart, type Prompt, type usePrompt } from "@/context/prompt"
+import { isPromptEqual, type ContextItem, type ImageAttachmentPart, type Prompt, type usePrompt } from "@/context/prompt"
 import { useSDK, type DirectorySDK } from "@/context/sdk"
 import { useSync, type DirectorySync } from "@/context/sync"
 import { Identifier } from "@/utils/id"
@@ -41,12 +41,15 @@ export type FollowupDraft = {
   variant?: string
 }
 
+type QueuedRetry = Pick<FollowupDraft, "sessionID" | "prompt" | "context"> & { messageID: string }
+
 type FollowupSendInput = {
   api: DirectorySDK["api"]["session"]
   serverSync: ServerSync
   sync: DirectorySync
   draft: FollowupDraft
   messageID?: string
+  delivery?: "steer" | "queue"
   optimisticBusy?: boolean
   before?: () => Promise<boolean> | boolean
 }
@@ -76,7 +79,7 @@ export async function sendFollowupDraft(input: FollowupSendInput) {
 
   const [head, ...tail] = text.split(" ")
   const cmd = head?.startsWith("/") ? head.slice(1) : undefined
-  if (cmd && input.sync.data.command.find((item) => item.name === cmd)) {
+  if (cmd && input.delivery !== "queue" && input.sync.data.command.find((item) => item.name === cmd)) {
     setBusy()
     try {
       if (!(await wait())) {
@@ -153,14 +156,14 @@ export async function sendFollowupDraft(input: FollowupSendInput) {
 
   batch(() => {
     setBusy()
-    add()
+    if (input.delivery !== "queue") add()
   })
 
   try {
     if (!(await wait())) {
       batch(() => {
         setIdle()
-        remove()
+        if (input.delivery !== "queue") remove()
       })
       return false
     }
@@ -196,12 +199,13 @@ export async function sendFollowupDraft(input: FollowupSendInput) {
             ]
           : [],
       ),
+      delivery: input.delivery,
     })
     return true
   } catch (err) {
     batch(() => {
       setIdle()
-      remove()
+      if (input.delivery !== "queue") remove()
     })
     throw err
   }
@@ -226,6 +230,7 @@ type PromptSubmitInput = {
   onNewSessionWorktreeReset?: () => void
   shouldQueue?: Accessor<boolean>
   onQueue?: (draft: FollowupDraft) => void
+  onQueueSubmitted?: () => void
   onAbort?: () => void
   onSubmit?: () => void
   model?: ModelSelection
@@ -245,6 +250,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
   const [search] = useSearchParams<{ draftId?: string }>()
   const tabs = useTabs()
   const pendingKey = (sessionID: string) => ScopedKey.from(sdk().scope, sessionID)
+  let queuedRetry: QueuedRetry | undefined
 
   const errorMessage = (err: unknown) => {
     if (err && typeof err === "object" && "message" in err && typeof err.message === "string") return err.message
@@ -320,7 +326,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
     })
   }
 
-  const handleSubmit = async (event: Event) => {
+  const handle = async (delivery: "steer" | "queue", event: Event) => {
     event.preventDefault()
 
     const target = prompt.capture()
@@ -336,7 +342,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
     const mode = input.mode()
 
     if (text.trim().length === 0 && images.length === 0 && input.commentCount() === 0) {
-      if (input.working()) void abort()
+      if (delivery === "steer" && input.working()) void abort()
       return
     }
 
@@ -484,10 +490,53 @@ export function createPromptSubmit(input: PromptSubmitInput) {
       return true
     }
 
-    if (!isNewSession && mode === "normal" && input.shouldQueue?.()) {
-      input.onQueue?.(draft)
+    const queue = delivery === "queue" || input.shouldQueue?.()
+    if (!isNewSession && mode === "normal" && queue) {
+      if ((await sdk().protocol) === "v1") {
+        if (!input.onQueue) return
+        input.onQueue?.(draft)
+        clearContext(submission.target())
+        clearInput()
+        return
+      }
+
+      const retry = queuedRetry
+      const messageID =
+        retry && retry.sessionID === draft.sessionID && isPromptEqual(retry.prompt, draft.prompt) && isContextEqual(retry.context, draft.context)
+          ? retry.messageID
+          : Identifier.ascending("message")
+      queuedRetry = undefined
       clearContext(submission.target())
       clearInput()
+      void sendFollowupDraft({
+        api: sdk().api.session,
+        sync: sync(),
+        serverSync: serverSync(),
+        draft,
+        messageID,
+        delivery: "queue",
+      })
+        .then(() => {
+          input.onQueueSubmitted?.()
+          showToast({
+            variant: "success",
+            title: language.t("prompt.toast.queued.title"),
+            description: language.t("prompt.toast.queued.description"),
+          })
+        })
+        .catch((err) => {
+          queuedRetry = {
+            sessionID: draft.sessionID,
+            messageID,
+            prompt: draft.prompt,
+            context: draft.context,
+          }
+          showToast({
+            title: language.t("prompt.toast.promptSendFailed.title"),
+            description: errorMessage(err),
+          })
+          if (restoreInput()) restoreCommentItems(submission.target(), context)
+        })
       return
     }
 
@@ -645,6 +694,28 @@ export function createPromptSubmit(input: PromptSubmitInput) {
 
   return {
     abort,
-    handleSubmit,
+    handleSubmit: (event: Event) => handle("steer", event),
+    handleQueue: (event: Event) => handle("queue", event),
   }
+}
+
+function isContextEqual(
+  first: (ContextItem & { key: string })[],
+  second: (ContextItem & { key: string })[],
+) {
+  if (first.length !== second.length) return false
+  return first.every((item, index) => {
+    const other = second[index]
+    return (
+      item.path === other.path &&
+      item.comment === other.comment &&
+      item.commentID === other.commentID &&
+      item.commentOrigin === other.commentOrigin &&
+      item.preview === other.preview &&
+      item.selection?.startLine === other.selection?.startLine &&
+      item.selection?.startChar === other.selection?.startChar &&
+      item.selection?.endLine === other.selection?.endLine &&
+      item.selection?.endChar === other.selection?.endChar
+    )
+  })
 }

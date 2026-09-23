@@ -10,6 +10,7 @@
 - English is the only required UI language. Do not expand or repair non-English translations unless explicitly requested. Keep the existing English dictionary and typed copy APIs; removing inherited locale infrastructure is not required.
 - Prioritize working provider access, Jev review, reliable sessions, and preserving local data. Public distribution and multilingual acceptance are outside the current scope.
 - Read `documentation/localization.md` for language/test scope and `plans/README.md` for current priorities.
+- After every desktop runtime or UI addition/fix, rebuild, package, and install the local dev app before calling the installed app current. Follow `documentation/desktop-updates.md`.
 
 ## Branch Names
 

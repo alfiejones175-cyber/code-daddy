@@ -1,6 +1,6 @@
 # Development documentation
 
-Start with the [current roadmap](/Users/alfredo/Documents/code-daddy/plans/README.md). The app is for the owner and a few friends, with English as the only required language. Priorities are OpenCode free-model access, reliable development checks, and Jev output review. Multilingual support and public-launch preparation are outside the current scope.
+Start with the [current roadmap](../plans/README.md). The app is for the owner and a few friends, with English as the only required language. Priorities are OpenCode free-model access, reliable development checks, and Jev output review. Multilingual support and public-launch preparation are outside the current scope.
 
 This is a locally maintained OpenCode-based workspace. The development desktop currently displays **Code Daddy**; the desired release direction remains **OpenCode**. Product naming, provider access, and update ownership are separate decisions. No package identity or model configuration was changed by this documentation update.
 
@@ -8,18 +8,21 @@ This is a locally maintained OpenCode-based workspace. The development desktop c
 
 | Need | Start here | Status / purpose |
 | --- | --- | --- |
-| Next implementation work | [Roadmap](/Users/alfredo/Documents/code-daddy/plans/README.md) | Current priorities and acceptance criteria |
-| Run, build, and contribute | [Contributing](/Users/alfredo/Documents/code-daddy/CONTRIBUTING.md), [desktop setup](/Users/alfredo/Documents/code-daddy/packages/desktop/README.md), [app setup](/Users/alfredo/Documents/code-daddy/packages/app/README.md) | Development commands; root installation/download links describe upstream distributions |
-| Editing and test rules | [Repository instructions](/Users/alfredo/Documents/code-daddy/AGENTS.md) and package-local `AGENTS.md` files | Operating constraints; run tests/typechecks from package directories |
-| Understand language requirements | [English-only scope](/Users/alfredo/Documents/code-daddy/documentation/localization.md) | English copy and test requirements; historical translation backlog is out of scope |
-| Configure or test Jev | [Jev package README](/Users/alfredo/Documents/code-daddy/packages/jev/README.md) | Implemented commands, settings, supported inputs, and limitations |
-| Build Jev output review | [Jev integration plan](/Users/alfredo/Documents/code-daddy/plans/jev-integration.md) | Current implementation versus proposed app integration |
-| Understand session execution | [Runtime concepts](/Users/alfredo/Documents/code-daddy/CONTEXT.md), [V2 session contract](/Users/alfredo/Documents/code-daddy/specs/v2/session.md) | Vocabulary, invariants, implemented behavior, and migration gaps |
-| Understand other V2 boundaries | [Configuration](/Users/alfredo/Documents/code-daddy/specs/v2/config.md), [provider/model](/Users/alfredo/Documents/code-daddy/specs/v2/provider-model.md), [tools](/Users/alfredo/Documents/code-daddy/specs/v2/tools.md), [instructions](/Users/alfredo/Documents/code-daddy/specs/v2/instructions.md), [provider policy](/Users/alfredo/Documents/code-daddy/specs/v2/provider-policy.md) | Architecture references; verify partial/missing claims against current code before implementation |
-| Review project and storage designs | [Projects](/Users/alfredo/Documents/code-daddy/specs/project.md), [TUI package](/Users/alfredo/Documents/code-daddy/specs/tui-package.md), [storage design](/Users/alfredo/Documents/code-daddy/specs/storage/effect-sqlite-package.md), [storage migration proposal](/Users/alfredo/Documents/code-daddy/specs/storage/remove-opencode-db.md) | Domain-specific design references |
-| Understand current risks | [Workspace review](/Users/alfredo/Documents/code-daddy/plans/007-workspace-review.md) | Dated findings and tests; not a continuously updated release certificate |
-| Find previous feature work | [Plan index](/Users/alfredo/Documents/code-daddy/plans/README.md) | Links to implementation records, historical plans, and their acceptance limits |
-| Inspect Jev audit evidence | [Core audit](/Users/alfredo/Documents/code-daddy/plans/validation/jev-audit-core.md), [platform audit](/Users/alfredo/Documents/code-daddy/plans/validation/jev-audit-platform.md), [response diagnostic](/Users/alfredo/Documents/code-daddy/plans/validation/jev-audit-response-diagnostic.md) | Dated investigations; candidate findings need source/test confirmation |
+| Next implementation work | [Roadmap](../plans/README.md) | Current priorities and acceptance criteria |
+| Codex-style workflows | [Codex workflow plan](../plans/codex-alignment.md) | Implemented source slices, installed-app limits, Sentry privacy choice, and remaining acceptance gaps |
+| Run, build, and contribute | [Contributing](../CONTRIBUTING.md), [desktop setup](../packages/desktop/README.md), [app setup](../packages/app/README.md) | Development commands; root installation/download links describe upstream distributions |
+| Update the installed local desktop app | [Desktop update workflow](desktop-updates.md) | Required rebuild, package, install, and provenance checks for Code Daddy development builds |
+| Editing and test rules | [Repository instructions](../AGENTS.md) and package-local `AGENTS.md` files | Operating constraints; run tests/typechecks from package directories |
+| Understand language requirements | [English-only scope](localization.md) | English copy and test requirements; historical translation backlog is out of scope |
+| Configure or test Jev | [Jev package README](../packages/jev/README.md) | Implemented commands, settings, supported inputs, and limitations |
+| Review UI consistency | [UI fixes and verification](../plans/jev-ui-fixes.md), [original Jev review](../plans/jev-ui-review.md) | Six repaired findings, browser/native checks, Jev assessments, and installed-build verification |
+| Use or evaluate Jev output review | [Jev integration plan](../plans/jev-integration.md) | Explicit review flow, current validation, and later milestones |
+| Understand session execution | [Runtime concepts](../CONTEXT.md), [V2 session contract](../specs/v2/session.md) | Vocabulary, invariants, implemented behavior, and migration gaps |
+| Understand other V2 boundaries | [Configuration](../specs/v2/config.md), [provider/model](../specs/v2/provider-model.md), [tools](../specs/v2/tools.md), [instructions](../specs/v2/instructions.md), [provider policy](../specs/v2/provider-policy.md) | Architecture references; verify partial/missing claims against current code before implementation |
+| Review project and storage designs | [Projects](../specs/project.md), [TUI package](../specs/tui-package.md), [storage design](../specs/storage/effect-sqlite-package.md), [storage migration proposal](../specs/storage/remove-opencode-db.md) | Domain-specific design references |
+| Understand current risks | [Workspace review](../plans/007-workspace-review.md) | Dated findings and tests; not a continuously updated release certificate |
+| Find previous feature work | [Plan index](../plans/README.md) | Links to implementation records, historical plans, and their acceptance limits |
+| Inspect Jev audit evidence | [Core audit](../plans/validation/jev-audit-core.md), [platform audit](../plans/validation/jev-audit-platform.md), [response diagnostic](../plans/validation/jev-audit-response-diagnostic.md) | Dated investigations; candidate findings need source/test confirmation |
 
 ## Keep documentation useful
 

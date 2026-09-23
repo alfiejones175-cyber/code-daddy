@@ -2,13 +2,15 @@
 
 Researched September 22, 2026. Research used three subagents for official documentation, repository architecture, and automation/testing review. The design below is the research baseline; the initial implementation is described next. Live synthetic validation has now passed; no real-world accuracy benchmark has been run.
 
-**Current priority, September 22:** the user is testing Jev and wants it integrated into the app to help review outputs. Next build explicit output review, followed by optional review on completion after evaluation. Skill suggestions and action selection remain later experiments. See the [workspace roadmap](/Users/alfredo/Documents/code-daddy/plans/README.md) and [documentation map](/Users/alfredo/Documents/code-daddy/documentation/README.md). No app output-review control has shipped yet.
+**Current priority, September 23:** explicit output review is implemented in the working tree. Complete browser and installed-app acceptance, then collect real labeled examples before considering automatic review. Skill suggestions and action selection remain later experiments. See the [workspace roadmap](README.md) and [documentation map](../documentation/README.md).
+
+The September 23 [validation record](validation/jev-output-review.md) covers deterministic fixtures, build and install hashes, and installed-app startup. A live completed-session review and real quality evaluation remain outstanding.
 
 **Audience/language scope:** this is a private app for the owner and a few friends, with English as the only required UI language. Use real tasks from this group to evaluate usefulness. Keep bounded, trustworthy review results, but do not add multilingual evaluation, public onboarding, or enterprise rollout work. This does not restrict which programming languages or documents the coding agent can work with.
 
 ## Initial implementation
 
-The [Jev package](/Users/alfredo/Documents/code-daddy/packages/jev/README.md) now contains the shared evaluator, private settings reader, CLI, and two advisory plugin operations. The repository plugin entry supports both legacy sessions used by the current desktop and the V2 registry. Both paths reuse the evaluator and preserve their existing permission mechanisms. The CLI includes synthetic examples and a separate live evaluation command; normal test execution remains deterministic. Future skill suggestions and computer-control pilots remain proposed work.
+The [Jev package](../packages/jev/README.md) now contains the shared evaluator, private settings reader, CLI, and three advisory plugin operations. The repository plugin entry supports both legacy sessions used by the current desktop and the V2 registry. Both paths reuse the evaluator and preserve their existing permission mechanisms. The app also offers explicit review through a legacy session endpoint, which persists a bounded review record and marks it stale when response text changes. The CLI includes synthetic examples and a separate live evaluation command; normal test execution remains deterministic. Future skill suggestions and computer-control pilots remain proposed work.
 
 Put the TypeSafe API key in `~/.config/code-daddy/jev.env` as `TYPESAFE_API_KEY=...`, then run `bun run jev check` and `bun run jev smoke` from `packages/jev`. Full setup, commands, input limits, and evaluation limitations are in the package README. The private file lives outside the repository.
 
@@ -16,19 +18,19 @@ Live validation on September 22 used `jev-1.13.0` and question revision `jev-pil
 
 ## Recommendation
 
-Keep the reusable evaluator in the backend or local analysis process. Failure triage and research relevance are implemented. Next add narrow output-review criteria and an app flow exposing the reviewed evidence and result. Expand to skill suggestions and browser action selection only after measuring usefulness on this project's examples.
+Keep the reusable evaluator in the backend or local analysis process. Failure triage, research relevance, narrow output-review criteria, and an explicit app review flow are implemented. Next evaluate review quality on real examples and verify the browser and installed-app flow. Expand to skill suggestions and browser action selection only after measuring usefulness on this project's examples.
 
 ## App integration roadmap
 
-The [package README](/Users/alfredo/Documents/code-daddy/packages/jev/README.md) owns implemented commands and settings. The operations and controls below are proposals, not existing CLI commands or API endpoints.
+The [package README](../packages/jev/README.md) owns implemented commands and settings. J2 and the explicit J3 flow now exist in the working tree. Their acceptance criteria below remain the validation target; J1 and J4 remain proposed work.
 
 ### J1 — Evaluate the ongoing tests
 
-Review the saved [Core audit](/Users/alfredo/Documents/code-daddy/plans/validation/jev-audit-core.md) and [platform audit](/Users/alfredo/Documents/code-daddy/plans/validation/jev-audit-platform.md). Confirm candidates through source and deterministic reproduction; distinguish intentional migration gaps from regressions. Preserve original evidence and record disposition separately.
+Review the saved [Core audit](validation/jev-audit-core.md) and [platform audit](validation/jev-audit-platform.md). Confirm candidates through source and deterministic reproduction; distinguish intentional migration gaps from regressions. Preserve original evidence and record disposition separately.
 
 Add real labeled cases of incomplete answers, unsupported completion claims, useful answers, and insufficient evidence. Reserve an untouched holdout; compare Jev-assisted review with the existing workflow and simple checks. Ten synthetic examples are not enough to establish production quality.
 
-The [response diagnostic](/Users/alfredo/Documents/code-daddy/plans/validation/jev-audit-response-diagnostic.md) records an `invalid_response` that did not recur in two later calls. If it recurs, record only a sanitized validation category such as `answer_ids`, `score_shape`, or `probability_distribution`. Preserve strict validation. Unavailable is neither a finding nor a successful review.
+The [response diagnostic](validation/jev-audit-response-diagnostic.md) records an `invalid_response` that did not recur in two later calls. If it recurs, record only a sanitized validation category such as `answer_ids`, `score_shape`, or `probability_distribution`. Preserve strict validation. Unavailable is neither a finding nor a successful review.
 
 Acceptance: cases have provenance and expected outcomes; uncertain cases remain identifiable; deterministic tests require no live model calls.
 
@@ -90,13 +92,13 @@ The preferred Code Daddy integration is an external V2 plugin with a small numbe
 
 | Existing component | Evidence | Integration implication |
 | --- | --- | --- |
-| System One proxy | [provider adapter](/Users/alfredo/Documents/code-daddy/packages/console/app/src/routes/zen/util/provider/systemone.ts:8), [HTTP route](/Users/alfredo/Documents/code-daddy/packages/console/app/src/routes/zen/systemone/v1/systemone.ts:4) | Console has transport support; this does not make Jev an agent model |
-| External plugin discovery | [plugin loader](/Users/alfredo/Documents/code-daddy/packages/core/src/config/plugin/external.ts:32) | Use an installable extension rather than changing the runner |
-| Plugin tool registration | [host bridge](/Users/alfredo/Documents/code-daddy/packages/core/src/plugin/host.ts:223) | Existing bridge registers canonical tools and checks PermissionV2 |
-| V2 plugin dependencies | [PluginV2](/Users/alfredo/Documents/code-daddy/packages/core/src/plugin.ts:172) | Plugin tools use the Location-scoped registry and permission services |
-| Durable tool execution | [runner materialization](/Users/alfredo/Documents/code-daddy/packages/core/src/session/runner/llm.ts:225), [tool settlement](/Users/alfredo/Documents/code-daddy/packages/core/src/session/runner/llm.ts:272) | Advice enters the normal recorded tool-result path |
-| Skill availability | [skill guidance](/Users/alfredo/Documents/code-daddy/packages/core/src/skill/guidance.ts:40), [skill loader](/Users/alfredo/Documents/code-daddy/packages/core/src/tool/skill.ts:57) | Restrict recommendations to available, permitted skills |
-| Existing verification | [plugin tool tests](/Users/alfredo/Documents/code-daddy/packages/core/test/plugin/tool.test.ts:14) | Extend existing registration, permission, execution, and disposal coverage when implementing |
+| System One proxy | [provider adapter](../packages/console/app/src/routes/zen/util/provider/systemone.ts#L8), [HTTP route](../packages/console/app/src/routes/zen/systemone/v1/systemone.ts#L4) | Console has transport support; this does not make Jev an agent model |
+| External plugin discovery | [plugin loader](../packages/core/src/config/plugin/external.ts#L32) | Use an installable extension rather than changing the runner |
+| Plugin tool registration | [host bridge](../packages/core/src/plugin/host.ts#L223) | Existing bridge registers canonical tools and checks PermissionV2 |
+| V2 plugin dependencies | [PluginV2](../packages/core/src/plugin.ts#L172) | Plugin tools use the Location-scoped registry and permission services |
+| Durable tool execution | [runner materialization](../packages/core/src/session/runner/llm.ts#L225), [tool settlement](../packages/core/src/session/runner/llm.ts#L272) | Advice enters the normal recorded tool-result path |
+| Skill availability | [skill guidance](../packages/core/src/skill/guidance.ts#L40), [skill loader](../packages/core/src/tool/skill.ts#L57) | Restrict recommendations to available, permitted skills |
+| Existing verification | [plugin tool tests](../packages/core/test/plugin/tool.test.ts#L14) | Extend existing registration, permission, execution, and disposal coverage when implementing |
 
 Proposed module responsibilities: a transport module calls TypeSafe; a question module owns versioned rubrics; a plugin facade exposes the initial operations; a CLI uses the same evaluator for test artifacts. Final packaging should follow the existing external plugin format. Start with failure triage and evidence ranking; add other operations only when their evaluations justify them.
 
@@ -104,9 +106,9 @@ A skill alone supplies instructions, not an API client or tool. The official Typ
 
 Preserve the repository's dependency direction and Location scoping. Do not move decisions into prompt admission or SessionExecution, alter queue/steer behavior, replace `llm.stream`, or inject advice directly into durable context epochs. The existing tool result path supplies the next turn's context. No public Protocol/HttpApi change is needed for this pilot; if later UI work changes those contracts, regenerate Client using the repository instructions.
 
-The most concrete pilot consumes existing test artifacts. [Playwright configuration](/Users/alfredo/Documents/code-daddy/packages/app/playwright.config.ts:10) already captures traces, screenshots, and video. [Error collection](/Users/alfredo/Documents/code-daddy/packages/app/e2e/utils/errors.ts:3) and the [visual stability reporter](/Users/alfredo/Documents/code-daddy/packages/app/e2e/utils/visual-stability/reporter.ts:13) provide useful text/JSON inputs. Preserve the [deterministic analyzer](/Users/alfredo/Documents/code-daddy/packages/app/e2e/utils/visual-stability/analyzer.ts:36) as the test oracle. The [E2E policy](/Users/alfredo/Documents/code-daddy/packages/app/e2e/AGENTS.md:8) requires isolated deterministic data and exact outcomes, so live Jev evaluation belongs in a separate optional artifact-analysis command, not the normal assertion path or required CI.
+The most concrete pilot consumes existing test artifacts. [Playwright configuration](../packages/app/playwright.config.ts#L10) already captures traces, screenshots, and video. [Error collection](../packages/app/e2e/utils/errors.ts#L3) and the [visual stability reporter](../packages/app/e2e/utils/visual-stability/reporter.ts#L13) provide useful text/JSON inputs. Preserve the [deterministic analyzer](../packages/app/e2e/utils/visual-stability/analyzer.ts#L36) as the test oracle. The [E2E policy](../packages/app/e2e/AGENTS.md#L8) requires isolated deterministic data and exact outcomes, so live Jev evaluation belongs in a separate optional artifact-analysis command, not the normal assertion path or required CI.
 
-Desktop automation needs more groundwork: the current [desktop scripts](/Users/alfredo/Documents/code-daddy/packages/desktop/package.json:13) provide build/package workflows but no native Electron E2E command. Existing tests cover extracted logic, such as [window persistence](/Users/alfredo/Documents/code-daddy/packages/desktop/src/main/window-registry.test.ts:17). Build an accessibility/text observation harness or Electron automation harness before attaching Jev. Keep credentials outside the renderer and preserve the existing preload/IPC boundary. This investigation found no ready Jev browser or desktop controller.
+Desktop automation needs more groundwork: the current [desktop scripts](../packages/desktop/package.json#L13) provide build/package workflows but no native Electron E2E command. Existing tests cover extracted logic, such as [window persistence](../packages/desktop/src/main/window-registry.test.ts#L17). Build an accessibility/text observation harness or Electron automation harness before attaching Jev. Keep credentials outside the renderer and preserve the existing preload/IPC boundary. This investigation found no ready Jev browser or desktop controller.
 
 ## Ranked uses
 
@@ -173,8 +175,8 @@ Keep results advisory while collecting evidence. Promote only operations that im
 ## Delivery sequence
 
 1. **Implemented:** shared evaluator, CLI, local fixtures, and separate live synthetic evaluation.
-2. **Implemented tools; broader UI integration pending:** advisory failure triage and research ranking in legacy and V2 plugin paths.
-3. **Next:** complete J1–J3 above: real evaluation examples, output-review operation, explicit app flow, and editable follow-up.
+2. **Implemented:** advisory failure triage, research ranking, and output review in legacy and V2 plugin paths.
+3. **Implemented in source; acceptance pending:** explicit app review of a completed response, typed findings, persisted provenance, stale detection, and editable follow-up. J1 real evaluation examples remain next.
 4. **After measurement:** J4 optional review on task completion; evaluate a Zen transport separately.
 5. **Later:** skill suggestions, bounded browser pilot, then desktop observation if justified.
 

@@ -111,7 +111,13 @@ export const make = Effect.fn("PluginHost.make")(function* (plugin: PluginV2.Int
         active: (id) => integration.connection.active(Integration.ID.make(id)),
         resolve: (connection) =>
           integration.connection.resolve(
-            connection.type === "credential" ? { ...connection, id: Credential.ID.make(connection.id) } : connection,
+            connection.type === "credential"
+              ? {
+                  ...connection,
+                  id: Credential.ID.make(connection.id),
+                  methodID: connection.methodID ? Integration.MethodID.make(connection.methodID) : undefined,
+                }
+              : connection,
           ),
       },
       transform: (callback) =>

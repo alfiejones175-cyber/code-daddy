@@ -98,6 +98,16 @@ export const PromptAdmitted = Event.define({
 })
 export type PromptAdmitted = typeof PromptAdmitted.Type
 
+export const PromptCancelled = Event.define({
+  type: "session.next.prompt.cancelled",
+  ...options,
+  schema: {
+    ...Base,
+    messageID: SessionMessage.ID,
+  },
+})
+export type PromptCancelled = typeof PromptCancelled.Type
+
 export const ContextUpdated = Event.define({
   type: "session.next.context.updated",
   ...options,
@@ -451,6 +461,7 @@ export const DurableDefinitions = Event.inventory(
   Moved,
   Prompted,
   PromptAdmitted,
+  PromptCancelled,
   ContextUpdated,
   Synthetic,
   Shell.Started,
@@ -482,6 +493,7 @@ export const Definitions = Event.inventory(
   Moved,
   Prompted,
   PromptAdmitted,
+  PromptCancelled,
   ContextUpdated,
   Synthetic,
   Shell.Started,

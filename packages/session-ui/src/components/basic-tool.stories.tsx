@@ -152,7 +152,10 @@ export const JevUnavailable = {
   render: () => (
     <mod.GenericTool
       tool="jev_rank_evidence"
-      input={{ query: "Why did the regression fail?", passages: "12 supplied passages" }}
+      input={{
+        query: "Why did the regression fail?",
+        passages: [{ id: "failure-log", text: "The retry completed but the session remained busy." }],
+      }}
       output={JSON.stringify({
         status: "unavailable",
         reason: "missing_key",

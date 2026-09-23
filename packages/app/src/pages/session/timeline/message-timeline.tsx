@@ -78,6 +78,7 @@ import { observeElementOffsetReconnectAware } from "./observe-element-offset"
 import { createTimelineProjection } from "./projection"
 import { MessageComment, SummaryDiff, TimelineRow, TimelineRowMap } from "./rows"
 import { filterVirtualIndexes } from "./virtual-items"
+import { JevResponseReview, type JevReviewForm } from "./jev-response-review"
 
 const emptyMessages: MessageType[] = []
 const emptyParts: PartType[] = []
@@ -259,6 +260,7 @@ export function MessageTimeline(props: {
   setRevealMessage?: (fn: (id: string) => void) => void
   setScrollToEnd?: (fn: () => void) => void
   setHistoryAnchor?: (handlers: { capture: () => void; restore: (done: boolean) => void }) => void
+  onPreparePrompt?: (text: string) => void
 }) {
   let touchGesture: number | undefined
 
@@ -413,6 +415,7 @@ export function MessageTimeline(props: {
   }
 
   const [toolOpen, setToolOpen] = createStore<Record<string, boolean | undefined>>(cached?.toolOpen ?? {})
+  const [jevReviewForms, setJevReviewForms] = createStore<Record<string, JevReviewForm>>({})
   const [renderOverscan, setRenderOverscan] = createSignal(initialMeasurements?.length || coldBottomMount ? 6 : 20)
   let resizePinnedIndexes: number[] = []
   let resizePinFrame: number | undefined
@@ -1024,19 +1027,57 @@ export function MessageTimeline(props: {
         {(message) => (
           <Show when={part()}>
             {(part) => (
-              <MessagePart
-                part={part()}
-                message={message()}
-                showAssistantCopyPartID={assistantCopyPartID(row().userMessageID)}
-                turnDurationMs={turnDurationMs(row().userMessageID)}
-                useV2Actions={settings.general.newLayoutDesigns()}
-                defaultOpen={defaultOpen()}
-                toolOpen={toolOpen[part().id] ?? defaultOpen()}
-                onToolOpenChange={(open) => setToolOpen(part().id, open)}
-                deferToolContent
-                virtualizeDiff={false}
-                onContentRendered={onSizeChange}
-              />
+              <>
+                <MessagePart
+                  part={part()}
+                  message={message()}
+                  showAssistantCopyPartID={assistantCopyPartID(row().userMessageID)}
+                  turnDurationMs={turnDurationMs(row().userMessageID)}
+                  useV2Actions={settings.general.newLayoutDesigns()}
+                  defaultOpen={defaultOpen()}
+                  toolOpen={toolOpen[part().id] ?? defaultOpen()}
+                  onToolOpenChange={(open) => setToolOpen(part().id, open)}
+                  deferToolContent
+                  virtualizeDiff={false}
+                  onContentRendered={onSizeChange}
+                />
+                <Show
+                  when={
+                    part().type === "text" &&
+                    part().id === assistantCopyPartID(row().userMessageID) &&
+                    message().role === "assistant" &&
+                    typeof (message() as AssistantMessage).time.completed === "number" &&
+                    !workingTurn(row().userMessageID)
+                  }
+                >
+                  <JevResponseReview
+                    sessionID={params.id!}
+                    messageID={message().id}
+                    response={getMsgParts(message().id)
+                      .flatMap((item) => (item.type === "text" && !item.synthetic ? [item.text] : []))
+                      .join("\n\n")
+                      .trim()}
+                    requirement={getMsgParts(row().userMessageID)
+                      .flatMap((item) => (item.type === "text" ? [item.text] : []))
+                      .join("\n\n")
+                      .trim()}
+                    changedFiles={(() => {
+                      const user = messageByID().get(row().userMessageID)
+                      return user?.role === "user"
+                        ? [
+                            ...new Set(
+                              user.summary?.diffs?.map((diff) => diff.file).filter((file): file is string => !!file) ??
+                                [],
+                            ),
+                          ]
+                        : []
+                    })()}
+                    form={jevReviewForms[message().id]}
+                    onFormChange={(next) => setJevReviewForms(message().id, next)}
+                    onPreparePrompt={props.onPreparePrompt}
+                  />
+                </Show>
+              </>
             )}
           </Show>
         )}

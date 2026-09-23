@@ -14,6 +14,7 @@ import { Timestamps } from "../database/schema.sql"
 import type { SystemContext } from "../system-context/index"
 import { AgentV2 } from "../agent"
 import type { Revert } from "@opencode-ai/schema/revert"
+import type { Routine } from "@opencode-ai/schema/routine"
 
 type SessionMessageData = Omit<(typeof SessionMessage.Message)["Encoded"], "type" | "id">
 type V1MessageData = Omit<SessionV1.Info, "id" | "sessionID">
@@ -113,6 +114,73 @@ export const TodoTable = sqliteTable(
   (table) => [
     primaryKey({ columns: [table.session_id, table.position] }),
     index("todo_session_idx").on(table.session_id),
+  ],
+)
+
+export const SessionGoalTable = sqliteTable(
+  "session_goal",
+  {
+    session_id: text()
+      .$type<SessionSchema.ID>()
+      .primaryKey()
+      .references(() => SessionTable.id, { onDelete: "cascade" }),
+    objective: text().notNull(),
+    acceptance_criteria: text({ mode: "json" }).$type<ReadonlyArray<string>>().notNull(),
+    budget: integer(),
+    status: text().notNull(),
+    progress: text(),
+    blockers: text({ mode: "json" }).$type<ReadonlyArray<string>>().notNull().default([]),
+    evidence: text(),
+    ...Timestamps,
+  },
+  (table) => [index("session_goal_status_idx").on(table.status)],
+)
+
+export const RoutineTable = sqliteTable(
+  "routine",
+  {
+    id: text().$type<Routine.ID>().primaryKey(),
+    session_id: text()
+      .$type<SessionSchema.ID>()
+      .notNull()
+      .references(() => SessionTable.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    prompt: text().notNull(),
+    interval_ms: integer().notNull(),
+    status: text().notNull(),
+    next_run_at: integer().notNull(),
+    ...Timestamps,
+  },
+  (table) => [
+    index("routine_status_next_run_at_idx").on(table.status, table.next_run_at),
+    index("routine_session_idx").on(table.session_id),
+  ],
+)
+
+export const RoutineRunTable = sqliteTable(
+  "routine_run",
+  {
+    id: text().$type<Routine.RunID>().primaryKey(),
+    routine_id: text()
+      .$type<Routine.ID>()
+      .notNull()
+      .references(() => RoutineTable.id, { onDelete: "cascade" }),
+    session_id: text()
+      .$type<SessionSchema.ID>()
+      .notNull()
+      .references(() => SessionTable.id, { onDelete: "cascade" }),
+    message_id: text().$type<SessionMessage.ID>().notNull().unique(),
+    scheduled_at: integer().notNull(),
+    status: text().notNull(),
+    admitted_seq: integer(),
+    error: text(),
+    claimed_at: integer().notNull(),
+    ...Timestamps,
+  },
+  (table) => [
+    index("routine_run_routine_scheduled_at_idx").on(table.routine_id, table.scheduled_at),
+    index("routine_run_status_claimed_at_idx").on(table.status, table.claimed_at),
+    uniqueIndex("routine_run_routine_scheduled_at_unique").on(table.routine_id, table.scheduled_at),
   ],
 )
 

@@ -243,6 +243,9 @@ export async function mockOpenCodeServer(page: Page, config: MockServerConfig) {
     }
     if (path in staticRoutes) return json(route, staticRoutes[path])
 
+    if (/^\/api\/session\/[^/]+\/queue$/.test(path) && route.request().method() === "GET")
+      return json(route, { data: [] })
+
     const currentSessionMatch = path.match(/^\/api\/session\/([^/]+)$/)
     if (currentSessionMatch) {
       const session = config.sessions.find((item) => item.id === currentSessionMatch[1])

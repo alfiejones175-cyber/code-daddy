@@ -2385,6 +2385,13 @@ export type FormatterStatus = {
   enabled: boolean
 }
 
+export type NotFoundError = {
+  name: "NotFoundError"
+  data: {
+    message: string
+  }
+}
+
 export type McpStatusConnected = {
   status: "connected"
 }
@@ -2543,13 +2550,6 @@ export type ProviderAuthError1 = {
   }
 }
 
-export type NotFoundError = {
-  name: "NotFoundError"
-  data: {
-    message: string
-  }
-}
-
 export type TextPartInput = {
   id?: string
   type: "text"
@@ -2698,26 +2698,32 @@ export type InvalidCursorError = {
   message: string
 }
 
-export type SessionActive = {
-  type: "running"
-}
-
 export type SessionNotFoundError = {
   _tag: "SessionNotFoundError"
   sessionID: string
   message: string
 }
 
-export type PromptInput = {
-  text: string
-  files?: Array<PromptInputFileAttachment>
-  agents?: Array<PromptAgentAttachment>
-}
-
 export type ConflictError = {
   _tag: "ConflictError"
   message: string
   resource?: string
+}
+
+export type SessionActive = {
+  type: "running"
+}
+
+export type UnknownError1 = {
+  _tag: "UnknownError"
+  message: string
+  ref?: string
+}
+
+export type PromptInput = {
+  text: string
+  files?: Array<PromptInputFileAttachment>
+  agents?: Array<PromptAgentAttachment>
 }
 
 export type ServiceUnavailableError = {
@@ -2731,12 +2737,6 @@ export type MessageNotFoundError = {
   sessionID: string
   messageID: string
   message: string
-}
-
-export type UnknownError1 = {
-  _tag: "UnknownError"
-  message: string
-  ref?: string
 }
 
 export type SessionDurableEvent =
@@ -2957,6 +2957,13 @@ export type ProjectCopyError = {
   data: {
     message: string
     forceRequired?: boolean
+  }
+}
+
+export type ProjectAppearanceError = {
+  name: "ProjectAppearanceError"
+  data: {
+    message: string
   }
 }
 
@@ -3847,6 +3854,45 @@ export type ConfigV2ExperimentalPolicy = {
   resource: string
 }
 
+export type JevReviewResult =
+  | {
+      status: "ok"
+      advisory: true
+      model: string
+      questionVersion: string
+      usage: {
+        input_tokens: number
+        output_tokens: number
+      }
+      durationMs: number
+      rubricVersion: string
+      projectID: string
+      sessionID: string
+      messageID: string
+      responseDigest: string
+      evidenceDigest: string
+      findings: Array<{
+        criterion: "requirements" | "checks" | "completion" | "errors"
+        assessment: "supported" | "concern" | "insufficient_evidence"
+        confidence: number
+        probabilities: {
+          [key: string]: number
+        }
+        evidenceID?: string
+      }>
+    }
+  | {
+      status: "unavailable"
+      reason: "missing_key" | "configuration" | "timeout" | "cancelled" | "network" | "http" | "invalid_response"
+      message: string
+      validation?: "response_schema" | "answer_ids" | "choice_answer" | "ranking_answer"
+    }
+  | {
+      status: "invalid_input"
+      reason: "invalid_input"
+      message: "Input did not match the expected schema."
+    }
+
 export type ProjectDirectories = Array<{
   directory: string
   strategy?: string
@@ -3931,6 +3977,23 @@ export type SessionV2Info = {
   subpath?: string
   revert?: RevertState
 }
+
+export type SessionRecoveryStatus =
+  | {
+      type: "running"
+    }
+  | {
+      type: "idle"
+    }
+  | {
+      type: "pending"
+      delivery: "steer" | "queue"
+    }
+  | {
+      type: "needs_recovery"
+      reason: "promoted_input" | "incomplete_assistant" | "incomplete_tool" | "continuation"
+      messageID?: string
+    }
 
 export type PromptInputFileAttachment = {
   uri: string
@@ -4925,6 +4988,8 @@ export type ConnectionCredentialInfo = {
   type: "credential"
   id: string
   label: string
+  authType?: "key" | "oauth"
+  methodID?: string
 }
 
 export type ConnectionEnvInfo = {
@@ -4981,6 +5046,17 @@ export type IntegrationAttemptStatus =
         created: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
         expires: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
       }
+    }
+  | {
+      status: "cancelled"
+      time: {
+        created: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+        expires: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+      }
+    }
+  | {
+      status: "not_found"
+      attemptID: string
     }
 
 export type PermissionV2Request = {
@@ -6152,6 +6228,27 @@ export type ReferenceInfo = {
 
 export type ProjectCopyCopy = {
   directory: string
+}
+
+export type ProjectAppearance = {
+  name?: string
+  icon?: ProjectIcon
+  commands?: ProjectCommands
+}
+
+export type McpTool = {
+  name: string
+  source: string
+  description?: string
+}
+
+export type McpInfo = {
+  id: string
+  name: string
+  transport: "local" | "remote"
+  state: "configured" | "connected" | "available" | "failed" | "disabled"
+  error?: string
+  tools: Array<McpTool>
 }
 
 export type EventModelsDevRefreshed = {
@@ -8430,6 +8527,111 @@ export type FormatterStatusResponses = {
 }
 
 export type FormatterStatusResponse = FormatterStatusResponses[keyof FormatterStatusResponses]
+
+export type SessionJevReviewGetData = {
+  body?: never
+  path: {
+    sessionID: string
+    messageID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/session/{sessionID}/jev-review/{messageID}"
+}
+
+export type SessionJevReviewGetErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+  /**
+   * NotFoundError
+   */
+  404: NotFoundError
+}
+
+export type SessionJevReviewGetError = SessionJevReviewGetErrors[keyof SessionJevReviewGetErrors]
+
+export type SessionJevReviewGetResponses = {
+  /**
+   * Success
+   */
+  200: {
+    status: "not_reviewed" | "reviewed" | "stale"
+    responseDigest: string
+    review: {
+      createdAt: number
+      responseDigest: string
+      requirements: Array<string>
+      evidence: Array<{
+        id: string
+        text: string
+        url?: string
+      }>
+      result: JevReviewResult
+    }
+  }
+}
+
+export type SessionJevReviewGetResponse = SessionJevReviewGetResponses[keyof SessionJevReviewGetResponses]
+
+export type SessionJevReviewCreateData = {
+  body?: {
+    requirements: Array<string>
+    evidence: Array<{
+      id: string
+      text: string
+      url?: string
+    }>
+  }
+  path: {
+    sessionID: string
+    messageID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/session/{sessionID}/jev-review/{messageID}"
+}
+
+export type SessionJevReviewCreateErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+  /**
+   * NotFoundError
+   */
+  404: NotFoundError
+}
+
+export type SessionJevReviewCreateError = SessionJevReviewCreateErrors[keyof SessionJevReviewCreateErrors]
+
+export type SessionJevReviewCreateResponses = {
+  /**
+   * Success
+   */
+  200: {
+    status: "not_reviewed" | "reviewed" | "stale"
+    responseDigest: string
+    review: {
+      createdAt: number
+      responseDigest: string
+      requirements: Array<string>
+      evidence: Array<{
+        id: string
+        text: string
+        url?: string
+      }>
+      result: JevReviewResult
+    }
+  }
+}
+
+export type SessionJevReviewCreateResponse = SessionJevReviewCreateResponses[keyof SessionJevReviewCreateResponses]
 
 export type McpStatusData = {
   body?: never
@@ -11336,6 +11538,7 @@ export type V2SessionListData = {
   body?: never
   path?: never
   query?: {
+    parentID?: "null" | string
     workspace?: string
     limit?: number
     order?: "asc" | "desc"
@@ -11376,6 +11579,7 @@ export type V2SessionListResponse = V2SessionListResponses[keyof V2SessionListRe
 export type V2SessionCreateData = {
   body: {
     id?: string
+    parentID?: string
     agent?: string
     model?: ModelRef
     location?: LocationRef
@@ -11394,6 +11598,14 @@ export type V2SessionCreateErrors = {
    * UnauthorizedError
    */
   401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+  /**
+   * ConflictError
+   */
+  409: ConflictError
 }
 
 export type V2SessionCreateError = V2SessionCreateErrors[keyof V2SessionCreateErrors]
@@ -11478,6 +11690,86 @@ export type V2SessionGetResponses = {
 }
 
 export type V2SessionGetResponse = V2SessionGetResponses[keyof V2SessionGetResponses]
+
+export type V2SessionRecoveryData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/recovery"
+}
+
+export type V2SessionRecoveryErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+  /**
+   * UnknownError
+   */
+  500: UnknownError1
+}
+
+export type V2SessionRecoveryError = V2SessionRecoveryErrors[keyof V2SessionRecoveryErrors]
+
+export type V2SessionRecoveryResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: SessionRecoveryStatus
+  }
+}
+
+export type V2SessionRecoveryResponse = V2SessionRecoveryResponses[keyof V2SessionRecoveryResponses]
+
+export type V2SessionResumeData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/resume"
+}
+
+export type V2SessionResumeErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+  /**
+   * UnknownError
+   */
+  500: UnknownError1
+}
+
+export type V2SessionResumeError = V2SessionResumeErrors[keyof V2SessionResumeErrors]
+
+export type V2SessionResumeResponses = {
+  /**
+   * <No Content>
+   */
+  204: void
+}
+
+export type V2SessionResumeResponse = V2SessionResumeResponses[keyof V2SessionResumeResponses]
 
 export type V2SessionSwitchAgentData = {
   body: {
@@ -13587,6 +13879,276 @@ export type V2ProjectCopyRefreshResponses = {
 }
 
 export type V2ProjectCopyRefreshResponse = V2ProjectCopyRefreshResponses[keyof V2ProjectCopyRefreshResponses]
+
+export type V2ProjectAppearanceUpdateData = {
+  body: ProjectAppearance
+  path?: never
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/project/current/appearance"
+}
+
+export type V2ProjectAppearanceUpdateErrors = {
+  /**
+   * ProjectAppearanceError | InvalidRequestError
+   */
+  400: ProjectAppearanceError | InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2ProjectAppearanceUpdateError = V2ProjectAppearanceUpdateErrors[keyof V2ProjectAppearanceUpdateErrors]
+
+export type V2ProjectAppearanceUpdateResponses = {
+  /**
+   * Success
+   */
+  200: {
+    location: LocationInfo
+    data: Project
+  }
+}
+
+export type V2ProjectAppearanceUpdateResponse =
+  V2ProjectAppearanceUpdateResponses[keyof V2ProjectAppearanceUpdateResponses]
+
+export type V2McpListData = {
+  body?: never
+  path?: never
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/mcp"
+}
+
+export type V2McpListErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2McpListError = V2McpListErrors[keyof V2McpListErrors]
+
+export type V2McpListResponses = {
+  /**
+   * Success
+   */
+  200: {
+    location: LocationInfo
+    data: Array<McpInfo>
+  }
+}
+
+export type V2McpListResponse = V2McpListResponses[keyof V2McpListResponses]
+
+export type V2McpConnectData = {
+  body?: never
+  path: {
+    serverID: string
+  }
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/mcp/{serverID}/connect"
+}
+
+export type V2McpConnectErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2McpConnectError = V2McpConnectErrors[keyof V2McpConnectErrors]
+
+export type V2McpConnectResponses = {
+  /**
+   * Success
+   */
+  200: {
+    location: LocationInfo
+    data: McpInfo
+  }
+}
+
+export type V2McpConnectResponse = V2McpConnectResponses[keyof V2McpConnectResponses]
+
+export type V2McpDisconnectData = {
+  body?: never
+  path: {
+    serverID: string
+  }
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/mcp/{serverID}/disconnect"
+}
+
+export type V2McpDisconnectErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2McpDisconnectError = V2McpDisconnectErrors[keyof V2McpDisconnectErrors]
+
+export type V2McpDisconnectResponses = {
+  /**
+   * Success
+   */
+  200: {
+    location: LocationInfo
+    data: McpInfo
+  }
+}
+
+export type V2McpDisconnectResponse = V2McpDisconnectResponses[keyof V2McpDisconnectResponses]
+
+export type V2McpReconnectData = {
+  body?: never
+  path: {
+    serverID: string
+  }
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/mcp/{serverID}/reconnect"
+}
+
+export type V2McpReconnectErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2McpReconnectError = V2McpReconnectErrors[keyof V2McpReconnectErrors]
+
+export type V2McpReconnectResponses = {
+  /**
+   * Success
+   */
+  200: {
+    location: LocationInfo
+    data: McpInfo
+  }
+}
+
+export type V2McpReconnectResponse = V2McpReconnectResponses[keyof V2McpReconnectResponses]
+
+export type V2McpPresetData = {
+  body?: never
+  path: {
+    presetID: "browser" | "xcode" | "openai-docs" | "github"
+  }
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/mcp/preset/{presetID}"
+}
+
+export type V2McpPresetErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2McpPresetError = V2McpPresetErrors[keyof V2McpPresetErrors]
+
+export type V2McpPresetResponses = {
+  /**
+   * Success
+   */
+  200: {
+    location: LocationInfo
+    data: McpInfo
+  }
+}
+
+export type V2McpPresetResponse = V2McpPresetResponses[keyof V2McpPresetResponses]
+
+export type V2McpTestData = {
+  body?: never
+  path: {
+    serverID: string
+  }
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/mcp/{serverID}/test"
+}
+
+export type V2McpTestErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2McpTestError = V2McpTestErrors[keyof V2McpTestErrors]
+
+export type V2McpTestResponses = {
+  /**
+   * Success
+   */
+  200: {
+    location: LocationInfo
+    data: McpInfo
+  }
+}
+
+export type V2McpTestResponse = V2McpTestResponses[keyof V2McpTestResponses]
 
 export type PtyConnectData = {
   body?: never

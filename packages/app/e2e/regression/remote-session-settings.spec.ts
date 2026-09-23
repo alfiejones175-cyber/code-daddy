@@ -16,15 +16,47 @@ test("session settings use the remote server context", async ({ page }) => {
   await mockServers(page, permissionRequests)
   await configureServers(page)
 
+  await page.setViewportSize({ width: 390, height: 844 })
   await page.goto(`/server/${base64Encode(serverB)}/session/${sessionB.id}`)
   await expect(page.getByText(sessionB.title).first()).toBeVisible()
   await page.keyboard.press("Control+,")
 
-  const dialog = page.locator(".settings-v2-dialog")
+  const dialog = page.getByRole("dialog", { name: "Settings" })
   const autoAccept = dialog.locator('[data-action="settings-auto-accept-permissions"]')
   const input = autoAccept.getByRole("switch")
+  await expect(dialog).toBeVisible()
   await expect(autoAccept).toBeVisible()
+  await expect(input).toHaveAccessibleName("Auto-accept permissions")
+  await expect(dialog.getByRole("switch")).toHaveCount(12)
+  for (const name of [
+    "Auto-accept permissions",
+    "Show reasoning summaries",
+    "Expand shell tool parts",
+    "Expand edit tool parts",
+    "Bottom navigation",
+    "File tree",
+    "Command palette",
+    "Server status",
+    "Show agent",
+    "Agent",
+    "Permissions",
+    "Errors",
+  ]) {
+    await expect(dialog.getByRole("switch", { name, exact: true })).toHaveCount(1)
+  }
   await expect(input).toBeEnabled()
+  await expect.poll(() => dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
+  const copy = autoAccept
+    .locator("xpath=ancestor::*[@data-component='settings-v2-row']")
+    .locator('[data-slot="settings-v2-row-copy"]')
+  expect(await copy.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThanOrEqual(150)
+  for (const name of ["General", "Shortcuts", "Servers", "Providers", "Models", "Capabilities"]) {
+    const tab = dialog.getByRole("tab", { name })
+    const content = tab.locator('[data-slot="tabs-v2-trigger-content"]')
+    expect(
+      await content.evaluate((element) => element.getBoundingClientRect().width <= element.parentElement!.getBoundingClientRect().width),
+    ).toBe(true)
+  }
   permissionRequests.length = 0
   await autoAccept.locator('[data-slot="switch-control"]').click()
   await expect(input).toBeChecked()
@@ -37,6 +69,10 @@ test("session settings use the remote server context", async ({ page }) => {
     )
     .toBe(true)
   expect(permissionRequests.every((request) => new URL(request).origin === serverB)).toBe(true)
+
+  await dialog.getByRole("tab", { name: "General" }).focus()
+  await page.keyboard.press("ArrowDown")
+  await expect(dialog.getByRole("tab", { name: "Shortcuts" })).toHaveAttribute("aria-selected", "true")
 
   await dialog.getByRole("tab", { name: "Models" }).click()
   await expect(dialog.getByRole("switch", { name: "Server B Model" })).toBeEnabled()
@@ -73,7 +109,7 @@ test("auto-accept responds for an unfocused server session", async ({ page }) =>
     .toBe(true)
   await page.keyboard.press("Escape")
 
-  await page.locator(`[data-titlebar-tab-slot]:has(a[href="${hrefB}"])`).click()
+  await page.goto(hrefB)
   await expect(page).toHaveURL(new RegExp(`${hrefB.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`))
   await expect(page.getByText(sessionB.title).first()).toBeVisible()
   await transport.waitForConnection()

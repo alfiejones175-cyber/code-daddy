@@ -39,6 +39,15 @@ export const groupNames = {
 
 export const endpointNames = {
   "session.messages": "list",
+  "session.queue.list": "listQueued",
+  "session.queue.cancel": "cancelQueued",
+  "session.goal.get": "goal",
+  "session.goal.set": "setGoal",
+  "session.goal.pause": "pauseGoal",
+  "session.goal.resume": "resumeGoal",
+  "session.goal.block": "blockGoal",
+  "session.goal.complete": "completeGoal",
+  "session.goal.clear": "clearGoal",
   "integration.connect.key": "connectKey",
   "integration.connect.oauth": "connectOauth",
   "integration.attempt.status": "attemptStatus",

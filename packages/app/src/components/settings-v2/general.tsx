@@ -82,7 +82,10 @@ const PermissionScopeSetting: Component<{ controller: PermissionScopeController 
           checked={props.controller.accepting()}
           disabled={!props.controller.enabled()}
           onChange={props.controller.set}
-        />
+          hideLabel
+        >
+          {language.t("command.permissions.autoaccept.enable")}
+        </Switch>
       </div>
     </SettingsRowV2>
   )
@@ -388,7 +391,10 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.general.showReasoningSummaries()}
               onChange={(checked) => settings.general.setShowReasoningSummaries(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.row.reasoningSummaries.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
 
@@ -400,7 +406,10 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.general.shellToolPartsExpanded()}
               onChange={(checked) => settings.general.setShellToolPartsExpanded(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.row.shellToolPartsExpanded.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
 
@@ -412,7 +421,10 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.general.editToolPartsExpanded()}
               onChange={(checked) => settings.general.setEditToolPartsExpanded(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.row.editToolPartsExpanded.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
 
@@ -425,7 +437,10 @@ export const SettingsGeneralV2: Component<{
               <Switch
                 checked={settings.general.mobileTitlebarPosition() === "bottom"}
                 onChange={(checked) => settings.general.setMobileTitlebarPosition(checked ? "bottom" : "top")}
-              />
+                hideLabel
+              >
+                {language.t("settings.general.row.mobileTitlebarBottom.title")}
+              </Switch>
             </div>
           </SettingsRowV2>
         </Show>
@@ -446,7 +461,10 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.general.showFileTree()}
               onChange={(checked) => settings.general.setShowFileTree(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.row.showFileTree.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
 
@@ -458,7 +476,10 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.general.showSearch()}
               onChange={(checked) => settings.general.setShowSearch(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.row.showSearch.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
 
@@ -470,7 +491,10 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.general.showStatus()}
               onChange={(checked) => settings.general.setShowStatus(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.row.showStatus.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
 
@@ -482,7 +506,10 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.general.showCustomAgents()}
               onChange={(checked) => settings.general.setShowCustomAgents(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.row.showCustomAgents.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
       </SettingsListV2>
@@ -502,7 +529,10 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.notifications.agent()}
               onChange={(checked) => settings.notifications.setAgent(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.notifications.agent.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
 
@@ -514,7 +544,10 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.notifications.permissions()}
               onChange={(checked) => settings.notifications.setPermissions(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.notifications.permissions.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
 
@@ -526,7 +559,10 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.notifications.errors()}
               onChange={(checked) => settings.notifications.setErrors(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.notifications.errors.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
       </SettingsListV2>
@@ -546,13 +582,16 @@ export const SettingsGeneralV2: Component<{
             <Switch
               checked={settings.general.releaseNotes()}
               onChange={(checked) => settings.general.setReleaseNotes(checked)}
-            />
+              hideLabel
+            >
+              {language.t("settings.general.row.releaseNotes.title")}
+            </Switch>
           </div>
         </SettingsRowV2>
 
         <SettingsRowV2
           title={language.t("settings.updates.row.check.title")}
-          description={language.t("settings.updates.row.check.description")}
+          description={language.t(updater.action().description ?? "settings.updates.row.check.description")}
         >
           <ButtonV2 size="normal" variant="neutral" disabled={!updater.action().run} onClick={() => updater.run()}>
             {language.t(updater.action().label)}
@@ -574,7 +613,9 @@ export const SettingsGeneralV2: Component<{
             description={language.t("settings.general.row.pinchZoom.description")}
           >
             <div data-action="settings-pinch-zoom">
-              <Switch checked={pinchZoom.latest} onChange={onPinchZoomChange} />
+              <Switch checked={pinchZoom.latest} onChange={onPinchZoomChange} hideLabel>
+                {language.t("settings.general.row.pinchZoom.title")}
+              </Switch>
             </div>
           </SettingsRowV2>
         </SettingsListV2>

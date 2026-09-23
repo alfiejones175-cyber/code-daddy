@@ -137,6 +137,7 @@ export function SessionComposerRegion(props: {
                   sending={controller.followup()!.sending}
                   onSend={controller.followup()!.onSend}
                   onEdit={controller.followup()!.onEdit}
+                  onCancel={controller.followup()!.onCancel}
                 />
               </Show>
               <Show

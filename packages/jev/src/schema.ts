@@ -117,3 +117,42 @@ export const RankResult = Schema.Union([RankSuccess, Unavailable, InvalidInput])
   identifier: "Jev.RankResult",
 })
 export type RankResult = typeof RankResult.Type
+
+export const ReviewCriterion = Schema.Literals(["requirements", "checks", "completion", "errors"])
+export type ReviewCriterion = typeof ReviewCriterion.Type
+export const ReviewAssessment = Schema.Literals(["supported", "concern", "insufficient_evidence"])
+export type ReviewAssessment = typeof ReviewAssessment.Type
+
+export const ReviewInput = Schema.Struct({
+  projectID: NonEmptyText(200),
+  sessionID: NonEmptyText(200),
+  messageID: NonEmptyText(200),
+  requirements: Schema.Array(NonEmptyText(2_000)).check(Schema.isLengthBetween(1, 5)),
+  response: NonEmptyText(12_000),
+  evidence: Schema.Array(Passage).check(Schema.isLengthBetween(0, 8)),
+}).annotate({ identifier: "Jev.ReviewInput" })
+export type ReviewInput = typeof ReviewInput.Type
+
+const ReviewFinding = Schema.Struct({
+  criterion: ReviewCriterion,
+  assessment: ReviewAssessment,
+  confidence: Probability,
+  probabilities: Schema.Record(Schema.String, Probability),
+  evidenceID: Schema.optionalKey(Schema.String),
+})
+
+const ReviewSuccess = Schema.Struct({
+  ...SuccessFields,
+  rubricVersion: NonEmptyText(200),
+  projectID: NonEmptyText(200),
+  sessionID: NonEmptyText(200),
+  messageID: NonEmptyText(200),
+  responseDigest: NonEmptyText(100),
+  evidenceDigest: NonEmptyText(100),
+  findings: Schema.Array(ReviewFinding),
+})
+
+export const ReviewResult = Schema.Union([ReviewSuccess, Unavailable, InvalidInput]).annotate({
+  identifier: "Jev.ReviewResult",
+})
+export type ReviewResult = typeof ReviewResult.Type

@@ -29,6 +29,7 @@ import { SessionCompaction } from "../compaction"
 import { SessionEvent } from "../event"
 import { SessionHistory } from "../history"
 import { SessionInput } from "../input"
+import { SessionGoal } from "../goal"
 import { SessionSchema } from "../schema"
 import { SessionStore } from "../store"
 import { ProviderTimeoutError, type RunError, Service } from "./index"
@@ -106,6 +107,7 @@ const layer = Layer.effect(
     const systemContext = yield* SystemContextRegistry.Service
     const skillGuidance = yield* SkillGuidance.Service
     const referenceGuidance = yield* ReferenceGuidance.Service
+    const goals = yield* SessionGoal.Service
     const config = yield* Config.Service
     const snapshots = yield* Snapshot.Service
     const db = (yield* Database.Service).db
@@ -169,10 +171,13 @@ const layer = Layer.effect(
     const continueAfterOverflowCompaction = (step: number) =>
       new TurnTransitionError({ _tag: "ContinueAfterOverflowCompaction", step })
 
-    const loadSystemContext = (agent: AgentV2.Selection) =>
-      Effect.all([systemContext.load(), skillGuidance.load(agent), referenceGuidance.load()], {
-        concurrency: "unbounded",
-      }).pipe(Effect.map(SystemContext.combine))
+    const loadSystemContext = (sessionID: SessionSchema.ID, agent: AgentV2.Selection) =>
+      Effect.all(
+        [systemContext.load(), skillGuidance.load(agent), referenceGuidance.load(), goals.context(sessionID)],
+        {
+          concurrency: "unbounded",
+        },
+      ).pipe(Effect.map(SystemContext.combine))
 
     const runTurnAttempt = Effect.fn("SessionRunner.runTurn")(function* (
       sessionID: SessionSchema.ID,
@@ -184,7 +189,7 @@ const layer = Layer.effect(
       if (session.location.directory !== location.directory || session.location.workspaceID !== location.workspaceID)
         return yield* Effect.interrupt
       const agent = yield* agents.select(session.agent)
-      const initialized = yield* SessionContextEpoch.initialize(db, loadSystemContext(agent), session.id)
+      const initialized = yield* SessionContextEpoch.initialize(db, loadSystemContext(session.id, agent), session.id)
       const toolFibers = yield* FiberSet.make<void, ToolOutputStore.Error>()
       const sessionConfig = Config.latest(yield* config.entries(), "session")
       const toolConcurrency = sessionConfig?.tool_concurrency ?? 4
@@ -204,7 +209,8 @@ const layer = Layer.effect(
         if (promoted > 0) currentStep = 1
       }
       const system =
-        initialized ?? (yield* SessionContextEpoch.prepare(db, events, loadSystemContext(agent), session.id))
+        initialized ??
+        (yield* SessionContextEpoch.prepare(db, events, loadSystemContext(session.id, agent), session.id))
       const model = yield* models.resolve(session)
       const entries = yield* SessionHistory.entriesForRunner(db, session.id, system.baselineSeq)
       const context = entries.map((entry) => entry.message)
@@ -307,28 +313,30 @@ const layer = Layer.effect(
             }
             admittedToolCalls++
             yield* Effect.uninterruptibleMask((restore) =>
-              toolSemaphore.withPermit(
-                restore(
-                  toolMaterialization.settle({
-                    sessionID: session.id,
-                    agent: agent.id,
-                    assistantMessageID,
-                    call: event,
-                  }),
-                ),
-              ).pipe(
-                Effect.flatMap((settlement) =>
-                  publish(
-                    LLMEvent.toolResult({
-                      id: event.id,
-                      name: event.name,
-                      result: settlement.result,
-                      output: settlement.output,
+              toolSemaphore
+                .withPermit(
+                  restore(
+                    toolMaterialization.settle({
+                      sessionID: session.id,
+                      agent: agent.id,
+                      assistantMessageID,
+                      call: event,
                     }),
-                    settlement.outputPaths ?? [],
+                  ),
+                )
+                .pipe(
+                  Effect.flatMap((settlement) =>
+                    publish(
+                      LLMEvent.toolResult({
+                        id: event.id,
+                        name: event.name,
+                        result: settlement.result,
+                        output: settlement.output,
+                      }),
+                      settlement.outputPaths ?? [],
+                    ),
                   ),
                 ),
-              ),
             ).pipe(FiberSet.run(toolFibers))
           }),
         ),
@@ -490,6 +498,7 @@ export const node = makeLocationNode({
     SystemContextRegistry.node,
     SkillGuidance.node,
     ReferenceGuidance.node,
+    SessionGoal.node,
     Config.node,
     Snapshot.node,
     Database.node,

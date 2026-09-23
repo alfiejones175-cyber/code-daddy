@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-22T14:15:38.332Z",
+  "scope": "Production GenericTool fixture with identical pre-fix records, click plus accessibility-state round trip; includes browser automation overhead, not isolated render latency",
+  "samples": [
+    {
+      "durationMs": 3309,
+      "expanded": "true"
+    },
+    {
+      "durationMs": 267,
+      "expanded": "false"
+    },
+    {
+      "durationMs": 274,
+      "expanded": "true"
+    },
+    {
+      "durationMs": 267,
+      "expanded": "false"
+    },
+    {
+      "durationMs": 275,
+      "expanded": "true"
+    },
+    {
+      "durationMs": 271,
+      "expanded": "false"
+    },
+    {
+      "durationMs": 269,
+      "expanded": "true"
+    },
+    {
+      "durationMs": 264,
+      "expanded": "false"
+    },
+    {
+      "durationMs": 267,
+      "expanded": "true"
+    },
+    {
+      "durationMs": 270,
+      "expanded": "false"
+    }
+  ]
+}

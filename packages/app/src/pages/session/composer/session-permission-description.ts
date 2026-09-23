@@ -13,6 +13,9 @@ export function pluginPermissionDescription(request: PermissionRequest): Descrip
   if (isJevPermission(request.permission, "jev_rank_evidence")) {
     return { key: "permission.plugin.jev.rank.description" }
   }
+  if (isJevPermission(request.permission, "jev_review_output")) {
+    return { key: "permission.plugin.jev.review.description" }
+  }
   if (!request.permission.startsWith("plugin.")) return
 
   const destination = request.metadata.destination

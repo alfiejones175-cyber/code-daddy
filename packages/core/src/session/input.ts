@@ -4,7 +4,8 @@ import { and, asc, eq, isNull, lte } from "drizzle-orm"
 import { DateTime, Effect, Schema } from "effect"
 import { Admitted, Delivery } from "@opencode-ai/schema/session-input"
 import type { Database } from "../database/database"
-import type { EventV2 } from "../event"
+import { EventV2 } from "../event"
+import { EventTable } from "../event/sql"
 import { SessionEvent } from "./event"
 import { SessionMessage } from "./message"
 import { Prompt } from "./prompt"
@@ -50,6 +51,19 @@ export const admit = Effect.fn("SessionInput.admit")(function* (
 ) {
   const existing = yield* find(db, input.id)
   if (existing !== undefined) return existing
+  const cancelled = yield* db
+    .select({ data: EventTable.data })
+    .from(EventTable)
+    .where(
+      and(
+        eq(EventTable.aggregate_id, input.sessionID),
+        eq(EventTable.type, EventV2.versionedType(SessionEvent.PromptCancelled.type, 1)),
+      ),
+    )
+    .all()
+    .pipe(Effect.orDie)
+  if (cancelled.some((event) => event.data.messageID === input.id))
+    return yield* Effect.die(new LifecycleConflict({ id: input.id }))
   const timestamp = yield* DateTime.now
   return yield* events
     .publish(SessionEvent.PromptAdmitted, {
@@ -188,6 +202,39 @@ export const hasPending = Effect.fn("SessionInput.hasPending")(function* (
   return row !== undefined
 })
 
+export const queued = Effect.fn("SessionInput.queued")(function* (db: DatabaseService, sessionID: SessionSchema.ID) {
+  const rows = yield* db
+    .select()
+    .from(SessionInputTable)
+    .where(
+      and(
+        eq(SessionInputTable.session_id, sessionID),
+        isNull(SessionInputTable.promoted_seq),
+        eq(SessionInputTable.delivery, "queue"),
+      ),
+    )
+    .orderBy(asc(SessionInputTable.admitted_seq))
+    .all()
+    .pipe(Effect.orDie)
+  return rows.map(fromRow)
+})
+
+export const cancelQueued = Effect.fn("SessionInput.cancelQueued")(function* (
+  db: DatabaseService,
+  events: EventV2.Interface,
+  input: { readonly sessionID: SessionSchema.ID; readonly id: SessionMessage.ID },
+) {
+  const timestamp = yield* DateTime.now
+  return yield* events
+    .publish(SessionEvent.PromptCancelled, { sessionID: input.sessionID, messageID: input.id, timestamp })
+    .pipe(
+      Effect.as(true),
+      Effect.catchDefect((defect) =>
+        defect instanceof LifecycleConflict && defect.id === input.id ? Effect.succeed(false) : Effect.die(defect),
+      ),
+    )
+})
+
 export const equivalent = (
   input: Admitted,
   expected: {
@@ -285,4 +332,24 @@ export const promoteNextQueued = Effect.fn("SessionInput.promoteNextQueued")(fun
     .get()
     .pipe(Effect.orDie)
   return row === undefined ? false : yield* publish(db, events, sessionID, [row]).pipe(Effect.as(true))
+})
+
+export const projectCancelled = Effect.fn("SessionInput.projectCancelled")(function* (
+  db: DatabaseService,
+  input: { readonly sessionID: SessionSchema.ID; readonly id: SessionMessage.ID },
+) {
+  const deleted = yield* db
+    .delete(SessionInputTable)
+    .where(
+      and(
+        eq(SessionInputTable.id, input.id),
+        eq(SessionInputTable.session_id, input.sessionID),
+        isNull(SessionInputTable.promoted_seq),
+        eq(SessionInputTable.delivery, "queue"),
+      ),
+    )
+    .returning({ id: SessionInputTable.id })
+    .get()
+    .pipe(Effect.orDie)
+  if (!deleted) return yield* new LifecycleConflict({ id: input.id })
 })

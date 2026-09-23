@@ -1,6 +1,6 @@
 # Usability Review — Fixes
 
-> Historical source-review baseline. Several paths have since changed, including closed-draft restoration, provider-refresh error handling, and prompt interruption errors. Recheck each finding against current code/tests before treating it as open. Use the [current roadmap](/Users/alfredo/Documents/code-daddy/plans/README.md) for priorities and the [workspace review](/Users/alfredo/Documents/code-daddy/plans/007-workspace-review.md) for later evidence. This note does not mark the entire review resolved.
+> Historical source-review baseline. Several paths have since changed, including closed-draft restoration, provider-refresh error handling, and prompt interruption errors. Recheck each finding against current code/tests before treating it as open. Use the [current roadmap](../plans/README.md) for priorities and the [workspace review](../plans/007-workspace-review.md) for later evidence. This note does not mark the entire review resolved.
 
 Date: 2026-09-20
 Scope: opencode app front-end (`packages/app` + shared `packages/ui`, `packages/session-ui`)

@@ -591,6 +591,33 @@ describe("SessionRunnerLLM", () => {
     }),
   )
 
+  it.effect("lists and cancels only pending queued prompts", () =>
+    Effect.gen(function* () {
+      yield* setup
+      const session = yield* SessionV2.Service
+      const events = yield* EventV2.Service
+      const { db } = yield* Database.Service
+      const first = SessionMessage.ID.make("msg_queued_first")
+      const second = SessionMessage.ID.make("msg_queued_second")
+      const steer = SessionMessage.ID.make("msg_steered")
+      yield* session.prompt({ id: first, sessionID, prompt: Prompt.make({ text: "First queued" }), delivery: "queue", resume: false })
+      yield* session.prompt({ id: second, sessionID, prompt: Prompt.make({ text: "Second queued" }), delivery: "queue", resume: false })
+      yield* session.prompt({ id: steer, sessionID, prompt: Prompt.make({ text: "Steered" }), resume: false })
+
+      expect((yield* session.queued(sessionID)).map((input) => input.id)).toEqual([first, second])
+      expect(yield* session.cancelQueued({ sessionID, messageID: first })).toBe(true)
+      expect((yield* session.queued(sessionID)).map((input) => input.id)).toEqual([second])
+      expect(yield* session.cancelQueued({ sessionID, messageID: steer })).toBe(false)
+
+      yield* SessionInput.promoteNextQueued(db, events, sessionID)
+      expect(yield* session.cancelQueued({ sessionID, messageID: second })).toBe(false)
+      expect(yield* session.queued(sessionID)).toEqual([])
+
+      yield* replaySessionProjection(sessionID)
+      expect(yield* session.queued(sessionID)).toEqual([])
+    }),
+  )
+
   it.effect("advertises and executes a globally attached application tool", () =>
     Effect.gen(function* () {
       yield* setup

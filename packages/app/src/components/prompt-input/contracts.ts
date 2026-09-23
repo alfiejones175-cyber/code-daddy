@@ -8,6 +8,7 @@ export type PromptInputState = ReturnType<typeof usePrompt>
 export type PromptInputSubmission = {
   abort: () => Promise<void> | void
   handleSubmit: (event: Event) => Promise<void> | void
+  handleQueue: (event: Event) => Promise<void> | void
 }
 
 export type PromptInputControls = {
@@ -52,6 +53,7 @@ export interface PromptInputProps {
   onEditLoaded?: () => void
   shouldQueue?: () => boolean
   onQueue?: (draft: FollowupDraft) => void
+  onQueueSubmitted?: () => void
   onAbort?: () => void
   onSubmit?: () => void
 }

@@ -1,50 +1,41 @@
-## Usage
+# Web app development
 
-Dependencies for these templates are managed with [pnpm](https://pnpm.io) using `pnpm up -Lri`.
+`packages/app` contains the Solid web interface shared with the desktop app. This workspace's current product priorities and feature status are in the [roadmap](../../plans/README.md); package-specific rules are in [AGENTS.md](AGENTS.md).
 
-This is the reason you see a `pnpm-lock.yaml`. That said, any package manager will work. This file can safely be removed once you clone a template.
+## Run locally
 
-```bash
-$ npm install # or pnpm install or yarn install
+Install workspace dependencies once from the repository root with `bun install`. Run the backend and web app in separate terminals:
+
+```sh
+# From packages/opencode
+bun run ./src/index.ts serve --port 4096
 ```
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
+```sh
+# From packages/app
+bun dev -- --port 4444
+```
 
-## Available Scripts
+Open <http://localhost:4444>. The app connects to the backend at `localhost:4096` by default. `opencode dev web` proxies the hosted web app and will not show local UI changes.
 
-In the project directory, you can run:
+## Check changes
 
-### `npm run dev` or `npm start`
+Run checks from `packages/app`, not the repository root:
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```sh
+bun typecheck
+bun run test:unit
+bun run test:browser
+bun run build
+```
 
-The page will reload if you make edits.<br>
+The E2E suite uses Playwright and starts its own Vite server, but expects a backend at `127.0.0.1:4096` by default. Start the backend as shown above, then run:
 
-### `npm run build`
-
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-## E2E Testing
-
-Playwright starts the Vite dev server automatically via `webServer`, and UI tests expect an opencode backend at `localhost:4096` by default.
-
-```bash
+```sh
 bunx playwright install chromium
 bun run test:e2e:local
-bun run test:e2e:local -- --grep "settings"
 ```
 
-Environment options:
+Use `PLAYWRIGHT_SERVER_HOST` and `PLAYWRIGHT_SERVER_PORT` for a different backend, `PLAYWRIGHT_PORT` for the Vite port, and `PLAYWRIGHT_BASE_URL` for an alternate app URL. The [Playwright configuration](playwright.config.ts) defines the current defaults and artifacts.
 
-- `PLAYWRIGHT_SERVER_HOST` / `PLAYWRIGHT_SERVER_PORT` (backend address, default: `localhost:4096`)
-- `PLAYWRIGHT_PORT` (Vite dev server port, default: `3000`)
-- `PLAYWRIGHT_BASE_URL` (override base URL, default: `http://localhost:<PLAYWRIGHT_PORT>`)
-
-## Deployment
-
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+The desktop app bundles this UI. After a desktop UI change, follow the [build, package, and local install workflow](../../documentation/desktop-updates.md) before calling the installed app current.

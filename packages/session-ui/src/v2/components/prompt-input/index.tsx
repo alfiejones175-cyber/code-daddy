@@ -263,10 +263,13 @@ export function PromptInputV2(props: PromptInputV2Props) {
           <PromptInputV2SubmitButton
             mode={state.mode}
             stopping={view.submit.stopping()}
+            working={view.submit.working?.() ?? false}
             disabled={!props.controller.canSubmit()}
-            sendLabel={i18n.t("ui.promptInput.send")}
+            sendLabel={i18n.t("ui.promptInput.steer")}
+            queueLabel={i18n.t("ui.promptInput.queue")}
             stopLabel={i18n.t("ui.promptInput.stop")}
             onSubmit={props.controller.submit}
+            onQueue={view.submit.onQueue}
             onStop={props.controller.stop}
           />
         </div>
@@ -729,38 +732,80 @@ export function PromptInputV2Popover(props: {
 export function PromptInputV2SubmitButton(props: {
   mode: PromptInputV2Mode
   stopping: boolean
+  working: boolean
   disabled: boolean
   sendLabel: string
+  queueLabel: string
   stopLabel: string
   onSubmit: () => void
+  onQueue?: () => void
   onStop: () => void
 }) {
   return (
-    <TooltipV2
-      placement="top"
-      inactive={!props.stopping && props.disabled}
-      value={props.stopping ? props.stopLabel : props.sendLabel}
-    >
-      <IconButton
-        data-action="prompt-submit"
-        type="button"
-        disabled={!props.stopping && props.disabled}
-        tabIndex={props.mode === "normal" ? undefined : -1}
-        icon={props.stopping ? "stop" : props.mode === "shell" ? "arrow-undo-down" : "arrow-up"}
-        variant="primary"
-        class="size-7 rounded-md p-[6px] text-v2-icon-icon-muted shadow-[var(--v2-elevation-button-contrast)] disabled:opacity-50"
-        aria-label={props.stopping ? props.stopLabel : props.sendLabel}
-        onClick={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          if (props.stopping) {
-            props.onStop()
-            return
-          }
-          props.onSubmit()
-        }}
-      />
-    </TooltipV2>
+    <div class="flex items-center gap-1">
+      <Show when={props.working && !props.stopping}>
+        <TooltipV2 placement="top" value={props.stopLabel}>
+          <IconButton
+            data-action="prompt-stop"
+            type="button"
+            tabIndex={props.mode === "normal" ? undefined : -1}
+            icon="stop"
+            variant="primary"
+            class="size-7 rounded-md p-[6px] text-v2-icon-icon-muted shadow-[var(--v2-elevation-button-contrast)]"
+            aria-label={props.stopLabel}
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              props.onStop()
+            }}
+          />
+        </TooltipV2>
+      </Show>
+      <Show when={props.working && !props.stopping && props.mode === "normal" && props.onQueue}>
+        <TooltipV2 placement="top" value={props.queueLabel}>
+          <IconButton
+            data-action="prompt-queue"
+            type="button"
+            disabled={props.disabled}
+            tabIndex={props.mode === "normal" ? undefined : -1}
+            icon="archive"
+            variant="secondary"
+            class="size-7 rounded-md p-[6px] text-v2-icon-icon-muted shadow-[var(--v2-elevation-button-contrast)] disabled:opacity-50"
+            aria-label={props.queueLabel}
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              props.onQueue?.()
+            }}
+          />
+        </TooltipV2>
+      </Show>
+      <TooltipV2
+        placement="top"
+        inactive={!props.stopping && props.disabled}
+        value={props.stopping ? props.stopLabel : props.sendLabel}
+      >
+        <IconButton
+          data-action="prompt-submit"
+          type="button"
+          disabled={!props.stopping && props.disabled}
+          tabIndex={props.mode === "normal" ? undefined : -1}
+          icon={props.stopping ? "stop" : props.mode === "shell" ? "arrow-undo-down" : "arrow-up"}
+          variant="primary"
+          class="size-7 rounded-md p-[6px] text-v2-icon-icon-muted shadow-[var(--v2-elevation-button-contrast)] disabled:opacity-50"
+          aria-label={props.stopping ? props.stopLabel : props.sendLabel}
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            if (props.stopping) {
+              props.onStop()
+              return
+            }
+            props.onSubmit()
+          }}
+        />
+      </TooltipV2>
+    </div>
   )
 }
 

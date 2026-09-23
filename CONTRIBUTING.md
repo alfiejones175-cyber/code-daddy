@@ -1,6 +1,6 @@
 # Contributing to OpenCode
 
-For this private workspace's current priorities, feature status, and documentation ownership, start with the [development documentation map](/Users/alfredo/Documents/code-daddy/documentation/README.md) and [roadmap](/Users/alfredo/Documents/code-daddy/plans/README.md). English is the only required UI language; see the [language scope](/Users/alfredo/Documents/code-daddy/documentation/localization.md). Upstream contribution/public-release guidance below is reference material, not additional scope for this private app.
+For this private workspace's current priorities, feature status, and documentation ownership, start with the [development documentation map](documentation/README.md) and [roadmap](plans/README.md). English is the only required UI language; see the [language scope](documentation/localization.md). Upstream contribution/public-release guidance below is reference material, not additional scope for this private app.
 
 We want to make it easy for you to contribute to OpenCode. Here are the most common type of changes that get merged:
 
@@ -121,7 +121,7 @@ To test UI changes during development:
 bun run --cwd packages/app dev
 ```
 
-This starts a local dev server at http://localhost:5173 (or similar port shown in output). Most UI changes can be tested here, but the server must be running for full functionality.
+Vite uses port 3000 by default. Follow the [app development guide](packages/app/README.md) for the current two-terminal setup, backend port, and package checks.
 
 ### Running the Desktop App
 
@@ -141,7 +141,7 @@ bun run --cwd packages/desktop package
 ```
 
 > [!NOTE]
-> For public Protocol or Server `HttpApi` changes, run `bun run generate` from `packages/client`; do not edit `src/generated` or `src/generated-effect` directly. To regenerate the legacy JavaScript SDK, run `./packages/sdk/js/script/build.ts` from the repository root. Follow [AGENTS.md](/Users/alfredo/Documents/code-daddy/AGENTS.md) for dependency boundaries and package-local checks.
+> For public Protocol or Server `HttpApi` changes, run `bun run generate` from `packages/client`; do not edit `src/generated` or `src/generated-effect` directly. To regenerate the legacy JavaScript SDK, run `./packages/sdk/js/script/build.ts` from the repository root. Follow [AGENTS.md](AGENTS.md) for dependency boundaries and package-local checks.
 
 Please try to follow the [style guide](./AGENTS.md)
 

@@ -32,6 +32,22 @@ test("shows Jev result states with a keyboard-accessible bounded disclosure", as
       },
     ),
     toolPart(
+      "prt_jev_rank_ok",
+      "plugin_jev_rank_evidence_14s5b",
+      "completed",
+      {
+        query: "Which supplied passage best supports the claim?",
+        passages: [{ id: "models", text: "The provider documentation describes model availability." }],
+      },
+      {
+        output: JSON.stringify({
+          status: "ok",
+          advisory: true,
+          ranking: [{ id: "models", score: 2.99, confidence: 0.99 }],
+        }),
+      },
+    ),
+    toolPart(
       "prt_jev_invalid",
       "plugin_jev_rank_evidence_14s5b",
       "completed",
@@ -49,13 +65,26 @@ test("shows Jev result states with a keyboard-accessible bounded disclosure", as
 
   const success = page.locator('[data-timeline-part-id="prt_jev_ok"]')
   const unavailable = page.locator('[data-timeline-part-id="prt_jev_unavailable"]')
+  const ranking = page.locator('[data-timeline-part-id="prt_jev_rank_ok"]')
   const invalid = page.locator('[data-timeline-part-id="prt_jev_invalid"]')
-  const trigger = success.getByRole("button", { name: /Jev advisory result/ })
+  const trigger = success.getByRole("button", { name: /Jev failure triage.*Jev advisory result/ })
 
+  await expect(success).toContainText("Jev failure triage")
   await expect(success).toContainText("Jev advisory result")
+  await expect(unavailable).toContainText("Jev failure triage")
   await expect(unavailable).toContainText("Jev unavailable")
   await expect(unavailable).toContainText("Jev is unavailable because no API key is configured.")
+  await expect(ranking).toContainText("Jev evidence ranking")
+  await expect(ranking).toContainText("Jev advisory result")
+  await expect(ranking.locator('[data-slot="basic-tool-tool-arg"]')).toContainText(
+    "query=Which supplied passage best supports the claim?",
+  )
+  await expect(invalid).toContainText("Jev evidence ranking")
   await expect(invalid).toContainText("Input needs attention")
+  await expect(invalid.locator('[data-slot="basic-tool-tool-arg"]')).toHaveText([
+    "Input did not match the expected schema.",
+    "query=Why did the regression fail?",
+  ])
   await expect(trigger).toHaveAttribute("aria-expanded", "false")
   await expect(trigger).not.toContainText(evidence.slice(0, 241))
   await expect(success.locator('[data-slot="basic-tool-tool-arg"]')).toHaveText("evidence · 24000 characters")
@@ -64,7 +93,7 @@ test("shows Jev result states with a keyboard-accessible bounded disclosure", as
   await page.keyboard.press("Enter")
   await expect(trigger).toHaveAttribute("aria-expanded", "true")
   const inputDetail = success.locator('[data-slot="generic-tool-detail"]').filter({
-    has: success.getByText("Input", { exact: true }),
+    has: page.getByText("Input", { exact: true }),
   })
   await expect(inputDetail).toBeVisible()
   await expect(inputDetail.locator("pre")).toContainText(evidence)

@@ -39,6 +39,7 @@ import { SessionRecovery } from "./session/recovery"
 import { Revert } from "@opencode-ai/schema/revert"
 import { FSUtil } from "./fs-util"
 import { SessionDurable } from "@opencode-ai/schema/durable-event-manifest"
+import { SessionGoal } from "./session/goal"
 
 export const RevertState = Revert.State
 export type RevertState = Revert.State
@@ -167,6 +168,11 @@ export interface Interface {
     delivery?: SessionInput.Delivery
     resume?: boolean
   }) => Effect.Effect<SessionInput.Admitted, NotFoundError | PromptConflictError>
+  readonly queued: (sessionID: SessionSchema.ID) => Effect.Effect<ReadonlyArray<SessionInput.Admitted>, NotFoundError>
+  readonly cancelQueued: (input: {
+    sessionID: SessionSchema.ID
+    messageID: SessionMessage.ID
+  }) => Effect.Effect<boolean, NotFoundError>
   readonly shell: (input: {
     id?: EventV2.ID
     sessionID: SessionSchema.ID
@@ -187,6 +193,22 @@ export interface Interface {
   ) => Effect.Effect<SessionRecovery.Status, NotFoundError | MessageDecodeError>
   readonly resume: (sessionID: SessionSchema.ID) => Effect.Effect<void, NotFoundError | SessionRunner.RunError>
   readonly interrupt: (sessionID: SessionSchema.ID) => Effect.Effect<void>
+  readonly goal: {
+    readonly get: (sessionID: SessionSchema.ID) => Effect.Effect<SessionGoal.Info | undefined, NotFoundError>
+    readonly set: (input: SessionGoal.SetInput) => Effect.Effect<SessionGoal.Info, NotFoundError>
+    readonly pause: (
+      sessionID: SessionSchema.ID,
+    ) => Effect.Effect<SessionGoal.Info, NotFoundError | SessionGoal.NotFoundError>
+    readonly resume: (
+      sessionID: SessionSchema.ID,
+    ) => Effect.Effect<SessionGoal.Info, NotFoundError | SessionGoal.NotFoundError>
+    readonly block: (input: SessionGoal.BlockInput) => Effect.Effect<SessionGoal.Info, NotFoundError | SessionGoal.NotFoundError>
+    readonly complete: (input: {
+      sessionID: SessionSchema.ID
+      evidence: string
+    }) => Effect.Effect<SessionGoal.Info, NotFoundError | SessionGoal.NotFoundError>
+    readonly clear: (sessionID: SessionSchema.ID) => Effect.Effect<void, NotFoundError>
+  }
   readonly revert: {
     readonly stage: (input: {
       sessionID: SessionSchema.ID
@@ -432,6 +454,14 @@ const layer = Layer.effect(
           }),
         ),
       ),
+      queued: Effect.fn("V2Session.queued")(function* (sessionID) {
+        yield* result.get(sessionID)
+        return yield* SessionInput.queued(db, sessionID)
+      }),
+      cancelQueued: Effect.fn("V2Session.cancelQueued")(function* (input) {
+        yield* result.get(input.sessionID)
+        return yield* SessionInput.cancelQueued(db, events, { id: input.messageID, sessionID: input.sessionID })
+      }),
       shell: Effect.fn("V2Session.shell")(function* () {
         return yield* new OperationUnavailableError({ operation: "shell" })
       }),
@@ -483,6 +513,50 @@ const layer = Layer.effect(
       interrupt: Effect.fn("V2Session.interrupt")((sessionID) =>
         Effect.uninterruptible(execution.interrupt(sessionID)),
       ),
+      goal: {
+        get: Effect.fn("V2Session.goal.get")(function* (sessionID) {
+          const session = yield* result.get(sessionID)
+          return yield* SessionGoal.Service.use((goals) => goals.get(sessionID)).pipe(
+            Effect.provide(locations.get(session.location)),
+          )
+        }),
+        set: Effect.fn("V2Session.goal.set")(function* (input) {
+          const session = yield* result.get(input.sessionID)
+          return yield* SessionGoal.Service.use((goals) => goals.set(input)).pipe(
+            Effect.provide(locations.get(session.location)),
+          )
+        }),
+        pause: Effect.fn("V2Session.goal.pause")(function* (sessionID) {
+          const session = yield* result.get(sessionID)
+          return yield* SessionGoal.Service.use((goals) => goals.pause(sessionID)).pipe(
+            Effect.provide(locations.get(session.location)),
+          )
+        }),
+        resume: Effect.fn("V2Session.goal.resume")(function* (sessionID) {
+          const session = yield* result.get(sessionID)
+          return yield* SessionGoal.Service.use((goals) => goals.resume(sessionID)).pipe(
+            Effect.provide(locations.get(session.location)),
+          )
+        }),
+        block: Effect.fn("V2Session.goal.block")(function* (input) {
+          const session = yield* result.get(input.sessionID)
+          return yield* SessionGoal.Service.use((goals) => goals.block(input)).pipe(
+            Effect.provide(locations.get(session.location)),
+          )
+        }),
+        complete: Effect.fn("V2Session.goal.complete")(function* (input) {
+          const session = yield* result.get(input.sessionID)
+          return yield* SessionGoal.Service.use((goals) => goals.complete(input)).pipe(
+            Effect.provide(locations.get(session.location)),
+          )
+        }),
+        clear: Effect.fn("V2Session.goal.clear")(function* (sessionID) {
+          const session = yield* result.get(sessionID)
+          return yield* SessionGoal.Service.use((goals) => goals.clear(sessionID)).pipe(
+            Effect.provide(locations.get(session.location)),
+          )
+        }),
+      },
       revert: {
         stage: Effect.fn("V2Session.revert.stage")(function* (input) {
           const session = yield* result.get(input.sessionID)

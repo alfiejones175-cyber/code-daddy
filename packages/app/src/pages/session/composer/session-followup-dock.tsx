@@ -8,8 +8,9 @@ import { useLanguage } from "@/context/language"
 export function SessionFollowupDock(props: {
   items: { id: string; text: string }[]
   sending?: string
-  onSend: (id: string) => void
-  onEdit: (id: string) => void
+  onSend?: (id: string) => void
+  onEdit?: (id: string) => void
+  onCancel?: (id: string) => void
 }) {
   const language = useLanguage()
   const [store, setStore] = createStore({
@@ -77,24 +78,45 @@ export function SessionFollowupDock(props: {
             {(item) => (
               <div class="flex items-center gap-2 min-w-0 py-1">
                 <span class="min-w-0 flex-1 truncate text-13-regular text-text-strong">{item.text}</span>
-                <Button
-                  size="small"
-                  variant="secondary"
-                  class="shrink-0"
-                  disabled={!!props.sending}
-                  onClick={() => props.onSend(item.id)}
-                >
-                  {language.t("session.followupDock.sendNow")}
-                </Button>
-                <Button
-                  size="small"
-                  variant="ghost"
-                  class="shrink-0"
-                  disabled={!!props.sending}
-                  onClick={() => props.onEdit(item.id)}
-                >
-                  {language.t("session.followupDock.edit")}
-                </Button>
+                <Show when={props.onSend}>
+                  {(onSend) => (
+                    <Button
+                      size="small"
+                      variant="secondary"
+                      class="shrink-0"
+                      disabled={!!props.sending}
+                      onClick={() => onSend()(item.id)}
+                    >
+                      {language.t("session.followupDock.sendNow")}
+                    </Button>
+                  )}
+                </Show>
+                <Show when={props.onEdit}>
+                  {(onEdit) => (
+                    <Button
+                      size="small"
+                      variant="ghost"
+                      class="shrink-0"
+                      disabled={!!props.sending}
+                      onClick={() => onEdit()(item.id)}
+                    >
+                      {language.t("session.followupDock.edit")}
+                    </Button>
+                  )}
+                </Show>
+                <Show when={props.onCancel}>
+                  {(onCancel) => (
+                    <Button
+                      size="small"
+                      variant="ghost"
+                      class="shrink-0"
+                      disabled={!!props.sending}
+                      onClick={() => onCancel()(item.id)}
+                    >
+                      {language.t("session.followupDock.cancel")}
+                    </Button>
+                  )}
+                </Show>
               </div>
             )}
           </For>

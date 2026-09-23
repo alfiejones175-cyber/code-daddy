@@ -10,5 +10,7 @@ export const MCPHandler = HttpApiBuilder.group(Api, "server.mcp", (handlers) =>
     .handle("mcp.disconnect", (ctx) => response(MCP.Service.use((mcp) => mcp.disconnect(ctx.params.serverID))))
     .handle("mcp.reconnect", (ctx) => response(MCP.Service.use((mcp) => mcp.reconnect(ctx.params.serverID))))
     .handle("mcp.test", (ctx) => response(MCP.Service.use((mcp) => mcp.test(ctx.params.serverID))))
+    .handle("mcp.addRemote", (ctx) => response(MCP.Service.use((mcp) => mcp.addRemote(ctx.payload))))
+    .handle("mcp.remove", (ctx) => response(MCP.Service.use((mcp) => mcp.remove(ctx.params.serverID))))
     .handle("mcp.preset", (ctx) => response(MCP.Service.use((mcp) => mcp.preset(ctx.params.presetID)))),
 )

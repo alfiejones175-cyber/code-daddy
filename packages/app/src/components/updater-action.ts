@@ -4,8 +4,19 @@ import { usePlatform } from "@/context/platform"
 import { useLanguage } from "@/context/language"
 import { showToast } from "@/utils/toast"
 
-export function updaterAction(state: UpdaterState | undefined) {
-  if (!state) return { label: "settings.updates.action.checkNow" as const }
+type UpdaterAction = {
+  label:
+    | "settings.updates.action.checkNow"
+    | "settings.updates.action.checking"
+    | "settings.updates.action.downloading"
+    | "toast.update.action.installRestart"
+    | "settings.updates.action.installing"
+  description?: "settings.updates.row.check.disabledDescription"
+  run?: "check" | "install"
+}
+
+export function updaterAction(state: UpdaterState | undefined): UpdaterAction {
+  if (!state) return { label: "settings.updates.action.checkNow" }
   switch (state.status) {
     case "checking":
       return { label: "settings.updates.action.checking" as const }
@@ -16,7 +27,10 @@ export function updaterAction(state: UpdaterState | undefined) {
     case "installing":
       return { label: "settings.updates.action.installing" as const }
     case "disabled":
-      return { label: "settings.updates.action.checkNow" as const }
+      return {
+        label: "settings.updates.action.checkNow",
+        description: "settings.updates.row.check.disabledDescription",
+      }
     default:
       return { label: "settings.updates.action.checkNow" as const, run: "check" as const }
   }

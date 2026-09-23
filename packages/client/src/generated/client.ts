@@ -21,6 +21,24 @@ import type {
   SessionsSwitchModelOutput,
   SessionsPromptInput,
   SessionsPromptOutput,
+  SessionsListQueuedInput,
+  SessionsListQueuedOutput,
+  SessionsCancelQueuedInput,
+  SessionsCancelQueuedOutput,
+  SessionsGoalInput,
+  SessionsGoalOutput,
+  SessionsSetGoalInput,
+  SessionsSetGoalOutput,
+  SessionsPauseGoalInput,
+  SessionsPauseGoalOutput,
+  SessionsResumeGoalInput,
+  SessionsResumeGoalOutput,
+  SessionsBlockGoalInput,
+  SessionsBlockGoalOutput,
+  SessionsCompleteGoalInput,
+  SessionsCompleteGoalOutput,
+  SessionsClearGoalInput,
+  SessionsClearGoalOutput,
   SessionsCompactInput,
   SessionsCompactOutput,
   SessionsWaitInput,
@@ -128,8 +146,24 @@ import type {
   ServerMcpReconnectOutput,
   ServerMcpPresetInput,
   ServerMcpPresetOutput,
+  ServerMcpAddRemoteInput,
+  ServerMcpAddRemoteOutput,
+  ServerMcpRemoveInput,
+  ServerMcpRemoveOutput,
   ServerMcpTestInput,
   ServerMcpTestOutput,
+  ServerRoutineListInput,
+  ServerRoutineListOutput,
+  ServerRoutineCreateInput,
+  ServerRoutineCreateOutput,
+  ServerRoutinePauseInput,
+  ServerRoutinePauseOutput,
+  ServerRoutineResumeInput,
+  ServerRoutineResumeOutput,
+  ServerRoutineRemoveInput,
+  ServerRoutineRemoveOutput,
+  ServerRoutineRunsInput,
+  ServerRoutineRunsOutput,
 } from "./types"
 import { ClientError } from "./client-error"
 
@@ -417,6 +451,115 @@ export function make(options: ClientOptions) {
             body: { id: input["id"], prompt: input["prompt"], delivery: input["delivery"], resume: input["resume"] },
             successStatus: 200,
             declaredStatuses: [409, 404, 400, 401],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      listQueued: (input: SessionsListQueuedInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: SessionsListQueuedOutput }>(
+          {
+            method: "GET",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/queue`,
+            successStatus: 200,
+            declaredStatuses: [404, 400, 401],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      cancelQueued: (input: SessionsCancelQueuedInput, requestOptions?: RequestOptions) =>
+        request<SessionsCancelQueuedOutput>(
+          {
+            method: "DELETE",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/queue/${encodeURIComponent(input.messageID)}`,
+            successStatus: 204,
+            declaredStatuses: [409, 404, 400, 401],
+            empty: true,
+          },
+          requestOptions,
+        ),
+      goal: (input: SessionsGoalInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: SessionsGoalOutput }>(
+          {
+            method: "GET",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/goal`,
+            successStatus: 200,
+            declaredStatuses: [404, 400, 401],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      setGoal: (input: SessionsSetGoalInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: SessionsSetGoalOutput }>(
+          {
+            method: "POST",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/goal`,
+            body: {
+              objective: input["objective"],
+              acceptanceCriteria: input["acceptanceCriteria"],
+              budget: input["budget"],
+              progress: input["progress"],
+              blockers: input["blockers"],
+              evidence: input["evidence"],
+            },
+            successStatus: 200,
+            declaredStatuses: [404, 400, 401],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      pauseGoal: (input: SessionsPauseGoalInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: SessionsPauseGoalOutput }>(
+          {
+            method: "POST",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/goal/pause`,
+            successStatus: 200,
+            declaredStatuses: [409, 404, 400, 401],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      resumeGoal: (input: SessionsResumeGoalInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: SessionsResumeGoalOutput }>(
+          {
+            method: "POST",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/goal/resume`,
+            successStatus: 200,
+            declaredStatuses: [409, 404, 400, 401],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      blockGoal: (input: SessionsBlockGoalInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: SessionsBlockGoalOutput }>(
+          {
+            method: "POST",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/goal/block`,
+            body: { blockers: input["blockers"], progress: input["progress"] },
+            successStatus: 200,
+            declaredStatuses: [409, 404, 400, 401],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      completeGoal: (input: SessionsCompleteGoalInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: SessionsCompleteGoalOutput }>(
+          {
+            method: "POST",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/goal/complete`,
+            body: { evidence: input["evidence"] },
+            successStatus: 200,
+            declaredStatuses: [409, 404, 400, 401],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      clearGoal: (input: SessionsClearGoalInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: SessionsClearGoalOutput }>(
+          {
+            method: "POST",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/goal/clear`,
+            successStatus: 200,
+            declaredStatuses: [404, 400, 401],
             empty: false,
           },
           requestOptions,
@@ -1105,6 +1248,31 @@ export function make(options: ClientOptions) {
           },
           requestOptions,
         ),
+      addRemote: (input: ServerMcpAddRemoteInput, requestOptions?: RequestOptions) =>
+        request<ServerMcpAddRemoteOutput>(
+          {
+            method: "POST",
+            path: `/api/mcp/remote`,
+            query: { location: input["location"] },
+            body: { name: input["name"], url: input["url"] },
+            successStatus: 200,
+            declaredStatuses: [401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      remove: (input: ServerMcpRemoveInput, requestOptions?: RequestOptions) =>
+        request<ServerMcpRemoveOutput>(
+          {
+            method: "DELETE",
+            path: `/api/mcp/${encodeURIComponent(input.serverID)}`,
+            query: { location: input["location"] },
+            successStatus: 200,
+            declaredStatuses: [401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ),
       test: (input: ServerMcpTestInput, requestOptions?: RequestOptions) =>
         request<ServerMcpTestOutput>(
           {
@@ -1117,6 +1285,82 @@ export function make(options: ClientOptions) {
           },
           requestOptions,
         ),
+    },
+    "server.routine": {
+      list: (input?: ServerRoutineListInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: ServerRoutineListOutput }>(
+          {
+            method: "GET",
+            path: `/api/routine`,
+            query: { sessionID: input?.["sessionID"] },
+            successStatus: 200,
+            declaredStatuses: [401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      create: (input: ServerRoutineCreateInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: ServerRoutineCreateOutput }>(
+          {
+            method: "POST",
+            path: `/api/routine`,
+            body: {
+              sessionID: input["sessionID"],
+              name: input["name"],
+              prompt: input["prompt"],
+              intervalMs: input["intervalMs"],
+            },
+            successStatus: 200,
+            declaredStatuses: [404, 401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      pause: (input: ServerRoutinePauseInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: ServerRoutinePauseOutput }>(
+          {
+            method: "POST",
+            path: `/api/routine/${encodeURIComponent(input.routineID)}/pause`,
+            successStatus: 200,
+            declaredStatuses: [404, 401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      resume: (input: ServerRoutineResumeInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: ServerRoutineResumeOutput }>(
+          {
+            method: "POST",
+            path: `/api/routine/${encodeURIComponent(input.routineID)}/resume`,
+            successStatus: 200,
+            declaredStatuses: [404, 401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      remove: (input: ServerRoutineRemoveInput, requestOptions?: RequestOptions) =>
+        request<ServerRoutineRemoveOutput>(
+          {
+            method: "DELETE",
+            path: `/api/routine/${encodeURIComponent(input.routineID)}`,
+            successStatus: 204,
+            declaredStatuses: [404, 401, 400],
+            empty: true,
+          },
+          requestOptions,
+        ),
+      runs: (input: ServerRoutineRunsInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: ServerRoutineRunsOutput }>(
+          {
+            method: "GET",
+            path: `/api/routine/${encodeURIComponent(input.routineID)}/run`,
+            query: { limit: input["limit"] },
+            successStatus: 200,
+            declaredStatuses: [404, 401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
     },
   }
 }

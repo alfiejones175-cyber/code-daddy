@@ -11,7 +11,7 @@ import {
   SessionNotFoundError,
   UnknownError,
 } from "@opencode-ai/protocol/errors"
-import { AbsolutePath } from "@opencode-ai/core/schema"
+import { AbsolutePath, PositiveInt } from "@opencode-ai/core/schema"
 
 const DefaultSessionsLimit = 50
 const DefaultSessionHistoryLimit = 50
@@ -247,6 +247,179 @@ export const SessionHandler = HttpApiBuilder.group(Api, "server.session", (handl
                 ),
               ),
           }
+        }),
+      )
+      .handle(
+        "session.queue.list",
+        Effect.fn(function* (ctx) {
+          return {
+            data: (yield* session.queued(ctx.params.sessionID).pipe(
+              Effect.catchTag(
+                "Session.NotFoundError",
+                (error) =>
+                  new SessionNotFoundError({
+                    sessionID: error.sessionID,
+                    message: `Session not found: ${error.sessionID}`,
+                  }),
+              ),
+            )).map((input, index) => ({ id: input.id, order: PositiveInt.make(index + 1), text: input.prompt.text })),
+          }
+        }),
+      )
+      .handle(
+        "session.queue.cancel",
+        Effect.fn(function* (ctx) {
+          const cancelled = yield* session.cancelQueued(ctx.params).pipe(
+            Effect.catchTag(
+              "Session.NotFoundError",
+              (error) =>
+                new SessionNotFoundError({
+                  sessionID: error.sessionID,
+                  message: `Session not found: ${error.sessionID}`,
+                }),
+            ),
+          )
+          if (!cancelled)
+            return yield* new ConflictError({
+              resource: ctx.params.messageID,
+              message: "Only pending queued prompts can be cancelled",
+            })
+          return HttpApiSchema.NoContent.make()
+        }),
+      )
+      .handle(
+        "session.goal.get",
+        Effect.fn(function* (ctx) {
+          return {
+            data: yield* session.goal.get(ctx.params.sessionID).pipe(
+              Effect.catchTag(
+                "Session.NotFoundError",
+                (error) =>
+                  new SessionNotFoundError({
+                    sessionID: error.sessionID,
+                    message: `Session not found: ${error.sessionID}`,
+                  }),
+              ),
+              Effect.map((goal) => goal ?? null),
+            ),
+          }
+        }),
+      )
+      .handle(
+        "session.goal.set",
+        Effect.fn(function* (ctx) {
+          return {
+            data: yield* session.goal.set({ ...ctx.params, ...ctx.payload }).pipe(
+              Effect.catchTag(
+                "Session.NotFoundError",
+                (error) =>
+                  new SessionNotFoundError({
+                    sessionID: error.sessionID,
+                    message: `Session not found: ${error.sessionID}`,
+                  }),
+              ),
+            ),
+          }
+        }),
+      )
+      .handle(
+        "session.goal.pause",
+        Effect.fn(function* (ctx) {
+          return {
+            data: yield* session.goal.pause(ctx.params.sessionID).pipe(
+              Effect.catchTag(
+                "Session.NotFoundError",
+                (error) =>
+                  new SessionNotFoundError({
+                    sessionID: error.sessionID,
+                    message: `Session not found: ${error.sessionID}`,
+                  }),
+              ),
+              Effect.catchTag(
+                "SessionGoal.NotFoundError",
+                () => new ConflictError({ message: "Session has no goal", resource: ctx.params.sessionID }),
+              ),
+            ),
+          }
+        }),
+      )
+      .handle(
+        "session.goal.resume",
+        Effect.fn(function* (ctx) {
+          return {
+            data: yield* session.goal.resume(ctx.params.sessionID).pipe(
+              Effect.catchTag(
+                "Session.NotFoundError",
+                (error) =>
+                  new SessionNotFoundError({
+                    sessionID: error.sessionID,
+                    message: `Session not found: ${error.sessionID}`,
+                  }),
+              ),
+              Effect.catchTag(
+                "SessionGoal.NotFoundError",
+                () => new ConflictError({ message: "Session has no goal", resource: ctx.params.sessionID }),
+              ),
+            ),
+          }
+        }),
+      )
+      .handle(
+        "session.goal.block",
+        Effect.fn(function* (ctx) {
+          return {
+            data: yield* session.goal.block({ ...ctx.params, ...ctx.payload }).pipe(
+              Effect.catchTag(
+                "Session.NotFoundError",
+                (error) =>
+                  new SessionNotFoundError({
+                    sessionID: error.sessionID,
+                    message: `Session not found: ${error.sessionID}`,
+                  }),
+              ),
+              Effect.catchTag(
+                "SessionGoal.NotFoundError",
+                () => new ConflictError({ message: "Session has no goal", resource: ctx.params.sessionID }),
+              ),
+            ),
+          }
+        }),
+      )
+      .handle(
+        "session.goal.complete",
+        Effect.fn(function* (ctx) {
+          return {
+            data: yield* session.goal.complete({ ...ctx.params, ...ctx.payload }).pipe(
+              Effect.catchTag(
+                "Session.NotFoundError",
+                (error) =>
+                  new SessionNotFoundError({
+                    sessionID: error.sessionID,
+                    message: `Session not found: ${error.sessionID}`,
+                  }),
+              ),
+              Effect.catchTag(
+                "SessionGoal.NotFoundError",
+                () => new ConflictError({ message: "Session has no goal", resource: ctx.params.sessionID }),
+              ),
+            ),
+          }
+        }),
+      )
+      .handle(
+        "session.goal.clear",
+        Effect.fn(function* (ctx) {
+          yield* session.goal.clear(ctx.params.sessionID).pipe(
+            Effect.catchTag(
+              "Session.NotFoundError",
+              (error) =>
+                new SessionNotFoundError({
+                  sessionID: error.sessionID,
+                  message: `Session not found: ${error.sessionID}`,
+                }),
+            ),
+          )
+          return { data: null }
         }),
       )
       .handle(

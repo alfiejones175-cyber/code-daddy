@@ -364,7 +364,7 @@ function stringifyToolValue(value: unknown) {
 }
 
 function jevResult(tool: string, output: unknown) {
-  if (!isJevTool(tool) || typeof output !== "string") return
+  if (!jevOperation(tool) || typeof output !== "string") return
   try {
     const parsed: unknown = JSON.parse(output)
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return
@@ -380,13 +380,16 @@ function jevResult(tool: string, output: unknown) {
   }
 }
 
-function isJevTool(tool: string) {
-  return (
-    tool === "jev_triage_failure" ||
-    tool === "jev_rank_evidence" ||
-    /^plugin_jev_triage_failure_[a-z0-9]{1,7}$/.test(tool) ||
-    /^plugin_jev_rank_evidence_[a-z0-9]{1,7}$/.test(tool)
-  )
+export function jevOperation(tool: string) {
+  if (tool === "jev_triage_failure" || /^plugin_jev_triage_failure_[a-z0-9]{1,7}$/.test(tool)) {
+    return "triage"
+  }
+  if (tool === "jev_rank_evidence" || /^plugin_jev_rank_evidence_[a-z0-9]{1,7}$/.test(tool)) {
+    return "ranking"
+  }
+  if (tool === "jev_review_output" || /^plugin_jev_review_output_[a-z0-9]{1,7}$/.test(tool)) {
+    return "review"
+  }
 }
 
 export function GenericTool(props: {
@@ -401,6 +404,7 @@ export function GenericTool(props: {
   deferContent?: boolean
 }) {
   const i18n = useI18n()
+  const operation = () => jevOperation(props.tool)
   const result = () => jevResult(props.tool, props.output)
   const output = () => genericToolDetail(props.output, i18n.t("ui.genericTool.unavailable"))
   const input = () => genericToolDetail(props.input, i18n.t("ui.genericTool.unavailable"))
@@ -415,8 +419,13 @@ export function GenericTool(props: {
     const state = result()
     const payloadLabel = (input: { key: string; count: number }) =>
       i18n.t("ui.genericTool.characterCount", { name: input.key, count: input.count })
-    if (!state?.message) return genericToolArgs(props.input, payloadLabel)
-    return [state.message.slice(0, GENERIC_TOOL_PREVIEW_LIMIT), ...genericToolArgs(props.input, payloadLabel)].slice(0, 3)
+    const query =
+      operation() === "ranking" && typeof props.input?.query === "string"
+        ? `query=${props.input.query.slice(0, GENERIC_TOOL_PREVIEW_LIMIT - "query=".length)}`
+        : undefined
+    return [state?.message?.slice(0, GENERIC_TOOL_PREVIEW_LIMIT), query, ...genericToolArgs(props.input, payloadLabel)]
+      .filter((arg): arg is string => !!arg)
+      .slice(0, 3)
   }
 
   return (
@@ -428,9 +437,14 @@ export function GenericTool(props: {
       onOpenChange={props.onOpenChange}
       defer={props.deferContent}
       trigger={{
-        title: isJevTool(props.tool)
-          ? i18n.t("ui.genericTool.jev.title")
-          : i18n.t("ui.basicTool.called", { tool: props.tool }),
+        title:
+          operation() === "triage"
+            ? i18n.t("ui.genericTool.jev.triage.title")
+            : operation() === "ranking"
+              ? i18n.t("ui.genericTool.jev.ranking.title")
+              : operation() === "review"
+                ? i18n.t("ui.genericTool.jev.review.title")
+              : i18n.t("ui.basicTool.called", { tool: props.tool }),
         subtitle: subtitle(),
         args: args(),
       }}

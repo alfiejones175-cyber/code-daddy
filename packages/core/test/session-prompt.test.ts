@@ -269,6 +269,29 @@ describe("SessionV2.prompt", () => {
     }),
   )
 
+  it.effect("rejects an exact retry of a cancelled queued prompt", () =>
+    Effect.gen(function* () {
+      yield* setup
+      const session = yield* SessionV2.Service
+      const input = {
+        sessionID,
+        id: messageID,
+        prompt: Prompt.make({ text: "Wait until I am done" }),
+        delivery: "queue" as const,
+        resume: false,
+      }
+
+      yield* session.prompt(input)
+      expect(yield* session.cancelQueued({ sessionID, messageID })).toBe(true)
+
+      const failure = yield* session.prompt(input).pipe(Effect.flip)
+
+      expect(failure).toMatchObject({ _tag: "Session.PromptConflictError", sessionID, messageID })
+      expect(yield* admitted(messageID)).toBeUndefined()
+      expect(yield* admittedCount).toBe(0)
+    }),
+  )
+
   it.effect("wakes execution when an exact prompt retry recovers a committed message", () =>
     Effect.gen(function* () {
       yield* setup

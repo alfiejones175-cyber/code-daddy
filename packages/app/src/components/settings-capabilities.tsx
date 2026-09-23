@@ -15,6 +15,8 @@ export function SettingsCapabilities(props: { directory: Accessor<string | undef
     busy: undefined as string | undefined,
     failed: false,
     error: undefined as string | undefined,
+    name: "",
+    url: "",
   })
   const [xcode] = createResource(() => platform.xcodeDetect?.().catch(() => undefined))
   createEffect(() => {
@@ -22,26 +24,54 @@ export function SettingsCapabilities(props: { directory: Accessor<string | undef
     capabilities.scope()
     setState({ busy: undefined, failed: false, error: undefined })
   })
-  const run = async (id: string, action: "test" | "reconnect" | "setup") => {
+  const run = async (id: string, action: "test" | "reconnect" | "disconnect" | "remove" | "setup") => {
     const directory = props.directory()
     if (!directory || state.busy) return
     const scope = capabilities.scope()
     setState({ busy: id, failed: false, error: undefined })
     const api = capabilities.api()
     await (
-      action === "setup" && (id === "browser" || id === "xcode")
+      action === "setup" && (id === "browser" || id === "xcode" || id === "openai-docs" || id === "github")
         ? api.setup({ directory }, id)
         : action === "test"
           ? api.test({ directory }, id)
-          : api.reconnect({ directory }, id)
+          : action === "disconnect"
+            ? api.disconnect({ directory }, id)
+            : action === "remove"
+              ? api.remove({ directory }, id)
+              : api.reconnect({ directory }, id)
     )
       .then((result) => {
-        if (props.directory() === directory && capabilities.scope() === scope && (result.state === "failed" || result.error))
+        if (
+          props.directory() === directory &&
+          capabilities.scope() === scope &&
+          (result.state === "failed" || result.error)
+        )
           setState({ failed: true, error: result.error })
-        return capabilities.refresh()
+        void capabilities.refresh()
       })
       .catch(() => {
         if (props.directory() === directory && capabilities.scope() === scope) setState("failed", true)
+      })
+    if (props.directory() === directory && capabilities.scope() === scope) setState("busy", undefined)
+  }
+  const addRemote = async () => {
+    const directory = props.directory()
+    if (!directory || state.busy) return
+    const scope = capabilities.scope()
+    setState({ busy: "remote", failed: false, error: undefined })
+    await capabilities
+      .api()
+      .addRemote({ directory }, { name: state.name, url: state.url })
+      .then((result) => {
+        if (props.directory() !== directory || capabilities.scope() !== scope) return
+        if (result.state === "failed") setState({ failed: true, error: result.error })
+        else setState({ name: "", url: "" })
+        void capabilities.refresh()
+      })
+      .catch((error: unknown) => {
+        if (props.directory() === directory && capabilities.scope() === scope)
+          setState({ failed: true, error: error instanceof Error ? error.message : String(error) })
       })
     if (props.directory() === directory && capabilities.scope() === scope) setState("busy", undefined)
   }
@@ -81,7 +111,7 @@ export function SettingsCapabilities(props: { directory: Accessor<string | undef
           </div>
         </Show>
         <div class="flex flex-col divide-y divide-border-weak-base rounded-lg border border-border-weak-base">
-          <For each={["browser", "xcode"] as const}>
+          <For each={["browser", "xcode", "openai-docs", "github"] as const}>
             {(preset) => (
               <Show
                 when={
@@ -93,11 +123,25 @@ export function SettingsCapabilities(props: { directory: Accessor<string | undef
                 <div class="flex flex-wrap items-start justify-between gap-3 p-4">
                   <div class="min-w-0 flex-1">
                     <h3 class="text-14-medium text-text-strong">
-                      {language.t(preset === "browser" ? "capabilities.browser" : "capabilities.xcode")}
+                      {language.t(
+                        preset === "browser"
+                          ? "capabilities.browser"
+                          : preset === "xcode"
+                            ? "capabilities.xcode"
+                            : preset === "openai-docs"
+                              ? "capabilities.openaiDocs"
+                              : "capabilities.github",
+                      )}
                     </h3>
                     <p class="mt-1 text-13-regular text-text-weak">
                       {language.t(
-                        preset === "browser" ? "capabilities.browserDescription" : "capabilities.xcodeDescription",
+                        preset === "browser"
+                          ? "capabilities.browserDescription"
+                          : preset === "xcode"
+                            ? "capabilities.xcodeDescription"
+                            : preset === "openai-docs"
+                              ? "capabilities.openaiDocsDescription"
+                              : "capabilities.githubDescription",
                       )}
                     </p>
                     <Show when={preset === "xcode" && xcode()}>
@@ -140,10 +184,25 @@ export function SettingsCapabilities(props: { directory: Accessor<string | undef
                     <Button variant="ghost" disabled={!!state.busy} onClick={() => void run(item.id, "test")}>
                       {language.t("capabilities.test")}
                     </Button>
+                    <Show when={item.state === "available" || item.state === "connected"}>
+                      <Button variant="ghost" disabled={!!state.busy} onClick={() => void run(item.id, "disconnect")}>
+                        {language.t("capabilities.disconnect")}
+                      </Button>
+                    </Show>
                     <Button variant="secondary" disabled={!!state.busy} onClick={() => void run(item.id, "reconnect")}>
                       <Show when={state.busy === item.id} fallback={language.t("capabilities.reconnect")}>
                         <Spinner class="size-4" />
                       </Show>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      disabled={!!state.busy}
+                      onClick={() => {
+                        if (!window.confirm(language.t("capabilities.removeConfirm", { name: item.name }))) return
+                        void run(item.id, "remove")
+                      }}
+                    >
+                      {language.t("capabilities.remove")}
                     </Button>
                   </div>
                 </div>
@@ -162,8 +221,11 @@ export function SettingsCapabilities(props: { directory: Accessor<string | undef
                     <ul class="mt-2 flex flex-col gap-1">
                       <For each={item.tools}>
                         {(tool) => (
-                          <li class="break-all">
-                            <code>{tool.name}</code>
+                          <li class="break-words">
+                            <code class="break-all">{tool.name}</code>
+                            <Show when={tool.description}>
+                              {(description) => <p class="mt-0.5">{description()}</p>}
+                            </Show>
                           </li>
                         )}
                       </For>
@@ -174,6 +236,39 @@ export function SettingsCapabilities(props: { directory: Accessor<string | undef
             )}
           </For>
         </div>
+        <form
+          class="flex flex-col gap-3 rounded-lg border border-border-weak-base p-4"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void addRemote()
+          }}
+        >
+          <h3 class="text-14-medium text-text-strong">{language.t("capabilities.addRemote")}</h3>
+          <p class="text-13-regular text-text-weak">{language.t("capabilities.addRemoteDescription")}</p>
+          <label class="flex flex-col gap-1 text-13-regular text-text-weak">
+            {language.t("capabilities.serverName")}
+            <input
+              class="rounded border border-border-weak-base bg-surface-base p-2 text-text-strong"
+              value={state.name}
+              onInput={(event) => setState("name", event.currentTarget.value)}
+              required
+              pattern="[A-Za-z][A-Za-z0-9_-]{0,63}"
+            />
+          </label>
+          <label class="flex flex-col gap-1 text-13-regular text-text-weak">
+            {language.t("capabilities.serverUrl")}
+            <input
+              class="rounded border border-border-weak-base bg-surface-base p-2 text-text-strong"
+              type="url"
+              value={state.url}
+              onInput={(event) => setState("url", event.currentTarget.value)}
+              required
+            />
+          </label>
+          <Button variant="secondary" type="submit" disabled={!!state.busy}>
+            {language.t("capabilities.add")}
+          </Button>
+        </form>
       </Show>
     </section>
   )

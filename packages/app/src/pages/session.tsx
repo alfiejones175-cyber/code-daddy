@@ -13,6 +13,7 @@ import {
   createMemo,
   createEffect,
   createComputed,
+  createResource,
   createSignal,
   on,
   onMount,
@@ -78,6 +79,7 @@ import { MessageTimeline } from "@/pages/session/timeline/message-timeline"
 import { createTimelineModel } from "@/pages/session/timeline/model"
 import { type DiffStyle, SessionReviewTab, type SessionReviewTabProps } from "@/pages/session/review-tab"
 import { useSessionLayout } from "@/pages/session/session-layout"
+import { createWorkspaceApi } from "@/utils/workspace-api"
 import { restorePromptModel, syncPromptModel, syncSessionModel } from "@/pages/session/session-model-helpers"
 import {
   clampSessionPanelWidth,
@@ -1780,6 +1782,53 @@ export default function Page() {
 
   const busy = (sessionID: string) => sync().data.session_working(sessionID)
 
+  const [durableFollowups, { refetch: refetchDurableFollowups }] = createResource(
+    () => {
+      const sessionID = params.id
+      if (!sessionID || serverSDK().protocolKind() !== "v2") return
+      return sessionID
+    },
+    (sessionID) =>
+      createWorkspaceApi({ server: serverSDK().server.http, fetch: platform.fetch }).queued(
+        { directory: sdk().directory, workspaceID: info()?.workspaceID },
+        sessionID,
+      ),
+  )
+
+  createEffect(
+    on(
+      () => ({
+        sessionID: params.id,
+        protocol: serverSDK().protocolKind(),
+        working: params.id ? busy(params.id) : undefined,
+      }),
+      ({ sessionID, protocol }) => {
+        if (!sessionID || protocol !== "v2") return
+        void refetchDurableFollowups()
+      },
+      { defer: true },
+    ),
+  )
+
+  createEffect(() => {
+    const stop = serverSDK().event.listen((event) => {
+      const type = event.details.type as string
+      if (
+        type !== "session.next.prompt.admitted" &&
+        type !== "session.next.prompted" &&
+        type !== "session.next.prompt.cancelled" &&
+        type !== "session.input.admitted" &&
+        type !== "session.input.promoted" &&
+        type !== "session.input.cancelled"
+      )
+        return
+      const properties = event.details.properties as { sessionID?: string }
+      if (properties.sessionID !== params.id) return
+      void refetchDurableFollowups()
+    })
+    onCleanup(stop)
+  })
+
   const queuedFollowups = createMemo(() => {
     const id = params.id
     if (!id) return emptyFollowups
@@ -1829,12 +1878,6 @@ export default function Page() {
     return followupMutation.variables?.id
   })
 
-  const queueEnabled = createMemo(() => {
-    const id = params.id
-    if (!id) return false
-    return settings.general.followup() === "queue" && busy(id) && !composer.blocked() && !readOnlyChild()
-  })
-
   const followupText = (item: FollowupDraft) => {
     const text = item.prompt
       .map((part) => {
@@ -1862,6 +1905,34 @@ export default function Page() {
   }
 
   const followupDock = createMemo(() => queuedFollowups().map((item) => ({ id: item.id, text: followupText(item) })))
+
+  const durableFollowupDock = createMemo(() =>
+    (durableFollowups() ?? []).map((item) => ({ id: item.id, text: item.text })),
+  )
+
+  const cancelFollowupMutation = useMutation(() => ({
+    mutationFn: (input: { sessionID: string; messageID: string }) =>
+      createWorkspaceApi({ server: serverSDK().server.http, fetch: platform.fetch })
+        .cancelQueued({ directory: sdk().directory, workspaceID: info()?.workspaceID }, input.sessionID, input.messageID)
+        .finally(() => refetchDurableFollowups()),
+    onError: (error) => {
+      if (error instanceof Error && error.message === "HTTP 409") return
+      fail(error)
+    },
+  }))
+
+  const cancellingFollowup = createMemo(() => {
+    const sessionID = params.id
+    if (!sessionID || !cancelFollowupMutation.isPending) return
+    if (cancelFollowupMutation.variables?.sessionID !== sessionID) return
+    return cancelFollowupMutation.variables.messageID
+  })
+
+  const cancelDurableFollowup = (messageID: string) => {
+    const sessionID = params.id
+    if (!sessionID || cancelFollowupMutation.isPending) return
+    void cancelFollowupMutation.mutateAsync({ sessionID, messageID }).catch(() => {})
+  }
 
   const sendFollowup = (sessionID: string, id: string, opts?: { manual?: boolean }) => {
     if (sync().session.get(sessionID)?.parentID && serverSDK().protocolKind() !== "v2") return Promise.resolve()
@@ -2163,6 +2234,7 @@ export default function Page() {
               {(_id) => (
                 <MessageTimeline
                   actions={actions}
+                  onPreparePrompt={preparePrompt}
                   scroll={ui.scroll}
                   onResumeScroll={resumeScroll}
                   setScrollRef={setScrollRef}
@@ -2221,12 +2293,18 @@ export default function Page() {
             },
             followup: () =>
               params.id && !readOnlyChild()
-                ? {
-                    items: followupDock(),
-                    sending: sendingFollowup(),
-                    onSend: (id) => void sendFollowup(params.id!, id, { manual: true }),
-                    onEdit: editFollowup,
-                  }
+                ? serverSDK().protocolKind() === "v2"
+                  ? {
+                      items: durableFollowupDock(),
+                      sending: cancellingFollowup(),
+                      onCancel: cancelDurableFollowup,
+                    }
+                  : {
+                      items: followupDock(),
+                      sending: sendingFollowup(),
+                      onSend: (id) => void sendFollowup(params.id!, id, { manual: true }),
+                      onEdit: editFollowup,
+                    }
                 : undefined,
             revert: () =>
               rolled().length > 0
@@ -2274,8 +2352,8 @@ export default function Page() {
                       }}
                       edit={editingFollowup()}
                       onEditLoaded={clearFollowupEdit}
-                      shouldQueue={queueEnabled}
                       onQueue={queueFollowup}
+                      onQueueSubmitted={() => void refetchDurableFollowups()}
                       onAbort={() => {
                         const id = params.id
                         if (!id) return
@@ -2304,8 +2382,8 @@ export default function Page() {
                         return editingFollowup()
                       },
                       onEditLoaded: clearFollowupEdit,
-                      shouldQueue: queueEnabled,
                       onQueue: queueFollowup,
+                      onQueueSubmitted: () => void refetchDurableFollowups(),
                       onAbort: () => {
                         const id = params.id
                         if (!id) return

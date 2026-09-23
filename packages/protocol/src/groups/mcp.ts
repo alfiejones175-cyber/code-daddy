@@ -42,12 +42,30 @@ export const MCPGroup = HttpApiGroup.make("server.mcp")
   )
   .add(
     HttpApiEndpoint.post("mcp.preset", "/api/mcp/preset/:presetID", {
-      params: { presetID: Schema.Literals(["browser", "xcode"]) },
+      params: { presetID: Schema.Literals(["browser", "xcode", "openai-docs", "github"]) },
       query: LocationQuery,
       success: Location.response(MCP.Info),
     })
       .annotateMerge(locationQueryOpenApi)
       .annotateMerge(OpenApi.annotations({ identifier: "v2.mcp.preset", summary: "Configure MCP preset" })),
+  )
+  .add(
+    HttpApiEndpoint.post("mcp.addRemote", "/api/mcp/remote", {
+      payload: Schema.Struct({ name: Schema.String, url: Schema.String }),
+      query: LocationQuery,
+      success: Location.response(MCP.Info),
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(OpenApi.annotations({ identifier: "v2.mcp.addRemote", summary: "Add remote MCP server" })),
+  )
+  .add(
+    HttpApiEndpoint.delete("mcp.remove", "/api/mcp/:serverID", {
+      params: { serverID: MCP.ID },
+      query: LocationQuery,
+      success: Location.response(MCP.Info),
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(OpenApi.annotations({ identifier: "v2.mcp.remove", summary: "Remove project MCP server" })),
   )
   .add(
     HttpApiEndpoint.post("mcp.test", "/api/mcp/:serverID/test", {

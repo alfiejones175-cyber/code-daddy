@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { rankEvidence, triageFailure } from "../src/evaluator.js"
+import { rankEvidence, reviewOutput, triageFailure } from "../src/evaluator.js"
 
 const servers: Array<ReturnType<typeof Bun.serve>> = []
 
@@ -39,26 +39,129 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
+describe("reviewOutput", () => {
+  const input = {
+    projectID: "project-1",
+    sessionID: "session-1",
+    messageID: "message-1",
+    requirements: ["Fix the login error and run the test."],
+    response: "Fixed login. The test passed.",
+    evidence: [{ id: "test-log", text: "login.test.ts: 1 passed" }],
+  }
+  const answer = (choice: string, options: string[]) => ({
+    type: "choice",
+    choice,
+    confidence: 1,
+    probabilities: Object.fromEntries(options.map((item) => [item, item === choice ? 1 : 0])),
+  })
+  const answers = {
+    requirements: answer("supported", ["supported", "concern", "insufficient_evidence"]),
+    checks: answer("supported", ["supported", "concern", "insufficient_evidence"]),
+    completion: answer("supported", ["supported", "concern", "insufficient_evidence"]),
+    errors: answer("insufficient_evidence", ["supported", "concern", "insufficient_evidence"]),
+    "reference:requirements": answer("none", ["none", "test-log"]),
+    "reference:checks": answer("test-log", ["none", "test-log"]),
+    "reference:completion": answer("none", ["none", "test-log"]),
+    "reference:errors": answer("none", ["none", "test-log"]),
+  }
+
+  test("returns typed findings tied to the selected message and supplied evidence", async () => {
+    let request: Record<string, unknown> | undefined
+    const baseURL = server(async (incoming) => {
+      const body = await incoming.json()
+      if (isRecord(body)) request = body
+      return Response.json({ model: "jev-1.13.0", usage: { input_tokens: 42, output_tokens: 8 }, answers })
+    })
+    const result = await reviewOutput(input, { apiKey: "secret", baseURL })
+    expect(result).toMatchObject({
+      status: "ok",
+      advisory: true,
+      projectID: input.projectID,
+      sessionID: input.sessionID,
+      messageID: input.messageID,
+      rubricVersion: "jev-output-review-1",
+    })
+    if (result.status !== "ok") throw new Error("expected review")
+    expect(result.findings).toHaveLength(4)
+    expect(result.findings[1]).toMatchObject({ criterion: "checks", assessment: "supported", evidenceID: "test-log" })
+    expect(result.responseDigest).toMatch(/^[a-f0-9]{64}$/)
+    expect(result.evidenceDigest).toMatch(/^[a-f0-9]{64}$/)
+    expect(JSON.stringify(result)).not.toContain(input.response)
+    expect(request).toMatchObject({
+      state: { requirements: input.requirements, response: input.response, evidence: input.evidence },
+    })
+  })
+
+  test("rejects duplicate and unknown evidence references", async () => {
+    let calls = 0
+    const baseURL = server(() => {
+      calls += 1
+      return Response.json({ model: "jev-1.13.0", usage: { input_tokens: 1, output_tokens: 1 }, answers })
+    })
+    expect(
+      await reviewOutput({ ...input, evidence: [input.evidence[0], input.evidence[0]] }, { apiKey: "secret", baseURL }),
+    ).toMatchObject({ status: "invalid_input" })
+    expect(calls).toBe(0)
+    expect(
+      await reviewOutput({ ...input, evidence: [{ id: "none", text: "bad" }] }, { apiKey: "secret", baseURL }),
+    ).toMatchObject({ status: "invalid_input" })
+    expect(
+      await reviewOutput({ ...input, evidence: [{ id: "bad:id", text: "bad" }] }, { apiKey: "secret", baseURL }),
+    ).toMatchObject({ status: "invalid_input" })
+    expect(calls).toBe(0)
+    const malformed = server(() =>
+      Response.json({
+        model: "jev-1.13.0",
+        usage: { input_tokens: 1, output_tokens: 1 },
+        answers: { ...answers, "reference:checks": answer("unknown", ["none", "test-log", "unknown"]) },
+      }),
+    )
+    expect(await reviewOutput(input, { apiKey: "secret", baseURL: malformed, diagnostics: true })).toMatchObject({
+      status: "unavailable",
+      reason: "invalid_response",
+      validation: "choice_answer",
+    })
+  })
+
+  test("does not call a check claim supported without a cited excerpt", async () => {
+    const baseURL = server(() =>
+      Response.json({
+        model: "jev-1.13.0",
+        usage: { input_tokens: 1, output_tokens: 1 },
+        answers: { ...answers, "reference:checks": answer("none", ["none", "test-log"]) },
+      }),
+    )
+    const result = await reviewOutput(input, { apiKey: "secret", baseURL })
+    expect(result.status).toBe("ok")
+    if (result.status !== "ok") return
+    expect(result.findings.find((item) => item.criterion === "checks")?.assessment).toBe("insufficient_evidence")
+  })
+})
+
 describe("triageFailure", () => {
   test("validation diagnostics are opt-in categories and never include response contents", async () => {
     const baseURL = server(() => Response.json(triageResponse({ answers: { secret: "private response body" } })))
     const normal = await triageFailure({ evidence: "failure" }, { apiKey: "secret", baseURL })
     expect(normal).not.toHaveProperty("validation")
-    const diagnostic = await triageFailure(
-      { evidence: "failure" },
-      { apiKey: "secret", baseURL, diagnostics: true },
-    )
+    const diagnostic = await triageFailure({ evidence: "failure" }, { apiKey: "secret", baseURL, diagnostics: true })
     expect(diagnostic).toMatchObject({ status: "unavailable", reason: "invalid_response", validation: "answer_ids" })
     expect(JSON.stringify(diagnostic)).not.toContain("secret")
     expect(JSON.stringify(diagnostic)).not.toContain("private response body")
   })
 
   test("reports answer validation without weakening probability checks", async () => {
-    const baseURL = server(() => Response.json(triageResponse({ answers: {
-      category: { type: "choice", choice: "timing", confidence: 0.8, probabilities: { timing: 1 } },
-    } })))
-    expect(await triageFailure({ evidence: "failure" }, { apiKey: "secret", baseURL, diagnostics: true }))
-      .toMatchObject({ status: "unavailable", reason: "invalid_response", validation: "choice_answer" })
+    const baseURL = server(() =>
+      Response.json(
+        triageResponse({
+          answers: {
+            category: { type: "choice", choice: "timing", confidence: 0.8, probabilities: { timing: 1 } },
+          },
+        }),
+      ),
+    )
+    expect(
+      await triageFailure({ evidence: "failure" }, { apiKey: "secret", baseURL, diagnostics: true }),
+    ).toMatchObject({ status: "unavailable", reason: "invalid_response", validation: "choice_answer" })
   })
 
   test("sends the pinned model and fixed question, then returns advisory triage", async () => {

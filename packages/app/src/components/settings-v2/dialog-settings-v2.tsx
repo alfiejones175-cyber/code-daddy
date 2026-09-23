@@ -1,5 +1,5 @@
 import { Component, createMemo, createSignal, startTransition } from "solid-js"
-import { Dialog } from "@opencode-ai/ui/v2/dialog-v2"
+import { Dialog, DialogTitle } from "@opencode-ai/ui/v2/dialog-v2"
 import { TabsV2 } from "@opencode-ai/ui/v2/tabs-v2"
 import { Icon } from "@opencode-ai/ui/icon"
 import { useLanguage } from "@/context/language"
@@ -15,6 +15,7 @@ import { useLayout } from "@/context/layout"
 import { useTabs } from "@/context/tabs"
 import { useServerSync } from "@/context/server-sync"
 import { SettingsCapabilities } from "../settings-capabilities"
+import { SettingsRoutinesV2 } from "./routines"
 
 export const DialogSettings: Component<{
   sessionID?: string
@@ -44,6 +45,9 @@ export const DialogSettings: Component<{
 
   return (
     <Dialog size="x-large" variant="settings" class="settings-v2-dialog">
+      <DialogTitle>
+        <span class="sr-only">{language.t("sidebar.settings")}</span>
+      </DialogTitle>
       <TabsV2
         orientation="vertical"
         variant="settings"
@@ -88,6 +92,10 @@ export const DialogSettings: Component<{
                       <Icon name="window-cursor" />
                       {language.t("capabilities.title")}
                     </TabsV2.Trigger>
+                    <TabsV2.Trigger value="routines">
+                      <Icon name="bullet-list" />
+                      {language.t("settings.tab.routines")}
+                    </TabsV2.Trigger>
                   </div>
                 </div>
               </div>
@@ -115,6 +123,9 @@ export const DialogSettings: Component<{
         </TabsV2.Content>
         <TabsV2.Content value="capabilities" class="settings-v2-panel">
           <SettingsCapabilities directory={directory} />
+        </TabsV2.Content>
+        <TabsV2.Content value="routines" class="settings-v2-panel">
+          <SettingsRoutinesV2 sessionID={props.sessionID} />
         </TabsV2.Content>
       </TabsV2>
     </Dialog>

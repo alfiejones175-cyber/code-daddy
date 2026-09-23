@@ -1,7 +1,23 @@
 import { describe, expect, test } from "bun:test"
-import { GENERIC_TOOL_DISCLOSURE_LIMIT, GENERIC_TOOL_PREVIEW_LIMIT, genericToolArgs, genericToolDetail } from "./basic-tool"
+import {
+  GENERIC_TOOL_DISCLOSURE_LIMIT,
+  GENERIC_TOOL_PREVIEW_LIMIT,
+  genericToolArgs,
+  genericToolDetail,
+  jevOperation,
+} from "./basic-tool"
 
 describe("generic tool details", () => {
+  test("identifies legacy and V2 Jev operations without confusing their row identity", () => {
+    expect(jevOperation("jev_triage_failure")).toBe("triage")
+    expect(jevOperation("plugin_jev_triage_failure_14s5b")).toBe("triage")
+    expect(jevOperation("jev_rank_evidence")).toBe("ranking")
+    expect(jevOperation("plugin_jev_rank_evidence_z9")).toBe("ranking")
+    expect(jevOperation("jev_review_output")).toBe("review")
+    expect(jevOperation("plugin_jev_review_output_z9")).toBe("review")
+    expect(jevOperation("plugin_jev_rank_evidence_invalid_")).toBeUndefined()
+  })
+
   test("keeps maximum Jev evidence out of the collapsed argument preview", () => {
     const evidence = "e".repeat(24_000)
     const args = genericToolArgs({ evidence, attempt: 2 }, ({ key, count }) => `${key} · ${count} characters`)

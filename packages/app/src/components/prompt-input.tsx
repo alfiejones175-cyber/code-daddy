@@ -296,7 +296,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
     return (
       <div class="flex items-center gap-2">
-        <span>{language.t("prompt.action.send")}</span>
+        <span>{language.t("prompt.action.steer")}</span>
         <Icon name="enter" size="small" class="text-icon-base" />
       </div>
     )
@@ -1198,7 +1198,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     return permission.isAutoAccepting(id, sdk().directory)
   })
 
-  const { abort, handleSubmit } =
+  const { abort, handleSubmit, handleQueue } =
     props.submission ??
     createPromptSubmit({
       prompt,
@@ -1224,6 +1224,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       onNewSessionWorktreeReset: props.onNewSessionWorktreeReset,
       shouldQueue: props.shouldQueue,
       onQueue: props.onQueue,
+      onQueueSubmitted: props.onQueueSubmitted,
       onAbort: props.onAbort,
       onSubmit: props.onSubmit,
       model: props.controls.model.selection,
@@ -1501,7 +1502,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
           onMouseDown={(e) => {
             const target = e.target
             if (!(target instanceof HTMLElement)) return
-            if (target.closest('[data-action="prompt-attach"], [data-action="prompt-submit"]')) {
+            if (target.closest('[data-action="prompt-attach"], [data-action="prompt-submit"], [data-action="prompt-queue"]')) {
               return
             }
             editorRef?.focus()
@@ -1575,6 +1576,50 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
             />
 
             <div class="flex items-center gap-1 pointer-events-auto">
+              <Show when={working() && !stopping()}>
+                <Tooltip
+                  placement="top"
+                  value={
+                    <div class="flex items-center gap-2">
+                      <span>{language.t("prompt.action.stop")}</span>
+                      <span class="text-icon-base text-12-medium text-[10px]!">{language.t("common.key.esc")}</span>
+                    </div>
+                  }
+                >
+                  <IconButton
+                    data-action="prompt-stop"
+                    type="button"
+                    tabIndex={store.mode === "normal" ? undefined : -1}
+                    icon="stop"
+                    variant="primary"
+                    class="size-8"
+                    aria-label={language.t("prompt.action.stop")}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      void abort()
+                    }}
+                  />
+                </Tooltip>
+              </Show>
+              <Show when={working() && !stopping() && store.mode === "normal" && !blank()}>
+                <Tooltip placement="top" value={language.t("prompt.action.queue.description")}>
+                  <IconButton
+                    data-action="prompt-queue"
+                    type="button"
+                    tabIndex={store.mode === "normal" ? undefined : -1}
+                    icon="archive"
+                    variant="secondary"
+                    class="size-8"
+                    aria-label={language.t("prompt.action.queue")}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      void handleQueue(event)
+                    }}
+                  />
+                </Tooltip>
+              </Show>
               <Tooltip placement="top" inactive={!working() && blank()} value={tip()}>
                 <IconButton
                   data-action="prompt-submit"
@@ -1584,7 +1629,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
                   icon={stopping() ? "stop" : store.mode === "shell" ? "arrow-undo-down" : "arrow-up"}
                   variant="primary"
                   class="size-8"
-                  aria-label={stopping() ? language.t("prompt.action.stop") : language.t("prompt.action.send")}
+                  aria-label={stopping() ? language.t("prompt.action.stop") : language.t("prompt.action.steer")}
                 />
               </Tooltip>
             </div>

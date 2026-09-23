@@ -137,6 +137,8 @@ export const dict: Record<string, string> = {
   "ui.promptInput.chooseModel": "Choose model",
   "ui.promptInput.chooseVariant": "Choose model variant",
   "ui.promptInput.send": "Send",
+  "ui.promptInput.steer": "Send now",
+  "ui.promptInput.queue": "Queue",
   "ui.promptInput.stop": "Stop",
 
   "ui.tabs.close": "Close tab",
@@ -174,6 +176,9 @@ export const dict: Record<string, string> = {
   "ui.genericTool.truncated": "Showing the first {{limit}} characters.",
   "ui.genericTool.unavailable": "Details are unavailable.",
   "ui.genericTool.jev.title": "Jev",
+  "ui.genericTool.jev.triage.title": "Jev failure triage",
+  "ui.genericTool.jev.ranking.title": "Jev evidence ranking",
+  "ui.genericTool.jev.review.title": "Jev response review",
   "ui.genericTool.jev.completed": "Jev advisory result",
   "ui.genericTool.jev.unavailable": "Jev unavailable",
   "ui.genericTool.jev.invalidInput": "Input needs attention",
