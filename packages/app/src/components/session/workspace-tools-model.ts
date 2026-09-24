@@ -4,11 +4,11 @@ export type WorkspaceEvidence = { image?: FilePart; text?: string; tool: string;
 
 export function isHttpUrl(value: string) {
   if (!URL.canParse(value)) return false
-  const protocol = new URL(value).protocol
-  return (protocol === "http:" || protocol === "https:") && value.trim().length > 0
+  const url = new URL(value)
+  return (url.protocol === "http:" || url.protocol === "https:") && !!url.hostname && !url.username && !url.password
 }
 
-export function extractBrowserEvidence(
+export function extractWorkspaceEvidence(
   messages: readonly { id: string; sessionID?: string; time?: { created?: number } }[],
   parts: Record<string, readonly unknown[] | undefined>,
   sessionID?: string,
@@ -18,7 +18,12 @@ export function extractBrowserEvidence(
     .flatMap((message) =>
       (parts[message.id] ?? []).flatMap((value) => {
         const part = value as Partial<ToolPart>
-        if (part.type !== "tool" || typeof part.tool !== "string" || !/browser|playwright/i.test(part.tool)) return []
+        if (
+          part.type !== "tool" ||
+          typeof part.tool !== "string" ||
+          !/browser|playwright|xcode|simulator/i.test(part.tool)
+        )
+          return []
         if (part.state?.status !== "completed") return []
         const state = part.state
         const image = state.attachments?.find(

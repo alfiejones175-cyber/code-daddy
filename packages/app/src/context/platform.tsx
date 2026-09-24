@@ -21,6 +21,24 @@ type SaveFilePickerOptions = { title?: string; defaultPath?: string }
 type PlatformName = "web" | "desktop"
 type DesktopOS = "macos" | "windows" | "linux"
 
+export type BrowserWorkspaceBounds = { x: number; y: number; width: number; height: number }
+export type BrowserWorkspaceDiagnostic = { kind: "console" | "request"; message: string; time: number }
+export type XcodeWorkspaceInfo = {
+  directory: string
+  kind: "xcodeproj" | "xcworkspace" | "swift-package" | "none"
+  projects: { kind: "xcodeproj" | "xcworkspace" | "swift-package" | "none"; name: string }[]
+  schemes: string[]
+  targets: string[]
+}
+export type XcodeSimulator = {
+  deviceTypeIdentifier?: string
+  isAvailable: boolean
+  name: string
+  runtime: string
+  state: string
+  udid: string
+}
+
 export type FatalRendererErrorLog = {
   error: string
   url: string
@@ -123,6 +141,27 @@ type PlatformBase = {
     kind: "xcodeproj" | "xcworkspace" | "swift-package" | "none"
     names: string[]
   }>
+
+  /** Inspect an Xcode project and available simulators without changing them. */
+  xcodeWorkspaceInspect?(directory: string): Promise<XcodeWorkspaceInfo>
+  xcodeWorkspaceSimulators?(): Promise<XcodeSimulator[]>
+  xcodeWorkspaceCapture?(id: string): Promise<string>
+  legacyMcpPreset?(directory: string, preset: "browser" | "xcode"): Promise<{
+    filepath: string
+    config: { type: "local"; command: string[] }
+  }>
+
+  /** Preview an HTTP(S) page in an isolated native web view. */
+  browserWorkspace?: {
+    navigate(url: string, bounds: BrowserWorkspaceBounds): Promise<string>
+    setBounds(bounds: BrowserWorkspaceBounds): Promise<void>
+    show(bounds: BrowserWorkspaceBounds): Promise<string>
+    hide(): Promise<void>
+    close(): Promise<void>
+    capture(): Promise<string>
+    diagnostics(): Promise<BrowserWorkspaceDiagnostic[]>
+    currentURL(): Promise<string | undefined>
+  }
 
   /** Read image from clipboard (desktop only) */
   readClipboardImage?(): Promise<File | null>

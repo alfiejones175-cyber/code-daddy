@@ -9,7 +9,10 @@ import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useLanguage } from "@/context/language"
 import { useCapabilities } from "@/hooks/use-capabilities"
 import { useServerSync } from "@/context/server-sync"
-import { extractBrowserEvidence, isHttpUrl } from "./workspace-tools-model"
+import { extractWorkspaceEvidence, isHttpUrl } from "./workspace-tools-model"
+import { WorkspaceBrowserPreview } from "./workspace-browser-preview"
+import { WorkspaceXcodeInspector } from "./workspace-xcode-inspector"
+import { WorkspaceLegacyMcp } from "./workspace-legacy-mcp"
 import { SettingsCapabilities } from "../settings-capabilities"
 
 export type WorkspaceToolsProps = {
@@ -48,7 +51,7 @@ export const WorkspaceTools: Component<WorkspaceToolsProps> = (props) => {
       ),
   )
   const evidence = createMemo(() =>
-    extractBrowserEvidence(
+    extractWorkspaceEvidence(
       Object.values(sync().session.data.message).flat(),
       sync().session.data.part,
       props.sessionID,
@@ -67,10 +70,39 @@ export const WorkspaceTools: Component<WorkspaceToolsProps> = (props) => {
       </Dialog>
     ))
   }
+  const browserActions = () => (
+    <div class="flex flex-wrap gap-2">
+      <Button
+        disabled={!validUrl()}
+        onClick={() => prepare(language.t("workspaceTools.prompt.navigate", { url: state.url.trim() }))}
+      >
+        {language.t("workspaceTools.prepareNavigate")}
+      </Button>
+      <Button variant="secondary" onClick={() => prepare(language.t("workspaceTools.prompt.screenshot"))}>
+        {language.t("workspaceTools.prepareScreenshot")}
+      </Button>
+      <Button variant="ghost" onClick={() => prepare(language.t("workspaceTools.prompt.console"))}>
+        {language.t("workspaceTools.prepareConsole")}
+      </Button>
+    </div>
+  )
+  const xcodeActions = () => (
+    <div class="flex flex-wrap gap-2">
+      <Button onClick={() => prepare(language.t("workspaceTools.prompt.inspect", { directory: props.directory }))}>
+        {language.t("workspaceTools.prepareInspect")}
+      </Button>
+      <Button variant="secondary" onClick={() => prepare(language.t("workspaceTools.prompt.build"))}>
+        {language.t("workspaceTools.prepareBuild")}
+      </Button>
+      <Button variant="ghost" onClick={() => prepare(language.t("workspaceTools.prompt.test"))}>
+        {language.t("workspaceTools.prepareTest")}
+      </Button>
+    </div>
+  )
 
   return (
-    <Dialog size="large" title={language.t("workspaceTools.title")}>
-      <div class="flex min-h-0 flex-col gap-4 p-5">
+    <Dialog size="x-large" title={language.t("workspaceTools.title")}>
+      <div data-component="workspace-tools-scroll" class="flex min-h-0 flex-col gap-4 overflow-y-auto p-5">
         <header class="flex flex-col gap-1">
           <p class="text-13-regular text-text-weak">{language.t("workspaceTools.description")}</p>
         </header>
@@ -96,6 +128,7 @@ export const WorkspaceTools: Component<WorkspaceToolsProps> = (props) => {
               type="url"
               error={state.url && !validUrl() ? language.t("workspaceTools.invalidUrl") : undefined}
             />
+            <WorkspaceBrowserPreview url={state.url} valid={validUrl()} active={state.tab === "browser"} />
             <Show when={capabilities.loading()}>
               <p role="status" class="text-13-regular text-text-weak">
                 {language.t("common.loading")}
@@ -110,27 +143,24 @@ export const WorkspaceTools: Component<WorkspaceToolsProps> = (props) => {
               </div>
             </Show>
             <Show when={!capabilities.loading() && !capabilities.failed()}>
-              <Show when={browser()} fallback={<CapabilityUnavailable onSetup={setup} />}>
-                <div class="flex flex-wrap gap-2">
-                  <Button
-                    disabled={!validUrl()}
-                    onClick={() => prepare(language.t("workspaceTools.prompt.navigate", { url: state.url.trim() }))}
-                  >
-                    {language.t("workspaceTools.prepareNavigate")}
-                  </Button>
-                  <Button variant="secondary" onClick={() => prepare(language.t("workspaceTools.prompt.screenshot"))}>
-                    {language.t("workspaceTools.prepareScreenshot")}
-                  </Button>
-                  <Button variant="ghost" onClick={() => prepare(language.t("workspaceTools.prompt.console"))}>
-                    {language.t("workspaceTools.prepareConsole")}
-                  </Button>
-                </div>
+              <Show
+                when={capabilities.supported()}
+                fallback={
+                  <WorkspaceLegacyMcp directory={props.directory} preset="browser">
+                    {browserActions()}
+                  </WorkspaceLegacyMcp>
+                }
+              >
+                <Show when={browser()} fallback={<CapabilityUnavailable onSetup={setup} />}>
+                  {browserActions()}
+                </Show>
               </Show>
             </Show>
             <p class="text-12-regular text-text-weak">{language.t("workspaceTools.editPrompt")}</p>
           </Tabs.Content>
           <Tabs.Content value="xcode" class="flex min-h-0 flex-col gap-4 pt-4">
             <p class="text-13-regular text-text-weak">{language.t("workspaceTools.xcodeDescription")}</p>
+            <WorkspaceXcodeInspector directory={props.directory} active={state.tab === "xcode"} />
             <Show when={capabilities.loading()}>
               <p role="status" class="text-13-regular text-text-weak">
                 {language.t("common.loading")}
@@ -145,20 +175,17 @@ export const WorkspaceTools: Component<WorkspaceToolsProps> = (props) => {
               </div>
             </Show>
             <Show when={!capabilities.loading() && !capabilities.failed()}>
-              <Show when={xcode()} fallback={<CapabilityUnavailable onSetup={setup} />}>
-                <div class="flex flex-wrap gap-2">
-                  <Button
-                    onClick={() => prepare(language.t("workspaceTools.prompt.inspect", { directory: props.directory }))}
-                  >
-                    {language.t("workspaceTools.prepareInspect")}
-                  </Button>
-                  <Button variant="secondary" onClick={() => prepare(language.t("workspaceTools.prompt.build"))}>
-                    {language.t("workspaceTools.prepareBuild")}
-                  </Button>
-                  <Button variant="ghost" onClick={() => prepare(language.t("workspaceTools.prompt.test"))}>
-                    {language.t("workspaceTools.prepareTest")}
-                  </Button>
-                </div>
+              <Show
+                when={capabilities.supported()}
+                fallback={
+                  <WorkspaceLegacyMcp directory={props.directory} preset="xcode">
+                    {xcodeActions()}
+                  </WorkspaceLegacyMcp>
+                }
+              >
+                <Show when={xcode()} fallback={<CapabilityUnavailable onSetup={setup} />}>
+                  {xcodeActions()}
+                </Show>
               </Show>
             </Show>
             <p class="text-12-regular text-text-weak">{language.t("workspaceTools.editPrompt")}</p>
@@ -175,7 +202,9 @@ export const WorkspaceTools: Component<WorkspaceToolsProps> = (props) => {
                 <For each={evidence()}>
                   {(item) => (
                     <article class="flex flex-col gap-2 rounded-md border border-border-weak-base p-2">
-                      <span class="text-11-medium text-text-weak">{item.tool}</span>
+                      <span class="text-11-medium text-text-weak">
+                        {item.tool} · {new Date(item.time).toLocaleTimeString()}
+                      </span>
                       <Show when={item.image}>
                         <img src={item.image?.url} alt={item.tool} class="max-h-48 w-full rounded object-contain" />
                       </Show>

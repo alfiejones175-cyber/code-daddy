@@ -43,18 +43,22 @@ Detailed contracts, evaluation criteria, and transport choices live in the [Jev 
 
 ## Existing plans and evidence
 
-| Document | How to use it |
-| --- | --- |
-| [001 — Desktop workspace](001-desktop-workspace.md) | Original plan; delivered behavior is recorded in 003. Optional native-edge features remain separate. |
-| [002 — Sidebar motion](002-sidebar-motion.md) | Original motion plan; consult 003 and 006 for later implementation/acceptance. |
-| [003 — Desktop implementation](003-implementation.md) | Implemented sidebar, delegated chats, and provider behavior; dated verification limits. |
-| [004 — Capabilities and reliability](004-capabilities-implementation.md) | Implemented capabilities/recovery/delegation work and remaining native/live-provider checks. |
-| [005 — Sidebar usage and logos](005-sidebar-usage-logos.md) | Implementation and validation record. |
-| [006 — Spectrum UI integration](006-spectrum-ui-integration.md) | Visual/motion decisions and dated browser/benchmark evidence. |
-| [007 — Workspace review](007-workspace-review.md) | Broad review; release-direction recommendations are superseded by the explicit user decision above. Findings need rechecking as code changes. |
-| [Jev integration](jev-integration.md) | Current evaluator status and staged app-output-review roadmap. |
-| [UI consistency fixes](jev-ui-fixes.md) | Six reviewed UI findings fixed, tested with subagents and Jev, and installed in the local desktop build. |
-| [Transcription repair](transcription-fix.md) | Dictation implementation and acceptance boundaries. |
-| [Historical usability review](../documentation/usability-fixes.md) | Investigation baseline, not a current list of unresolved issues. |
+| Document                                                                      | How to use it                                                                                                                                 |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [001 — Desktop workspace](001-desktop-workspace.md)                           | Original plan; delivered behavior is recorded in 003. Optional native-edge features remain separate.                                          |
+| [002 — Sidebar motion](002-sidebar-motion.md)                                 | Original motion plan; consult 003 and 006 for later implementation/acceptance.                                                                |
+| [003 — Desktop implementation](003-implementation.md)                         | Implemented sidebar, delegated chats, and provider behavior; dated verification limits.                                                       |
+| [004 — Capabilities and reliability](004-capabilities-implementation.md)      | Implemented capabilities/recovery/delegation work and remaining native/live-provider checks.                                                  |
+| [005 — Sidebar usage and logos](005-sidebar-usage-logos.md)                   | Implementation and validation record.                                                                                                         |
+| [006 — Spectrum UI integration](006-spectrum-ui-integration.md)               | Visual/motion decisions and dated browser/benchmark evidence.                                                                                 |
+| [007 — Workspace review](007-workspace-review.md)                             | Broad review; release-direction recommendations are superseded by the explicit user decision above. Findings need rechecking as code changes. |
+| [008 — Agent workspaces](008-agent-workspaces.md)                             | Browser preview and Xcode/Simulator inspection implementation, evidence, and desktop acceptance gate.                                         |
+| [009 — Supabase workspace](009-supabase-workspace.md)                         | To do: project-scoped database context and reviewed write workflow.                                                                           |
+| [010 — GitHub and CI workspace](010-github-ci-workspace.md)                   | To do: connect issues and failing checks to local changes.                                                                                    |
+| [011 — Diagnostics and design workspace](011-diagnostics-design-workspace.md) | To do: local services, logs, optional Sentry and Figma context.                                                                               |
+| [Jev integration](jev-integration.md)                                         | Current evaluator status and staged app-output-review roadmap.                                                                                |
+| [UI consistency fixes](jev-ui-fixes.md)                                       | Six reviewed UI findings fixed, tested with subagents and Jev, and installed in the local desktop build.                                      |
+| [Transcription repair](transcription-fix.md)                                  | Dictation implementation and acceptance boundaries.                                                                                           |
+| [Historical usability review](../documentation/usability-fixes.md)            | Investigation baseline, not a current list of unresolved issues.                                                                              |
 
 Record newly completed work in the appropriate implementation document and change its roadmap status. Keep dated validation artifacts as evidence rather than treating old test counts as current release status.

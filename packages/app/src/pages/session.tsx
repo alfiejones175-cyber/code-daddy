@@ -2418,7 +2418,7 @@ export default function Page() {
     <SessionRouteFrame>
       <SessionHeader
         actions={
-          <Show when={serverSDK().protocolKind() === "v2"}>
+          <>
             <IconButton
               icon="window-cursor"
               variant="ghost"
@@ -2426,12 +2426,14 @@ export default function Page() {
               title={language.t("workspaceTools.title")}
               onClick={() => void openWorkspaceTools()}
             />
-            <Show when={params.id}>
-              <Button variant="ghost" size="small" onClick={() => void openTeam()}>
-                {language.t("team.title")}
-              </Button>
+            <Show when={serverSDK().protocolKind() === "v2"}>
+              <Show when={params.id}>
+                <Button variant="ghost" size="small" onClick={() => void openTeam()}>
+                  {language.t("team.title")}
+                </Button>
+              </Show>
             </Show>
-          </Show>
+          </>
         }
       />
       <SessionRecoveryNotice sessionID={params.id} directory={sdk().directory} workspaceID={info()?.workspaceID} />

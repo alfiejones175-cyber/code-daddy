@@ -26,6 +26,9 @@ import { createUpdaterSubscriptions } from "./updater-subscriptions"
 import { createDesktopDraftStore } from "./draft-store"
 import { nativeT } from "./native-translations"
 import { xcodeDetect, xcodeScanProject } from "./xcode"
+import { createBrowserWorkspace, type BrowserWorkspaceBounds } from "./browser-workspace"
+import { captureSimulatorScreenshot, inspectProject, listSimulators } from "./xcode-workspace"
+import { persistLegacyMcpPreset } from "./legacy-mcp"
 import { createDictationBridge, helperPath } from "./dictation"
 
 const pickerFilters = (ext?: string[]) => {
@@ -58,6 +61,21 @@ type Deps = {
 }
 
 export function registerIpcHandlers(deps: Deps) {
+  const browserWorkspaces = new WeakMap<BrowserWindow, ReturnType<typeof createBrowserWorkspace>>()
+  const browserFor = (event: IpcMainInvokeEvent) => {
+    assertWorkspaceSender(event)
+    const win = BrowserWindow.fromWebContents(event.sender)!
+    const existing = browserWorkspaces.get(win)
+    if (existing) return existing
+    const workspace = createBrowserWorkspace({ window: win })
+    browserWorkspaces.set(win, workspace)
+    win.once("closed", () => browserWorkspaces.delete(win))
+    return workspace
+  }
+  const existingBrowser = (event: IpcMainInvokeEvent) => {
+    assertWorkspaceSender(event)
+    return browserWorkspaces.get(BrowserWindow.fromWebContents(event.sender)!)
+  }
   const drafts = createDesktopDraftStore(join(app.getPath("userData"), "drafts.sqlite"))
   const updaterSubscriptions = createUpdaterSubscriptions()
   app.once("will-quit", updaterSubscriptions.clear)
@@ -89,6 +107,54 @@ export function registerIpcHandlers(deps: Deps) {
   ipcMain.handle("resolve-app-path", (_event: IpcMainInvokeEvent, appName: string) => deps.resolveAppPath(appName))
   ipcMain.handle("xcode-detect", () => xcodeDetect())
   ipcMain.handle("xcode-scan-project", (_event: IpcMainInvokeEvent, directory: string) => xcodeScanProject(directory))
+  ipcMain.handle("xcode-workspace-inspect", (event: IpcMainInvokeEvent, directory: string) => {
+    assertWorkspaceSender(event)
+    return inspectProject(directory)
+  })
+  ipcMain.handle("xcode-workspace-simulators", (event: IpcMainInvokeEvent) => {
+    assertWorkspaceSender(event)
+    return listSimulators()
+  })
+  ipcMain.handle("xcode-workspace-capture", (event: IpcMainInvokeEvent, id: string) => {
+    assertWorkspaceSender(event)
+    return captureSimulatorScreenshot(id)
+  })
+  ipcMain.handle("legacy-mcp-preset", (event: IpcMainInvokeEvent, directory: string, preset: "browser" | "xcode") => {
+    assertWorkspaceSender(event)
+    return persistLegacyMcpPreset(directory, preset)
+  })
+  ipcMain.handle(
+    "browser-workspace-navigate",
+    async (event: IpcMainInvokeEvent, url: string, bounds: BrowserWorkspaceBounds) =>
+      (await browserFor(event)).navigate(url, bounds),
+  )
+  ipcMain.handle("browser-workspace-bounds", async (event: IpcMainInvokeEvent, bounds: BrowserWorkspaceBounds) =>
+    (await existingBrowser(event))?.setBounds(bounds),
+  )
+  ipcMain.handle("browser-workspace-show", async (event: IpcMainInvokeEvent, bounds: BrowserWorkspaceBounds) => {
+    const browser = await existingBrowser(event)
+    if (!browser) throw new Error("Browser workspace is not open")
+    return browser.show(bounds)
+  })
+  ipcMain.handle("browser-workspace-hide", async (event: IpcMainInvokeEvent) => (await existingBrowser(event))?.hide())
+  ipcMain.handle("browser-workspace-close", async (event: IpcMainInvokeEvent) => {
+    const browser = await existingBrowser(event)
+    browser?.destroy()
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win) browserWorkspaces.delete(win)
+  })
+  ipcMain.handle("browser-workspace-capture", async (event: IpcMainInvokeEvent) => {
+    const browser = await existingBrowser(event)
+    if (!browser) throw new Error("Browser workspace is not open")
+    return browser.capture()
+  })
+  ipcMain.handle(
+    "browser-workspace-diagnostics",
+    async (event: IpcMainInvokeEvent) => (await existingBrowser(event))?.getDiagnostics() ?? [],
+  )
+  ipcMain.handle("browser-workspace-current-url", async (event: IpcMainInvokeEvent) =>
+    (await existingBrowser(event))?.currentURL(),
+  )
   ipcMain.handle("dictation-start", (event: IpcMainInvokeEvent, id: string, locale: string) => {
     assertDictationSender(event)
     if (!validDictationInput(id, locale)) return
@@ -339,6 +405,18 @@ function assertDictationSender(event: IpcMainInvokeEvent) {
     !isRendererUrl(event.senderFrame.url)
   )
     throw new Error("Invalid dictation sender")
+}
+
+function assertWorkspaceSender(event: IpcMainInvokeEvent) {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (
+    !win ||
+    win.isDestroyed() ||
+    win.webContents !== event.sender ||
+    event.senderFrame !== event.sender.mainFrame ||
+    !isRendererUrl(event.senderFrame.url)
+  )
+    throw new Error("Invalid workspace sender")
 }
 
 function validDictationInput(id: string, locale: string) {

@@ -318,6 +318,17 @@ const createPlatform = (windowState: DesktopWindowState): Platform => {
       return window.api.xcodeScanProject(directory)
     },
 
+    xcodeWorkspaceInspect: (directory: string) => window.api.xcodeWorkspaceInspect(directory),
+
+    xcodeWorkspaceSimulators: () => window.api.xcodeWorkspaceSimulators(),
+
+    xcodeWorkspaceCapture: (id: string) => window.api.xcodeWorkspaceCapture(id),
+
+    legacyMcpPreset: (directory: string, preset: "browser" | "xcode") =>
+      window.api.legacyMcpPreset(directory, preset),
+
+    browserWorkspace: window.api.browserWorkspace,
+
     async readClipboardImage() {
       const image = await window.api.readClipboardImage().catch(() => null)
       if (!image) return null

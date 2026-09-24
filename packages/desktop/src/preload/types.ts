@@ -58,6 +58,33 @@ export type XcodeProjectInfo = {
   names: string[]
 }
 
+export type BrowserWorkspaceBounds = { x: number; y: number; width: number; height: number }
+export type BrowserWorkspaceDiagnostic = {
+  kind: "console" | "request"
+  message: string
+  time: number
+  level?: number
+  line?: number
+  source?: string
+  code?: number
+  url?: string
+}
+export type XcodeWorkspaceInfo = {
+  directory: string
+  kind: XcodeProjectKind
+  projects: { kind: XcodeProjectKind; name: string }[]
+  schemes: string[]
+  targets: string[]
+}
+export type XcodeSimulator = {
+  deviceTypeIdentifier?: string
+  isAvailable: boolean
+  name: string
+  runtime: string
+  state: string
+  udid: string
+}
+
 export type ElectronAPI = {
   killSidecar: () => Promise<void>
   installCli: () => Promise<string>
@@ -77,6 +104,23 @@ export type ElectronAPI = {
   resolveAppPath: (appName: string) => Promise<string | null>
   xcodeDetect: () => Promise<XcodeStatus>
   xcodeScanProject: (directory: string) => Promise<XcodeProjectInfo>
+  xcodeWorkspaceInspect: (directory: string) => Promise<XcodeWorkspaceInfo>
+  xcodeWorkspaceSimulators: () => Promise<XcodeSimulator[]>
+  xcodeWorkspaceCapture: (id: string) => Promise<string>
+  legacyMcpPreset: (directory: string, preset: "browser" | "xcode") => Promise<{
+    filepath: string
+    config: { type: "local"; command: string[] }
+  }>
+  browserWorkspace: {
+    navigate: (url: string, bounds: BrowserWorkspaceBounds) => Promise<string>
+    setBounds: (bounds: BrowserWorkspaceBounds) => Promise<void>
+    show: (bounds: BrowserWorkspaceBounds) => Promise<string>
+    hide: () => Promise<void>
+    close: () => Promise<void>
+    capture: () => Promise<string>
+    diagnostics: () => Promise<BrowserWorkspaceDiagnostic[]>
+    currentURL: () => Promise<string | undefined>
+  }
   storeGet: (name: string, key: string) => Promise<string | null>
   storeSet: (name: string, key: string, value: string) => Promise<void>
   storeDelete: (name: string, key: string) => Promise<void>

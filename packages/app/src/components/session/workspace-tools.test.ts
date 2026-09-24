@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { extractBrowserEvidence, isHttpUrl } from "./workspace-tools-model"
+import { extractWorkspaceEvidence, isHttpUrl } from "./workspace-tools-model"
 
 describe("workspace tools evidence", () => {
   test("accepts only HTTP and HTTPS URLs", () => {
@@ -7,10 +7,11 @@ describe("workspace tools evidence", () => {
     expect(isHttpUrl("http://localhost:3000")).toBe(true)
     expect(isHttpUrl("file:///tmp/page.html")).toBe(false)
     expect(isHttpUrl("javascript:alert(1)")).toBe(false)
+    expect(isHttpUrl("https://user:pass@example.com")).toBe(false)
   })
 
   test("extracts completed browser screenshots and text", () => {
-    const evidence = extractBrowserEvidence(
+    const evidence = extractWorkspaceEvidence(
       [{ id: "message", sessionID: "session", time: { created: 1 } }],
       {
         message: [
