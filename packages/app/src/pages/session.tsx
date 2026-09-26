@@ -1913,7 +1913,11 @@ export default function Page() {
   const cancelFollowupMutation = useMutation(() => ({
     mutationFn: (input: { sessionID: string; messageID: string }) =>
       createWorkspaceApi({ server: serverSDK().server.http, fetch: platform.fetch })
-        .cancelQueued({ directory: sdk().directory, workspaceID: info()?.workspaceID }, input.sessionID, input.messageID)
+        .cancelQueued(
+          { directory: sdk().directory, workspaceID: info()?.workspaceID },
+          input.sessionID,
+          input.messageID,
+        )
         .finally(() => refetchDurableFollowups()),
     onError: (error) => {
       if (error instanceof Error && error.message === "HTTP 409") return

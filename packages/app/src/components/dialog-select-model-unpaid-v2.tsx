@@ -11,6 +11,7 @@ import { useProviders } from "@/hooks/use-providers"
 import { decode64 } from "@/utils/base64"
 import { useLanguage } from "@/context/language"
 import { ModelTooltip } from "./model-tooltip"
+import { isFreeModel } from "./free-model"
 
 type ModelState = ReturnType<typeof useLocal>["model"]
 const featuredProviders = ["opencode", "opencode-go", "openai", "anthropic", "google", "github-copilot"]
@@ -29,9 +30,7 @@ export const DialogSelectModelUnpaidV2: Component<{ model?: ModelState }> = (pro
     const c = model.current()
     return c ? `${c.provider.id}:${c.id}` : undefined
   })
-  const isFree = (item: ReturnType<ModelState["list"]>[number]) =>
-    item.provider.id === "opencode" && (!item.cost || item.cost.input === 0)
-  const freeModels = createMemo(() => model.list().filter(isFree))
+  const freeModels = createMemo(() => model.list().filter(isFreeModel))
 
   const openProviders = (provider?: string) => {
     void import("./dialog-connect-provider").then((x) => {
@@ -82,7 +81,14 @@ export const DialogSelectModelUnpaidV2: Component<{ model?: ModelState }> = (pro
                 {language.t("dialog.model.unpaid.freeModels.title")}
               </div>
             </div>
-            <For each={freeModels()}>
+            <For
+              each={freeModels()}
+              fallback={
+                <p class="px-3 py-2 text-[13px] text-v2-text-text-muted">
+                  {language.t("dialog.model.unpaid.noFreeModels")}
+                </p>
+              }
+            >
               {(item) => (
                 <TooltipV2
                   class="w-full"
@@ -94,7 +100,7 @@ export const DialogSelectModelUnpaidV2: Component<{ model?: ModelState }> = (pro
                     <ModelTooltip
                       model={{ ...item, name: displayModelName(item.name) }}
                       latest={item.latest}
-                      free={isFree(item)}
+                      free={isFreeModel(item)}
                       v2
                     />
                   }

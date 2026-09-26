@@ -22,9 +22,8 @@ import { handleDocumentSearchKeydown } from "@/utils/search-keydown"
 import { createMenuDismissController } from "@/utils/menu-dismiss-controller"
 import { createEventListener } from "@solid-primitives/event-listener"
 import { matchesModelSearch } from "./dialog-select-model-search"
-
-const isFree = (provider: string, cost: { input: number } | undefined) =>
-  provider === "opencode" && (!cost || cost.input === 0)
+import { isFreeModel } from "./free-model"
+import { openRouterPrice } from "./openrouter-price"
 
 type ModelState = ReturnType<typeof useLocal>["model"]
 type ModelItem = ReturnType<ModelState["list"]>[number]
@@ -85,7 +84,7 @@ const ModelList: Component<{
           placement="right-start"
           gutter={12}
           openDelay={0}
-          value={<ModelTooltip model={item} latest={item.latest} free={isFree(item.provider.id, item.cost)} />}
+          value={<ModelTooltip model={item} latest={item.latest} free={isFreeModel(item)} />}
         >
           {node}
         </Tooltip>
@@ -98,13 +97,27 @@ const ModelList: Component<{
       }}
     >
       {(i) => (
-        <div class="w-full flex items-center gap-x-2 text-13-regular">
-          <span class="truncate">{i.name}</span>
-          <Show when={isFree(i.provider.id, i.cost)}>
-            <Tag>{language.t("model.tag.free")}</Tag>
-          </Show>
-          <Show when={i.latest}>
-            <Tag>{language.t("model.tag.latest")}</Tag>
+        <div class="flex w-full min-w-0 flex-col text-13-regular">
+          <div class="flex min-w-0 items-center gap-x-2">
+            <span class="truncate">{i.name}</span>
+            <Show when={isFreeModel(i)}>
+              <Tag>{language.t("model.tag.free")}</Tag>
+            </Show>
+            <Show when={i.latest}>
+              <Tag>{language.t("model.tag.latest")}</Tag>
+            </Show>
+          </div>
+          <Show when={openRouterPrice(i)}>
+            {(price) => {
+              const value = price()
+              return (
+                <span class="truncate text-12-regular text-text-base">
+                  {value.kind === "rate"
+                    ? language.t("model.price.perMillion", value)
+                    : language.t("model.price.unavailable")}
+                </span>
+              )
+            }}
           </Show>
         </div>
       )}
@@ -465,7 +478,7 @@ function ModelSelectorPopoverV2View(props: {
                                 <ModelTooltip
                                   model={item}
                                   latest={item.latest}
-                                  free={isFree(item.provider.id, item.cost)}
+                                  free={isFreeModel(item)}
                                   v2
                                 />
                               }
@@ -474,7 +487,7 @@ function ModelSelectorPopoverV2View(props: {
                                 value={modelKey(item)}
                                 data-option-key={modelKey(item)}
                                 data-selected-model={props.current() === modelKey(item) ? true : undefined}
-                                class="scroll-my-6 w-full"
+                                class={`scroll-my-6 w-full ${openRouterPrice(item) ? "!h-auto !min-h-11 !py-1.5" : ""}`}
                                 classList={{ "!bg-v2-overlay-simple-overlay-hover": store.active === modelKey(item) }}
                                 onMouseEnter={() => {
                                   setStore("active", modelKey(item))
@@ -482,8 +495,22 @@ function ModelSelectorPopoverV2View(props: {
                                 }}
                                 onSelect={() => selectModel(item)}
                               >
-                                <span class="min-w-0 truncate leading-5">{item.name}</span>
-                                <Show when={isFree(item.provider.id, item.cost)}>
+                                <span class="flex min-w-0 flex-1 flex-col leading-5">
+                                  <span class="truncate">{item.name}</span>
+                                  <Show when={openRouterPrice(item)}>
+                                    {(price) => {
+                                      const value = price()
+                                      return (
+                                        <span class="truncate text-[11px] leading-4 text-v2-text-text-muted">
+                                          {value.kind === "rate"
+                                            ? language.t("model.price.perMillion", value)
+                                            : language.t("model.price.unavailable")}
+                                        </span>
+                                      )
+                                    }}
+                                  </Show>
+                                </span>
+                                <Show when={isFreeModel(item)}>
                                   <TagV2 class="shrink-0">{language.t("model.tag.free")}</TagV2>
                                 </Show>
                                 <Show when={item.latest}>

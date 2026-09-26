@@ -1,5 +1,6 @@
 import { Show, type Component, type JSX } from "solid-js"
 import { useLanguage } from "@/context/language"
+import { openRouterPrice } from "./openrouter-price"
 
 type InputKey = "text" | "image" | "audio" | "video" | "pdf"
 type InputMap = Record<InputKey, boolean>
@@ -8,8 +9,10 @@ type ModelInfo = {
   id: string
   name: string
   provider: {
+    id: string
     name: string
   }
+  cost?: { input: number; output: number }
   capabilities?: {
     reasoning: boolean
     input: InputMap
@@ -103,6 +106,18 @@ export const ModelTooltip: Component<{ model: ModelInfo; latest?: boolean; free?
         </Show>
         <ModelTooltipRow name={language.t("model.tooltip.reasoning")} value={reasoning()} />
         <ModelTooltipRow name={language.t("model.tooltip.context.label")} value={contextLimit()} />
+        <Show when={openRouterPrice(props.model)}>
+          {(price) => {
+            const value = price()
+            if (value.kind === "unavailable") return <div>{language.t("model.price.unavailable")}</div>
+            return (
+              <>
+                <ModelTooltipRow name={language.t("model.price.input")} value={value.input} />
+                <ModelTooltipRow name={language.t("model.price.output")} value={value.output} />
+              </>
+            )
+          }}
+        </Show>
       </div>
     )
   }
@@ -119,6 +134,18 @@ export const ModelTooltip: Component<{ model: ModelInfo; latest?: boolean; free?
       </Show>
       <div class="text-12-regular text-text-invert-base">{reasoning()}</div>
       <div class="text-12-regular text-text-invert-base">{context()}</div>
+      <Show when={openRouterPrice(props.model)}>
+        {(price) => {
+          const value = price()
+          return (
+            <div class="text-12-regular text-text-invert-base">
+              {value.kind === "rate"
+                ? language.t("model.price.perMillion", value)
+                : language.t("model.price.unavailable")}
+            </div>
+          )
+        }}
+      </Show>
     </div>
   )
 }

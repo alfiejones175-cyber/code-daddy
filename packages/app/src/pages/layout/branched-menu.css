@@ -3,7 +3,7 @@
 
 .branched-menu [data-option-key] {
   animation: branched-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: calc(var(--branch-index, 0) * 28ms);
+  animation-delay: calc(min(var(--branch-index, 0), 6) * 20ms);
 }
 
 @keyframes branched-in {
@@ -19,7 +19,17 @@
 
 @media (prefers-reduced-motion: reduce) {
   .branched-menu [data-option-key] {
-    animation: none;
+    animation: branched-in-reduced 100ms ease-out both;
+    animation-delay: 0ms;
+  }
+}
+
+@keyframes branched-in-reduced {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 

@@ -37,13 +37,15 @@ export function SessionRecoveryNotice(props: { sessionID?: string; directory: st
       return createWorkspaceApi({ server: input.server, fetch: platform.fetch })
         .recovery(input, input.id)
         .then((value) => ({ id: input.id, scope: input.scope, value }))
-        .catch(() => undefined)
+        .catch(() => ({ id: input.id, scope: input.scope, value: { type: "load_failed" as const } }))
     },
   )
   const current = () => {
     const value = status.latest
     return value && value.id === props.sessionID && value.scope === sdk().scope ? value.value : undefined
   }
+  const loadFailed = () => current()?.type === "load_failed"
+  const pending = () => current()?.type === "pending"
   const resume = async () => {
     const id = props.sessionID
     if (!id || state.resuming) return
@@ -58,22 +60,49 @@ export function SessionRecoveryNotice(props: { sessionID?: string; directory: st
     if (id === props.sessionID && scope === sdk().scope) setState("resuming", "")
   }
   return (
-    <Show when={current()?.type === "needs_recovery" || current()?.type === "pending" || state.failed}>
+    <Show when={current()?.type === "needs_recovery" || pending() || loadFailed() || state.failed}>
       <div
         class="mx-2 flex shrink-0 flex-wrap items-center justify-between gap-3 rounded-md border border-border-weak-base bg-surface-base-active p-3"
         role="status"
         data-component="session-recovery"
       >
         <div class="min-w-0 flex-1 text-13-regular">
-          <p class="font-medium text-text-strong">{language.t(state.failed ? "recovery.failed" : "recovery.title")}</p>
-          <p class="mt-1 text-text-weak">{language.t("recovery.description")}</p>
+          <p class="font-medium text-text-strong">
+            {language.t(
+              loadFailed()
+                ? "recovery.loadFailed.title"
+                : state.failed
+                  ? "recovery.failed"
+                  : pending()
+                    ? "recovery.pending.title"
+                    : "recovery.title",
+            )}
+          </p>
+          <p class="mt-1 text-text-weak">
+            {language.t(
+              loadFailed()
+                ? "recovery.loadFailed.description"
+                : pending()
+                  ? "recovery.pending.description"
+                  : "recovery.description",
+            )}
+          </p>
         </div>
-        <Button variant="secondary" disabled={!!state.resuming} onClick={() => void resume()}>
-          <Show when={state.resuming} fallback={language.t("recovery.resume")}>
-            <Spinner class="size-4" />
-            {language.t("recovery.resuming")}
-          </Show>
-        </Button>
+        <Show
+          when={!loadFailed()}
+          fallback={
+            <Button variant="secondary" disabled={status.loading} onClick={() => void actions.refetch()}>
+              {status.loading ? language.t("recovery.checking") : language.t("common.retry")}
+            </Button>
+          }
+        >
+          <Button variant="secondary" disabled={!!state.resuming} onClick={() => void resume()}>
+            <Show when={state.resuming} fallback={language.t(pending() ? "recovery.pending.resume" : "recovery.resume")}>
+              <Spinner class="size-4" />
+              {language.t("recovery.resuming")}
+            </Show>
+          </Button>
+        </Show>
       </div>
     </Show>
   )

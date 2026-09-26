@@ -11,6 +11,7 @@ import { popularProviders, useProviders } from "@/hooks/use-providers"
 import { ModelTooltip } from "./model-tooltip"
 import { useLanguage } from "@/context/language"
 import { decode64 } from "@/utils/base64"
+import { isFreeModel } from "./free-model"
 
 type ModelState = ReturnType<typeof useLocal>["model"]
 
@@ -49,7 +50,8 @@ export const DialogSelectModelUnpaid: Component<{ model?: ModelState }> = (props
         <List
           class="px-3 [&_[data-slot=list-scroll]]:overflow-visible"
           ref={(ref) => (listRef = ref)}
-          items={model.list}
+          items={() => model.list().filter(isFreeModel)}
+          emptyMessage={language.t("dialog.model.unpaid.noFreeModels")}
           current={model.current()}
           key={(x) => `${x.provider.id}:${x.id}`}
           itemWrapper={(item, node) => (
@@ -61,7 +63,7 @@ export const DialogSelectModelUnpaid: Component<{ model?: ModelState }> = (props
                 <ModelTooltip
                   model={item}
                   latest={item.latest}
-                  free={item.provider.id === "opencode" && (!item.cost || item.cost.input === 0)}
+                  free={isFreeModel(item)}
                 />
               }
             >

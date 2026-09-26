@@ -196,7 +196,7 @@
   min-width: 0;
   border-radius: 6px;
   text-align: start;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   span {
     overflow: hidden;
@@ -310,6 +310,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+  color: var(--v2-text-text-muted);
+  font-weight: 500;
+  transition: color 140ms ease;
+}
+.sidebar-chat-row:is(:hover, :focus-within) .sidebar-chat-title,
+.sidebar-chat-row[data-selected="true"] .sidebar-chat-title {
+  color: var(--v2-text-text-base);
+}
+.sidebar-chat-row[data-selected="true"] .sidebar-chat-title {
+  font-weight: 600;
 }
 .sidebar-chat-status {
   width: 6px;
@@ -324,7 +334,7 @@
 }
 .sidebar-chat-status[data-status="waiting"] {
   background: var(--icon-warning-base, #b87919);
-  animation: sidebar-attention-badge-in 500ms cubic-bezier(0.34, 1.36, 0.64, 1) both;
+  animation: sidebar-attention-badge-in 180ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 .sidebar-chat-status[data-status="failed"] {
   background: var(--icon-critical-base, #cf4545);
@@ -337,7 +347,7 @@
   width: 6px;
   height: 6px;
   flex-shrink: 0;
-  animation: sidebar-notification-badge-slide-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: sidebar-notification-badge-slide-in 180ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 .sidebar-unread::after {
   position: absolute;
@@ -346,7 +356,7 @@
   border-radius: 50%;
   background: var(--v2-text-text-base);
   transform-origin: center;
-  animation: sidebar-notification-badge-pop-in 500ms cubic-bezier(0.34, 1.36, 0.64, 1) both;
+  animation: sidebar-notification-badge-pop-in 180ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 @keyframes sidebar-notification-badge-slide-in {
   from {
@@ -359,24 +369,20 @@
 @keyframes sidebar-notification-badge-pop-in {
   from {
     opacity: 0;
-    filter: blur(2px);
-    transform: scale(0);
+    transform: scale(0.9);
   }
   to {
     opacity: 1;
-    filter: blur(0);
     transform: scale(1);
   }
 }
 @keyframes sidebar-attention-badge-in {
   from {
     opacity: 0;
-    filter: blur(2px);
-    transform: translate(-8.2px, 12.4px) scale(0);
+    transform: translate(-8.2px, 12.4px) scale(0.9);
   }
   to {
     opacity: 1;
-    filter: blur(0);
     transform: translate(0, 0) scale(1);
   }
 }

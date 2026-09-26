@@ -208,44 +208,30 @@ function HomeServerRow(props: {
     if (props.contextMenuOpen(id)) props.onSetContextMenuOpen(id, false)
   })
   return (
-    <div class="group/server relative flex h-7 min-w-0 items-center rounded-[6px]">
+    <div class="group/server relative flex h-7 min-w-0 items-center rounded-[6px] max-md:h-10 [@media(pointer:coarse)]:h-10">
+      <button
+        type="button"
+        data-action="home-server-collapse"
+        class="absolute left-0 top-0 z-10 flex size-7 items-center justify-center rounded-[6px] text-v2-icon-icon-muted hover:bg-v2-overlay-simple-overlay-hover focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:outline-2 focus-visible:outline-v2-border-border-focus disabled:opacity-40 max-md:size-10 [@media(pointer:coarse)]:size-10"
+        aria-label={props.collapsed ? props.language.t("home.server.expand") : props.language.t("home.server.collapse")}
+        aria-expanded={!props.collapsed}
+        disabled={!canToggle()}
+        onClick={() => props.onToggleCollapsed(props.server)}
+      >
+        <IconV2
+          name="chevron-down"
+          size="small"
+          class="transition-transform duration-150 ease-in-out"
+          style={{ transform: `rotate(${props.collapsed ? -90 : 0}deg)` }}
+        />
+      </button>
       <HomeProjectNavButton
         type="button"
-        class="pr-16 disabled:opacity-60"
+        class="h-full pl-7 pr-16 disabled:opacity-60 max-md:pl-10 [@media(pointer:coarse)]:pl-10"
         data-selected={props.selected ? "" : undefined}
         disabled={!healthy()}
         onClick={() => props.onFocusServer(props.server)}
       >
-        <span
-          data-action="home-server-collapse"
-          class={`
-            -ml-0.5 -mr-1.5 inline-flex size-5 shrink-0 items-center justify-center
-            rounded-[4px] text-v2-icon-icon-muted
-          `}
-          classList={{
-            "hover:bg-v2-overlay-simple-overlay-hover": canToggle(),
-            "cursor-default opacity-40": !canToggle(),
-          }}
-          aria-label={
-            props.collapsed ? props.language.t("home.server.expand") : props.language.t("home.server.collapse")
-          }
-          aria-disabled={!canToggle()}
-          aria-expanded={canToggle() ? !props.collapsed : undefined}
-          onClick={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            if (!canToggle()) return
-            props.onToggleCollapsed(props.server)
-          }}
-          onPointerDown={(event) => event.preventDefault()}
-        >
-          <IconV2
-            name="chevron-down"
-            size="small"
-            class="transition-transform duration-150 ease-in-out"
-            style={{ transform: `rotate(${props.collapsed ? -90 : 0}deg)` }}
-          />
-        </span>
         <div class="flex size-4 shrink-0 items-center justify-center -mr-0.5">
           <ServerHealthIndicator health={props.health} />
         </div>
@@ -473,7 +459,7 @@ function HomeProjectRow(
   return (
     <div
       ref={sortable.ref}
-      class="group/project relative flex h-7 min-w-0 items-center rounded-[6px]"
+      class="group/project relative flex h-7 min-w-0 items-center rounded-[6px] max-md:h-10 [@media(pointer:coarse)]:h-10"
       classList={{ "z-10": sortable.isDragSource() }}
       onContextMenu={(event) => {
         event.preventDefault()
@@ -483,7 +469,7 @@ function HomeProjectRow(
       <HomeProjectNavButton
         type="button"
         data-component="home-project-row"
-        class="pr-16 disabled:opacity-60"
+        class="h-full pr-16 disabled:opacity-60"
         classList={{
           "bg-v2-background-bg-layer-01 text-v2-text-text-base": sortable.isDragSource(),
         }}
