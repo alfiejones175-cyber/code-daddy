@@ -17,6 +17,7 @@ import {
 import type { State, VcsCache } from "./types"
 import { ServerScope } from "@/utils/server-scope"
 import type { ServerApi } from "@/utils/server"
+import { createTeamApi } from "@/utils/team-api"
 
 type ProjectApi = ServerApi["project"]
 
@@ -184,6 +185,25 @@ describe("bootstrapDirectory", () => {
 })
 
 describe("config queries", () => {
+  test("loads native team settings and the global source-agent directory", async () => {
+    const config = {
+      teams: { review: { lead: "build", roles: { research: { agent: "explore" } } } },
+      default_team: "review",
+    }
+    const teams = createTeamApi({
+      server: { url: "http://localhost:4096" },
+      fetch: async () => Response.json({ data: config, directory: "/global/config" }),
+    })
+    const sdk = {} as OpencodeClient
+    const client = new QueryClient()
+    const loaded = await client.fetchQuery(loadGlobalConfigQuery(ServerScope.local, sdk, Promise.resolve("v2"), teams))
+    expect(loaded.teams?.review.lead).toBe("build")
+    expect(loaded.default_team).toBe("review")
+    const path = await client.fetchQuery(loadPathQuery(ServerScope.local, "/repo", sdk, Promise.resolve("v2"), teams))
+    expect(path.config).toBe("/global/config")
+    expect(path.directory).toBe("/repo")
+  })
+
   test("skips legacy global config for v2 servers", async () => {
     const sdk = {
       global: {

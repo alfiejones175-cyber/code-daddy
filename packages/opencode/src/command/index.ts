@@ -10,6 +10,8 @@ import { Skill } from "../skill"
 import PROMPT_INITIALIZE from "./template/initialize.txt"
 import PROMPT_REVIEW from "./template/review.txt"
 import { LegacyEvent } from "@opencode-ai/schema/legacy-event"
+import { Agent } from "@/agent/agent"
+import { ConfigTeam } from "@opencode-ai/core/config/team"
 
 type State = {
   commands: Record<string, Info>
@@ -61,6 +63,7 @@ const layer = Layer.effect(
     const config = yield* Config.Service
     const mcp = yield* MCP.Service
     const skill = yield* Skill.Service
+    const agent = yield* Agent.Service
 
     const init = Effect.fn("Command.state")(function* (ctx: InstanceContext) {
       const cfg = yield* config.get()
@@ -151,6 +154,20 @@ const layer = Layer.effect(
         }
       }
 
+      yield* agent.list()
+      for (const item of ConfigTeam.commands(cfg.teams, cfg.default_team)) {
+        if (commands[item.name]) throw new Error(`Agent team command "/${item.name}" conflicts with another command`)
+        commands[item.name] = {
+          name: item.name,
+          agent: item.agent,
+          description: item.description,
+          source: "command",
+          template: item.template,
+          subtask: item.subtask,
+          hints: hints(item.template),
+        }
+      }
+
       return {
         commands,
       }
@@ -172,6 +189,10 @@ const layer = Layer.effect(
   }),
 )
 
-export const node = LayerNode.make({ service: Service, layer: layer, deps: [Config.node, MCP.node, Skill.node] })
+export const node = LayerNode.make({
+  service: Service,
+  layer: layer,
+  deps: [Config.node, MCP.node, Skill.node, Agent.node],
+})
 
 export * as Command from "."

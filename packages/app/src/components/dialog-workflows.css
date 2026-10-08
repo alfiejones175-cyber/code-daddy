@@ -1,0 +1,23 @@
+[data-component="dialog-v2"] [data-slot="dialog-container"].workflow-dialog-container {
+  width: min(1600px, calc(100vw - 32px));
+  height: calc(100dvh - 48px);
+}
+
+[data-component="dialog-v2"] [data-slot="dialog-content"].workflow-dialog {
+  overflow: auto;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.workflow-mcp-setup [data-component="textarea-v2"] {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  [data-component="dialog-v2"] [data-slot="dialog-container"].workflow-dialog-container {
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+  }
+}

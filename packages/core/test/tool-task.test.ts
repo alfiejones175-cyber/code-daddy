@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test"
-import { DateTime, Deferred, Effect, Fiber, Layer, Schema } from "effect"
+import { DateTime, Deferred, Effect, Fiber, Layer, Option, Schema } from "effect"
 import { AgentV2 } from "../src/agent"
+import { SkillV2 } from "../src/skill"
 import { Catalog } from "../src/catalog"
+import { Config } from "../src/config"
 import { Database } from "../src/database/database"
 import { makeGlobalNode } from "../src/effect/app-node"
 import { AppNodeBuilder } from "../src/effect/app-node-builder"
@@ -102,6 +104,7 @@ const it = testEffect(
       ToolRegistry.toolsNode,
       PermissionV2.node,
       AgentV2.node,
+      SkillV2.node,
     ]),
     [
       [ProjectV2.node, projects],
@@ -121,6 +124,26 @@ const it = testEffect(
         }),
       ],
       [ToolOutputStore.node, ToolOutputStore.nodeWithoutConfig],
+      [
+        Config.node,
+        Layer.succeed(
+          Config.Service,
+          Config.Service.of({
+            entries: () =>
+              Effect.succeed([
+                new Config.Document({
+                  type: "document",
+                  info: new Config.Info({
+                    teams: {
+                      coding: { lead: "build", roles: { research: { agent: "research", skills: ["quality"] } } },
+                      other: { lead: "build", roles: { research: { agent: "research" } } },
+                    },
+                  }),
+                }),
+              ]),
+          }),
+        ),
+      ],
     ],
   ),
 )
@@ -176,6 +199,274 @@ function setup(callID = "delegate", parentID?: SessionV2.ID, prompt = input.prom
 }
 
 describe("native task tool", () => {
+  it.effect("preloads required role skills after a target-agent permission check and before child execution", () =>
+    Effect.gen(function* () {
+      const agents = yield* AgentV2.Service
+      const skills = yield* SkillV2.Service
+      const sessions = yield* SessionV2.Service
+      const registry = yield* ToolRegistry.Service
+      const delegated = { ...input, subagent_type: AgentV2.ID.make("team-coding/research") }
+      const context = yield* setup("team-skill", undefined, input.prompt, delegated)
+      yield* agents.transform((draft) => {
+        draft.update(AgentV2.ID.make("team-coding"), (agent) => {
+          agent.mode = "primary"
+          agent.permissions = [{ action: "*", resource: "*", effect: "allow" }]
+        })
+        draft.update(AgentV2.ID.make("team-coding/research"), (agent) => {
+          agent.mode = "subagent"
+          agent.permissions = [
+            { action: "*", resource: "*", effect: "allow" },
+            { action: "task", resource: "*", effect: "deny" },
+          ]
+        })
+      })
+      yield* skills.transform((draft) =>
+        draft.source({
+          type: "embedded",
+          skill: {
+            name: "quality",
+            location: AbsolutePath.make("/skills/quality/SKILL.md"),
+            content: "Check the work against quality requirements.",
+          },
+        }),
+      )
+      const result = yield* settleTool(registry, {
+        ...context,
+        agent: AgentV2.ID.make("team-coding"),
+        call: { type: "tool-call", name: "task", id: context.toolCallID, input: delegated },
+      })
+      expect(result.output?.structured).toMatchObject({ status: "completed" })
+      const child = yield* sessions.get(TaskTool.identity(context).sessionID)
+      expect(String(child.agent)).toBe("team-coding/research")
+      expect((yield* sessions.messages({ sessionID: child.id, order: "asc" })).some(
+        (message) => message.type === "user" && message.text.includes("Check the work against quality requirements."),
+      )).toBe(true)
+    }),
+  )
+
+  it.effect("rejects a denied required skill without creating a child session", () =>
+    Effect.gen(function* () {
+      const agents = yield* AgentV2.Service
+      const skills = yield* SkillV2.Service
+      const sessions = yield* SessionV2.Service
+      const registry = yield* ToolRegistry.Service
+      const delegated = { ...input, subagent_type: AgentV2.ID.make("team-coding/research") }
+      const context = yield* setup("team-skill-denied", undefined, input.prompt, delegated)
+      yield* skills.transform((draft) =>
+        draft.source({
+          type: "embedded",
+          skill: {
+            name: "quality",
+            location: AbsolutePath.make("/skills/quality/SKILL.md"),
+            content: "Check the work.",
+          },
+        }),
+      )
+      yield* agents.transform((draft) => {
+        draft.update(AgentV2.ID.make("team-coding"), (agent) => {
+          agent.mode = "primary"
+          agent.permissions = [{ action: "*", resource: "*", effect: "allow" }]
+        })
+        draft.update(AgentV2.ID.make("team-coding/research"), (agent) => {
+          agent.mode = "subagent"
+          agent.permissions = [
+            { action: "*", resource: "*", effect: "allow" },
+            { action: "skill", resource: "quality", effect: "deny" },
+          ]
+        })
+      })
+      const result = yield* settleTool(registry, {
+        ...context,
+        agent: AgentV2.ID.make("team-coding"),
+        call: { type: "tool-call", name: "task", id: context.toolCallID, input: delegated },
+      })
+      expect(result.result.type).toBe("error")
+      expect(yield* sessions.get(TaskTool.identity(context).sessionID).pipe(Effect.option)).toEqual(Option.none())
+    }),
+  )
+
+  it.effect("enforces the current team lead's skill denial before admitting the child", () =>
+    Effect.gen(function* () {
+      const agents = yield* AgentV2.Service
+      const skills = yield* SkillV2.Service
+      const sessions = yield* SessionV2.Service
+      const registry = yield* ToolRegistry.Service
+      const delegated = { ...input, subagent_type: AgentV2.ID.make("team-coding/research") }
+      const context = yield* setup("team-lead-skill-denied", undefined, input.prompt, delegated)
+      yield* skills.transform((draft) =>
+        draft.source({
+          type: "embedded",
+          skill: {
+            name: "quality",
+            location: AbsolutePath.make("/skills/quality/SKILL.md"),
+            content: "Check the work.",
+          },
+        }),
+      )
+      yield* agents.transform((draft) => {
+        draft.update(AgentV2.ID.make("team-coding"), (agent) => {
+          agent.mode = "primary"
+          agent.permissions = [
+            { action: "*", resource: "*", effect: "allow" },
+            { action: "skill", resource: "quality", effect: "deny" },
+          ]
+        })
+        draft.update(AgentV2.ID.make("team-coding/research"), (agent) => {
+          agent.mode = "subagent"
+          agent.permissions = [{ action: "*", resource: "*", effect: "allow" }]
+        })
+      })
+      const result = yield* settleTool(registry, {
+        ...context,
+        agent: AgentV2.ID.make("team-coding"),
+        call: { type: "tool-call", name: "task", id: context.toolCallID, input: delegated },
+      })
+
+      expect(result.result.type).toBe("error")
+      expect(yield* sessions.get(TaskTool.identity(context).sessionID).pipe(Effect.option)).toEqual(Option.none())
+    }),
+  )
+
+  it.effect("asks under the current team lead's skill policy when the target role allows it", () =>
+    Effect.gen(function* () {
+      const agents = yield* AgentV2.Service
+      const skills = yield* SkillV2.Service
+      const sessions = yield* SessionV2.Service
+      const registry = yield* ToolRegistry.Service
+      const permission = yield* PermissionV2.Service
+      const events = yield* EventV2.Service
+      const asked = yield* Deferred.make<PermissionV2.Request>()
+      const unsubscribe = yield* events.listen((event) =>
+        event.type === PermissionV2.Event.Asked.type
+          ? Deferred.succeed(asked, event.data as PermissionV2.Request).pipe(Effect.asVoid)
+          : Effect.void,
+      )
+      yield* Effect.addFinalizer(() => unsubscribe)
+      const delegated = { ...input, subagent_type: AgentV2.ID.make("team-coding/research") }
+      const context = yield* setup("team-lead-skill-ask", undefined, input.prompt, delegated)
+      yield* skills.transform((draft) =>
+        draft.source({
+          type: "embedded",
+          skill: {
+            name: "quality",
+            location: AbsolutePath.make("/skills/quality/SKILL.md"),
+            content: "Check the work.",
+          },
+        }),
+      )
+      yield* agents.transform((draft) => {
+        draft.update(AgentV2.ID.make("team-coding"), (agent) => {
+          agent.mode = "primary"
+          agent.permissions = [
+            { action: "*", resource: "*", effect: "allow" },
+            { action: "skill", resource: "quality", effect: "ask" },
+          ]
+        })
+        draft.update(AgentV2.ID.make("team-coding/research"), (agent) => {
+          agent.mode = "subagent"
+          agent.permissions = [{ action: "*", resource: "*", effect: "allow" }]
+        })
+      })
+      const execution = yield* settleTool(registry, {
+        ...context,
+        agent: AgentV2.ID.make("team-coding"),
+        call: { type: "tool-call", name: "task", id: context.toolCallID, input: delegated },
+      }).pipe(Effect.forkChild)
+      const request = yield* Deferred.await(asked)
+      expect(request).toMatchObject({ action: "skill", resources: ["quality"] })
+      yield* permission.reply({ requestID: request.id, reply: "once" })
+      const result = yield* Fiber.join(execution)
+
+      expect(result.result.type).not.toBe("error")
+      expect(yield* sessions.get(TaskTool.identity(context).sessionID).pipe(Effect.option)).not.toEqual(Option.none())
+    }),
+  )
+
+  it.effect("enforces the selected team role's provider denial before child admission", () =>
+    Effect.gen(function* () {
+      const agents = yield* AgentV2.Service
+      const sessions = yield* SessionV2.Service
+      const registry = yield* ToolRegistry.Service
+      const delegated = { ...input, subagent_type: AgentV2.ID.make("team-coding/research") }
+      const context = yield* setup("team-role-provider-denied", undefined, input.prompt, delegated)
+      yield* agents.transform((draft) => {
+        draft.update(AgentV2.ID.make("team-coding"), (agent) => {
+          agent.mode = "primary"
+          agent.permissions = [{ action: "*", resource: "*", effect: "allow" }]
+        })
+        draft.update(AgentV2.ID.make("team-coding/research"), (agent) => {
+          agent.mode = "subagent"
+          agent.model = model
+          agent.permissions = [
+            { action: "*", resource: "*", effect: "allow" },
+            { action: "provider.use", resource: model.providerID, effect: "deny" },
+          ]
+        })
+      })
+      const result = yield* settleTool(registry, {
+        ...context,
+        agent: AgentV2.ID.make("team-coding"),
+        call: { type: "tool-call", name: "task", id: context.toolCallID, input: delegated },
+      })
+
+      expect(result.result.type).toBe("error")
+      expect(yield* sessions.get(TaskTool.identity(context).sessionID).pipe(Effect.option)).toEqual(Option.none())
+    }),
+  )
+
+  it.effect("rejects entering another team's role or leaving the fixed roster before creation", () =>
+    Effect.gen(function* () {
+      const agents = yield* AgentV2.Service
+      const sessions = yield* SessionV2.Service
+      const registry = yield* ToolRegistry.Service
+      const cases = [
+        { caller: "build", target: "team-coding/research" },
+        { caller: "team-other", target: "team-coding/research" },
+        { caller: "team-coding", target: "research" },
+        { caller: "team-coding/research", target: "research" },
+      ]
+      for (const [index, item] of cases.entries()) {
+        const delegated = { ...input, subagent_type: AgentV2.ID.make(item.target) }
+        const context = yield* setup(`roster-${index}`, undefined, input.prompt, delegated)
+        yield* agents.transform((draft) => {
+          for (const id of [item.caller, item.target])
+            draft.update(AgentV2.ID.make(id), (agent) => {
+              agent.mode = "all"
+              agent.permissions = [{ action: "*", resource: "*", effect: "allow" }]
+            })
+        })
+        const result = yield* settleTool(registry, {
+          ...context,
+          agent: AgentV2.ID.make(item.caller),
+          call: { type: "tool-call", name: "task", id: context.toolCallID, input: delegated },
+        })
+        expect(result.result.type).toBe("error")
+        expect(yield* sessions.get(TaskTool.identity(context).sessionID).pipe(Effect.option)).toEqual(Option.none())
+      }
+    }),
+  )
+  it.effect("uses the configured subagent model when the call omits a model", () =>
+    Effect.gen(function* () {
+      const catalog = yield* Catalog.Service
+      const agents = yield* AgentV2.Service
+      const sessions = yield* SessionV2.Service
+      const configured = { providerID: ProviderV2.ID.make("other"), id: ModelV2.ID.make("preset") }
+      yield* catalog.transform((editor) => editor.model.update(configured.providerID, configured.id, () => {}))
+      const context = yield* setup("preset-model")
+      yield* agents.transform((draft) =>
+        draft.update(input.subagent_type, (agent) => {
+          agent.model = configured
+        }),
+      )
+      const registry = yield* ToolRegistry.Service
+      const result = yield* settleTool(registry, {
+        ...context,
+        call: { type: "tool-call", name: "task", id: context.toolCallID, input },
+      })
+      expect(result.output?.structured).toMatchObject({ status: "completed" })
+      expect((yield* sessions.get(TaskTool.identity(context).sessionID)).model).toMatchObject(configured)
+    }),
+  )
   it.effect("persists the bounded maxTurns metadata on a child", () =>
     Effect.gen(function* () {
       const boundedInput = { ...input, max_turns: 3 }
@@ -457,11 +748,13 @@ describe("native task tool", () => {
         provider: { executed: false },
       })
       const result = yield* settleTool(registry, {
-          ...context,
-          call: { type: "tool-call", name: "task", id: "missing-model-followup", input: followup },
-        })
+        ...context,
+        call: { type: "tool-call", name: "task", id: "missing-model-followup", input: followup },
+      })
       expect(result.output?.structured).toMatchObject({ sessionID: child.id, status: "completed" })
-      expect((yield* sessions.messages({ sessionID: child.id })).filter((message) => message.type === "user")).toHaveLength(1)
+      expect(
+        (yield* sessions.messages({ sessionID: child.id })).filter((message) => message.type === "user"),
+      ).toHaveLength(1)
     }),
   )
 

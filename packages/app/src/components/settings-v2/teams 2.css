@@ -1,0 +1,220 @@
+.settings-v2-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  height: 100%;
+}
+
+.settings-v2-teams-header,
+.settings-v2-teams-roles-heading,
+.settings-v2-teams-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-v2-teams-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-v2-teams-description,
+.settings-v2-teams-roles-heading p {
+  margin: 6px 0 0;
+  color: var(--text-weak);
+  font-size: 12px;
+}
+
+.settings-v2-teams-error {
+  margin: 0;
+  color: var(--v2-state-fg-danger);
+  font-size: 12px;
+}
+
+.settings-v2-teams-layout {
+  display: grid;
+  grid-template-columns: minmax(140px, 170px) minmax(0, 1fr);
+  gap: 20px;
+  min-height: 0;
+  flex: 1;
+}
+
+.settings-v2-teams-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.settings-v2-teams-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-base);
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-v2-teams-item:hover,
+.settings-v2-teams-item-selected {
+  background: var(--surface-base-hover);
+}
+
+.settings-v2-teams-default {
+  color: var(--text-weak);
+  font-size: 11px;
+}
+
+.settings-v2-teams-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 1px;
+}
+
+.settings-v2-teams-editor [data-component="settings-v2-list"] {
+  gap: 0;
+}
+
+.settings-v2-teams-editor [data-component="settings-v2-row"] {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.settings-v2-teams-editor [data-slot="settings-v2-row-copy"],
+.settings-v2-teams-editor [data-slot="settings-v2-row-control"] {
+  width: 100%;
+  flex: none;
+  min-width: 0;
+}
+
+.settings-v2-teams-editor [data-component="text-input-v2"],
+.settings-v2-teams-editor [data-component="textarea-v2"],
+.settings-v2-teams-editor [data-component="select-v2"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.settings-v2-teams-editor [data-slot="text-input-v2-value"],
+.settings-v2-teams-editor [data-slot="text-input-v2-input"],
+.settings-v2-teams-editor [data-slot="textarea-v2-textarea"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.settings-v2-teams-default-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-base);
+  font-size: 12px;
+}
+
+.settings-v2-teams-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-v2-teams-roles-heading h3 {
+  margin: 0;
+  color: var(--text-base);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-v2-teams-role {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 10px;
+  padding: 12px 44px 12px 12px;
+  border: 1px solid var(--border-weak-base);
+  border-radius: 8px;
+}
+
+.settings-v2-teams-role label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-weak);
+  font-size: 11px;
+}
+
+.settings-v2-teams-role [data-component="text-input-v2"],
+.settings-v2-teams-role [data-component="select-v2"],
+.settings-v2-teams-role [data-component="textarea-v2"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.settings-v2-teams-role-instructions [data-component="textarea-v2"] {
+  min-height: 40px;
+}
+
+.settings-v2-teams-role-instructions {
+  grid-column: 1 / -1;
+}
+
+.settings-v2-teams-role > [data-component="button-v2"] {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+}
+
+.settings-v2-teams-actions {
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-weak-base);
+}
+
+.settings-v2-teams-actions [role="status"] {
+  margin-right: auto;
+  color: var(--text-weak);
+  font-size: 12px;
+}
+
+.settings-v2-teams-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  color: var(--text-weak);
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .settings-v2-teams-header-row,
+  .settings-v2-teams-roles-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .settings-v2-teams-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-v2-teams-list {
+    max-height: 130px;
+  }
+
+  .settings-v2-teams-role {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

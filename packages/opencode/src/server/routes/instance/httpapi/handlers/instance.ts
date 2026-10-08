@@ -1,4 +1,5 @@
 import { Agent } from "@/agent/agent"
+import { TeamDraft } from "@/agent/team-draft"
 import { Command } from "@/command"
 import * as InstanceState from "@/effect/instance-state"
 import { Format } from "@/format"
@@ -10,6 +11,7 @@ import { Effect } from "effect"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
 import { ApiVcsApplyError } from "../groups/instance"
+import { ServiceUnavailableError } from "../errors"
 import { markInstanceForDisposal } from "../lifecycle"
 
 export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance", (handlers) =>
@@ -103,6 +105,17 @@ export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance"
       .handle("vcsApply", applyVcs)
       .handle("command", getCommand)
       .handle("agent", getAgent)
+      .handle("teamDraft", (ctx) =>
+        TeamDraft.generate(ctx.payload).pipe(
+          Effect.mapError(
+            (error) =>
+              new ServiceUnavailableError({
+                message: "Team draft failed",
+                service: `team_draft_${error._tag === "TeamDraftError" ? error.reason : "unavailable"}`,
+              }),
+          ),
+        ),
+      )
       .handle("skill", getSkill)
       .handle("lsp", getLsp)
       .handle("formatter", getFormatter)

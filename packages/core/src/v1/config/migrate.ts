@@ -6,6 +6,8 @@ import { ConfigMCPV1 } from "./mcp"
 import { ConfigPermissionV1 } from "./permission"
 import { ConfigProviderV1 } from "./provider"
 import { ConfigProviderOptionsV1 } from "./provider-options"
+import { Schema } from "effect"
+import { ConfigTeam } from "../../config/team"
 
 const keys = new Set([
   "logLevel",
@@ -38,6 +40,8 @@ export function migrate(info: typeof ConfigV1.Info.Type) {
     shell: info.shell,
     model: info.model,
     default_agent: info.default_agent,
+    teams: info.teams === undefined ? undefined : Schema.encodeSync(ConfigTeam.Teams)(info.teams),
+    default_team: info.default_team,
     autoupdate: info.autoupdate,
     share: info.share ?? (info.autoshare ? "auto" : undefined),
     enterprise: info.enterprise,

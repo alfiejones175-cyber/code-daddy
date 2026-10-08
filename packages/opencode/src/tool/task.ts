@@ -14,6 +14,9 @@ import { Effect, Exit, Schema, Scope } from "effect"
 import { EffectBridge } from "@/effect/bridge"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { Database } from "@opencode-ai/core/database/database"
+import { ConfigTeam } from "@opencode-ai/core/config/team"
+import { Skill } from "@/skill"
+import { Permission } from "@/permission"
 
 export interface TaskPromptOps {
   cancel(sessionID: SessionID): Effect.Effect<void>
@@ -87,6 +90,8 @@ export const TaskTool = Tool.define(
     const sessions = yield* Session.Service
     const scope = yield* Scope.Scope
     const flags = yield* RuntimeFlags.Service
+    const skills = yield* Skill.Service
+    const permission = yield* Permission.Service
     const database = yield* Database.Service
 
     const run = Effect.fn("TaskTool.execute")(function* (
@@ -116,6 +121,51 @@ export const TaskTool = Tool.define(
         )
       }
 
+      const next = yield* agent.get(params.subagent_type)
+      if (!next) {
+        return yield* Effect.fail(new Error(`Unknown agent type: ${params.subagent_type} is not a valid agent type`))
+      }
+
+      const teams = Object.entries(cfg.teams ?? {}).filter(([, team]) => !team.disabled)
+      const roles = teams.flatMap(([name, team]) =>
+        Object.entries(team.roles).map(([role, info]) => ({
+          lead: ConfigTeam.leadID(name),
+          id: ConfigTeam.roleID(name, role),
+          skills: info.skills ?? [],
+        })),
+      )
+      if (roles.some((role) => role.id === ctx.agent)) {
+        return yield* Effect.fail(new Error("Team role agents cannot delegate additional tasks"))
+      }
+      const callerTeam = teams.find(([name]) => ConfigTeam.leadID(name) === ctx.agent)
+      if (
+        callerTeam &&
+        !Object.keys(callerTeam[1].roles).some(
+          (role) => ConfigTeam.roleID(callerTeam[0], role) === params.subagent_type,
+        )
+      ) {
+        return yield* Effect.fail(new Error("Team leads can only assign tasks to their configured roles"))
+      }
+      const targetRole = roles.find((role) => role.id === params.subagent_type)
+      if (targetRole && targetRole.lead !== ctx.agent) {
+        return yield* Effect.fail(new Error("Team roles can only be assigned by their configured team lead"))
+      }
+
+      const session = params.task_id
+        ? yield* sessions.get(SessionID.make(params.task_id)).pipe(Effect.catch(() => Effect.succeed(undefined)))
+        : undefined
+      if (params.task_id && !session) {
+        return yield* Effect.fail(new Error(`Task session not found: ${params.task_id}`))
+      }
+      if (session && session.parentID !== parent.id) {
+        return yield* Effect.fail(new Error("task_id must identify a direct child of the current session"))
+      }
+      if (session && session.agent !== next.name) {
+        return yield* Effect.fail(new Error("task_id must identify a child using the selected subagent"))
+      }
+      if (session && session.directory !== parent.directory) {
+        return yield* Effect.fail(new Error("task_id must identify a child in the current directory"))
+      }
       if (!ctx.extra?.bypassAgentCheck) {
         yield* ctx.ask({
           permission: id,
@@ -127,15 +177,55 @@ export const TaskTool = Tool.define(
           },
         })
       }
-
-      const next = yield* agent.get(params.subagent_type)
-      if (!next) {
-        return yield* Effect.fail(new Error(`Unknown agent type: ${params.subagent_type} is not a valid agent type`))
+      const assignedRole = roles.find((role) => role.id === params.subagent_type)
+      const requiredSkills: string[] = []
+      const caller = yield* agent.get(ctx.agent)
+      for (const name of assignedRole?.skills ?? []) {
+        const info = yield* skills
+          .require(name)
+          .pipe(
+            Effect.catchTag("Skill.NotFoundError", () =>
+              Effect.fail(new Error(`Required team skill is unavailable: ${name}`)),
+            ),
+          )
+        const policies = [next.permission, caller?.permission ?? [], parent.permission ?? []]
+        const rules = policies.map((policy) => Permission.evaluate("skill", name, policy))
+        if (rules.some((rule) => rule.action === "deny")) {
+          return yield* Effect.fail(new Error(`Required team skill is denied: ${name}`))
+        }
+        for (const [index, rule] of rules.entries()) {
+          if (rule.action !== "ask") continue
+          yield* permission.ask({
+            sessionID: ctx.sessionID,
+            permission: "skill",
+            patterns: [name],
+            always: [name],
+            metadata: {},
+            ruleset: policies[index] ?? [],
+          })
+        }
+        requiredSkills.push(
+          [
+            `<skill_content name="${info.name}">`,
+            `# Skill: ${info.name}`,
+            "",
+            info.content.trim(),
+            "",
+            "</skill_content>",
+          ].join("\n"),
+        )
       }
-
-      const session = params.task_id
-        ? yield* sessions.get(SessionID.make(params.task_id)).pipe(Effect.catchCause(() => Effect.succeed(undefined)))
-        : undefined
+      const delegatedPrompt = [
+        requiredSkills.length
+          ? [
+              "Required team skills follow. Read and apply these instructions before doing the assignment.",
+              ...requiredSkills,
+            ].join("\n\n")
+          : undefined,
+        params.prompt,
+      ]
+        .filter((item) => item !== undefined)
+        .join("\n\n")
       const childPermission = deriveSubagentSessionPermission({
         parentSessionPermission: parent.permission ?? [],
         subagent: next,
@@ -198,7 +288,7 @@ export const TaskTool = Tool.define(
       if (!ops) return yield* Effect.fail(new Error("TaskTool requires promptOps in ctx.extra"))
 
       const runTask = Effect.fn("TaskTool.runTask")(function* () {
-        const parts = yield* ops.resolvePromptParts(params.prompt)
+        const parts = yield* ops.resolvePromptParts(delegatedPrompt)
         const result = yield* ops.prompt({
           messageID: MessageID.ascending(),
           sessionID: nextSession.id,

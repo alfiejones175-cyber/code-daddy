@@ -156,3 +156,39 @@ export const ReviewResult = Schema.Union([ReviewSuccess, Unavailable, InvalidInp
   identifier: "Jev.ReviewResult",
 })
 export type ReviewResult = typeof ReviewResult.Type
+
+export const CodeReviewCriterion = Schema.Literals(["scope", "duplication", "abstraction"])
+export type CodeReviewCriterion = typeof CodeReviewCriterion.Type
+
+export const CodeReviewInput = Schema.Struct({
+  requirements: Schema.Array(NonEmptyText(2_000)).check(Schema.isLengthBetween(1, 3)),
+  changes: Schema.Array(
+    Schema.Struct({
+      id: NonEmptyText(64),
+      path: NonEmptyText(300),
+      diff: NonEmptyText(4_000),
+      context: Schema.optionalKey(NonEmptyText(2_000)),
+    }),
+  ).check(Schema.isLengthBetween(1, 4)),
+}).annotate({ identifier: "Jev.CodeReviewInput" })
+export type CodeReviewInput = typeof CodeReviewInput.Type
+
+const CodeReviewSuccess = Schema.Struct({
+  ...SuccessFields,
+  rubricVersion: NonEmptyText(200),
+  sourceDigest: NonEmptyText(100),
+  findings: Schema.Array(
+    Schema.Struct({
+      changeID: NonEmptyText(64),
+      criterion: CodeReviewCriterion,
+      assessment: ReviewAssessment,
+      confidence: Probability,
+      probabilities: Schema.Record(Schema.String, Probability),
+    }),
+  ),
+})
+
+export const CodeReviewResult = Schema.Union([CodeReviewSuccess, Unavailable, InvalidInput]).annotate({
+  identifier: "Jev.CodeReviewResult",
+})
+export type CodeReviewResult = typeof CodeReviewResult.Type

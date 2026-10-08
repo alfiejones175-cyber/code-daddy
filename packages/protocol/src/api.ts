@@ -24,6 +24,7 @@ import { ProjectCopyGroup } from "./groups/project-copy"
 import { ProjectGroup } from "./groups/project"
 import { MCPGroup } from "./groups/mcp"
 import { RoutineGroup } from "./groups/routine"
+import { TeamGroup } from "./groups/team"
 
 // Protocol owns middleware placement, while Server injects concrete keys so Core service identities stay downstream.
 const makeApiFromGroup = <
@@ -59,6 +60,7 @@ const makeApiFromGroup = <
     .add(ProjectGroup.middleware(locationMiddleware))
     .add(MCPGroup.middleware(locationMiddleware))
     .add(RoutineGroup)
+    .add(TeamGroup.middleware(locationMiddleware))
     .annotateMerge(
       OpenApi.annotations({
         title: "opencode HttpApi",

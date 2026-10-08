@@ -56,7 +56,13 @@ const getBase = (appId: string): Configuration => ({
   extraMetadata: {
     desktopName: `${appId}.desktop`,
   },
-  files: ["out/**/*", "resources/**/*", "!resources/opencode-cli*"],
+  files: [
+    "out/**/*",
+    "resources/**/*",
+    "!resources/opencode-cli*",
+    // Numbered sync-conflict copies are not app assets and can stall reads.
+    "!resources/icons/**/* [0-9]*.*",
+  ],
   extraResources: [
     ...(channel === "dev"
       ? [

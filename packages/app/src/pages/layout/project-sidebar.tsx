@@ -14,6 +14,7 @@ import { ProviderIcon } from "@opencode-ai/ui/provider-icon"
 import { TooltipV2 } from "@opencode-ai/ui/v2/tooltip-v2"
 import { useDirectoryPicker } from "@/components/directory-picker"
 import { useSettingsDialog } from "@/components/settings-dialog"
+import { useWorkflowDialog } from "@/components/workflow-dialog"
 import { useCommand } from "@/context/command"
 import { useGlobal, type ServerCtx } from "@/context/global"
 import { useLanguage } from "@/context/language"
@@ -206,7 +207,20 @@ export function ProjectSidebar() {
     if (connections) return providers()
     settings()
   }
+  const workflows = useWorkflowDialog(directory)
+  const openWorkflows = () => {
+    const conn = connection()
+    if (conn) global.settings.server.set(ServerConnection.key(conn))
+    if (compact()) close()
+    void workflows()
+  }
   command.register("project-sidebar", () => [
+    {
+      id: "workflows.open",
+      title: language.t("workflows.open"),
+      category: language.t("command.category.project"),
+      onSelect: openWorkflows,
+    },
     {
       id: "sidebar.toggle",
       title: language.t("command.sidebar.toggle"),
@@ -506,6 +520,11 @@ export function ProjectSidebar() {
           </Show>
         </div>
         <div class="sidebar-footer">
+          <button type="button" class="sidebar-connections" onClick={openWorkflows} disabled={!connection()}>
+            <Icon name="branch" size="small" />
+            <span>{language.t("workflow.title")}</span>
+            <Icon name="chevron-right" size="small" />
+          </button>
           <Show when={context()}>{(ctx) => <AppUsageActivity context={ctx()} sessions={usageSessions()} />}</Show>
           <div class="sidebar-footer-actions">
             <button type="button" class="sidebar-connections" onClick={() => openSettings(true)}>

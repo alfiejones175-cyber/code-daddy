@@ -1,11 +1,13 @@
+import { ServiceUnavailableError } from "../errors"
 import { Agent } from "@/agent/agent"
 import { Command } from "@/command"
 import { Format } from "@/format"
 import { LSP } from "@/lsp/lsp"
 import { Vcs } from "@/project/vcs"
 import { Skill } from "@/skill"
+import { AgentTeam } from "@opencode-ai/schema/agent-team"
 import { Schema } from "effect"
-import { HttpApi, HttpApiEndpoint, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/unstable/httpapi"
+import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/unstable/httpapi"
 import { Authorization } from "../middleware/authorization"
 import { InstanceContextMiddleware } from "../middleware/instance-context"
 import {
@@ -50,6 +52,7 @@ export const InstancePaths = {
   vcsApply: "/vcs/apply",
   command: "/command",
   agent: "/agent",
+  teamDraft: "/team/draft",
   skill: "/skill",
   lsp: "/lsp",
   formatter: "/formatter",
@@ -144,6 +147,18 @@ export const InstanceApi = HttpApi.make("instance")
             identifier: "command.list",
             summary: "List commands",
             description: "Get a list of all available commands in the OpenCode system.",
+          }),
+        ),
+        HttpApiEndpoint.post("teamDraft", InstancePaths.teamDraft, {
+          query: WorkspaceRoutingQuery,
+          payload: AgentTeam.DraftRequest,
+          success: AgentTeam.Draft,
+          error: ServiceUnavailableError,
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "app.teamDraft",
+            summary: "Design a team draft",
+            description: "Suggest a team using the connected model and available skills, without saving it.",
           }),
         ),
         HttpApiEndpoint.get("agent", InstancePaths.agent, {

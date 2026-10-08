@@ -1,7 +1,16 @@
 import { define } from "@opencode-ai/plugin/v2/effect"
 import { Effect } from "effect"
-import { rankEvidence, reviewOutput, triageFailure } from "./evaluator"
-import { RankInput, RankResult, ReviewInput, ReviewResult, TriageInput, TriageResult } from "./schema"
+import { rankEvidence, reviewCode, reviewOutput, triageFailure } from "./evaluator"
+import {
+  CodeReviewInput,
+  CodeReviewResult,
+  RankInput,
+  RankResult,
+  ReviewInput,
+  ReviewResult,
+  TriageInput,
+  TriageResult,
+} from "./schema"
 import { loadSettings } from "./settings"
 
 export default define({
@@ -42,6 +51,17 @@ export default define({
           output: ReviewResult,
           execute: (input) =>
             Effect.tryPromise(async (signal) => reviewOutput(input, { ...(await loadSettings()), signal })),
+        },
+      })
+      yield* host.tool.register({
+        review_code: {
+          description:
+            "Review up to four bounded diff excerpts against explicit requirements for unnecessary scope, duplicated logic, and needless abstraction. " +
+            "Supply current diffs and relevant context with stable change IDs; the result is advisory and may abstain. Do not send secrets or whole repositories.",
+          input: CodeReviewInput,
+          output: CodeReviewResult,
+          execute: (input) =>
+            Effect.tryPromise(async (signal) => reviewCode(input, { ...(await loadSettings()), signal })),
         },
       })
     }),

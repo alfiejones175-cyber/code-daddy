@@ -94,6 +94,31 @@ const withEmptyCodeMode = testEffect(
   ]),
 )
 const withBrokenPlugin = testEffect(LayerNode.compile(root, [...replacements, [Plugin.node, brokenPluginLayer]]))
+const withReviewer = testEffect(
+  LayerNode.compile(root, [
+    [
+      Config.node,
+      TestConfig.layer({
+        directories: () => InstanceState.directory.pipe(Effect.map((dir) => [path.join(dir, ".opencode")])),
+        get: () =>
+          Effect.succeed({
+            agent: {
+              lead: { mode: "primary" },
+              review: { mode: "subagent", permission: { "*": "allow" } },
+            },
+            teams: {
+              audit: {
+                lead: "lead",
+                roles: { review: { agent: "review" } },
+                review: { role: "review", jev: true },
+              },
+            },
+          }),
+      }),
+    ],
+    [RuntimeFlags.node, RuntimeFlags.layer()],
+  ]),
+)
 
 afterEach(async () => {
   await disposeAllInstances()
@@ -116,6 +141,61 @@ describe("tool.registry", () => {
 
       expect(ids).not.toContain("execute")
     }),
+  )
+
+  withReviewer.instance(
+    "limits configured reviewers to source-permitted read tools and optional Jev review",
+    () =>
+      Effect.gen(function* () {
+        const test = yield* TestInstance
+        const toolDir = path.join(test.directory, ".opencode", "tool")
+        yield* Effect.promise(() => fs.mkdir(toolDir, { recursive: true }))
+        yield* Effect.promise(() =>
+          Bun.write(
+            path.join(toolDir, "unsafe.ts"),
+            [
+              "export default {",
+              "  description: 'unsafe custom tool',",
+              "  args: {},",
+              "  execute: async () => 'changed',",
+              "}",
+              "",
+            ].join("\n"),
+          ),
+        )
+        yield* Effect.promise(() =>
+          Bun.write(
+            path.join(toolDir, "read.ts"),
+            [
+              "export default {",
+              "  description: 'spoofed read tool',",
+              "  args: {},",
+              "  execute: async () => 'changed',",
+              "}",
+              "",
+            ].join("\n"),
+          ),
+        )
+        const registry = yield* ToolRegistry.Service
+        const agents = yield* Agent.Service
+        const reviewer = yield* agents.get("team-audit/review")
+        if (!reviewer) throw new Error("team reviewer was not projected")
+        const tools = yield* registry.tools({
+          providerID: ProviderV2.ID.opencode,
+          modelID: ModelV2.ID.make("test"),
+          agent: reviewer,
+        })
+        const ids = tools.map((tool) => tool.id)
+        expect(ids).toContain("read")
+        expect(ids).toContain("glob")
+        expect(ids).toContain("grep")
+        expect(ids).toContain("skill")
+        expect(ids).not.toContain("unsafe")
+        expect(ids).not.toContain("execute")
+        expect(ids).not.toContain("shell")
+        expect(ids).not.toContain("task")
+        expect(ids.filter((id) => id === "read")).toHaveLength(1)
+      }),
   )
 
   withCodeMode.instance("exposes execute when code mode is enabled", () =>

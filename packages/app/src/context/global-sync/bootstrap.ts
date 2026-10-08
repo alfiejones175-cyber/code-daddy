@@ -30,6 +30,7 @@ import { batch } from "solid-js"
 import { produce, reconcile, type SetStoreFunction, type Store } from "solid-js/store"
 import type { State, VcsCache } from "./types"
 import type { ServerSession } from "../server-session"
+import type { TeamApi } from "@/utils/team-api"
 import {
   cmp,
   normalizeAgentList,
@@ -105,11 +106,16 @@ function showErrors(input: {
   })
 }
 
-export const loadGlobalConfigQuery = (scope: ServerScope, sdk: OpencodeClient, protocol?: Promise<ServerProtocol>) =>
-  queryOptions({
+export const loadGlobalConfigQuery = (
+  scope: ServerScope,
+  sdk: OpencodeClient,
+  protocol?: Promise<ServerProtocol>,
+  teams?: TeamApi,
+) =>
+  queryOptions<Config>({
     queryKey: [scope, "config"],
     queryFn: async () => {
-      if ((await protocol) !== "v1") return {}
+      if ((await protocol) !== "v1") return teams ? retry(() => teams.configGet().then((result) => result.data)) : {}
       return retry(() => sdk.global.config.get().then((x) => x.data!))
     },
   })
@@ -142,7 +148,7 @@ export const loadProjectsQuery = (scope: ServerScope, api: ProjectApi) =>
 
 export async function bootstrapGlobal(input: {
   serverSDK: OpencodeClient
-  serverAPI: CatalogApi & { readonly project: ProjectApi }
+  serverAPI: CatalogApi & { readonly project: ProjectApi; readonly team?: TeamApi }
   protocol?: Promise<ServerProtocol>
   scope: ServerScope
   requestFailedTitle: string
@@ -152,12 +158,18 @@ export async function bootstrapGlobal(input: {
   queryClient: QueryClient
 }) {
   const slow = [
-    () => input.queryClient.fetchQuery(loadGlobalConfigQuery(input.scope, input.serverSDK, input.protocol)),
+    () =>
+      input.queryClient.fetchQuery(
+        loadGlobalConfigQuery(input.scope, input.serverSDK, input.protocol, input.serverAPI.team),
+      ),
     () =>
       input.queryClient.fetchQuery(
         loadProvidersQuery(input.scope, null, input.serverAPI, input.serverSDK, input.protocol),
       ),
-    () => input.queryClient.fetchQuery(loadPathQuery(input.scope, null, input.serverSDK, input.protocol)),
+    () =>
+      input.queryClient.fetchQuery(
+        loadPathQuery(input.scope, null, input.serverSDK, input.protocol, input.serverAPI.team),
+      ),
     () =>
       input.queryClient
         .fetchQuery(loadProjectsQuery(input.scope, input.serverAPI.project))
@@ -300,12 +312,15 @@ export const loadPathQuery = (
   directory: string | null,
   sdk: OpencodeClient,
   protocol?: Promise<ServerProtocol>,
+  teams?: TeamApi,
 ) =>
   queryOptions<Path>({
     queryKey: [scope, directory, "path"],
     queryFn: async () => {
-      if ((await protocol) !== "v1")
-        return { state: "", config: "", worktree: "", directory: directory ?? "", home: "" }
+      if ((await protocol) !== "v1") {
+        const config = teams ? await retry(() => teams.configGet().then((result) => result.directory)) : ""
+        return { state: "", config, worktree: "", directory: directory ?? "", home: "" }
+      }
       return retry(() => sdk.path.get({ directory: directory ?? undefined }).then((result) => result.data!))
     },
   })
@@ -341,6 +356,7 @@ export async function bootstrapDirectory(input: {
     readonly question: QuestionApi
     readonly reference: ReferenceListApi
     readonly session: SessionApi
+    readonly team?: TeamApi
     readonly vcs: VcsApi
   }
   store: Store<State>
@@ -380,7 +396,12 @@ export async function bootstrapDirectory(input: {
           .then((data) => input.setStore("agent", data)),
       () =>
         retry(async () => {
-          if ((await input.protocol) !== "v1") return
+          if ((await input.protocol) !== "v1") {
+            if (!input.api.team) return
+            const result = await input.api.team.get({ location: { directory: input.directory } })
+            input.setStore("config", reconcile(result.data, { merge: false }))
+            return
+          }
           return input.sdk.config.get().then((x) => input.setStore("config", reconcile(x.data!, { merge: false })))
         }),
       () =>
@@ -418,7 +439,7 @@ export async function bootstrapDirectory(input: {
       !seededPath &&
         (() =>
           input.queryClient
-            .ensureQueryData(loadPathQuery(input.scope, input.directory, input.sdk, input.protocol))
+            .ensureQueryData(loadPathQuery(input.scope, input.directory, input.sdk, input.protocol, input.api.team))
             .then((data) => {
               const next = projectID(data.directory ?? input.directory, input.global.project)
               if (next) input.setStore("project", next)

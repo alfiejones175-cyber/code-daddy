@@ -1,5 +1,7 @@
 import { useFilteredList } from "@opencode-ai/ui/hooks"
 import { useSpring } from "@opencode-ai/ui/motion-spring"
+import { AgentTeam } from "@opencode-ai/schema/agent-team"
+import { Option, Schema } from "effect"
 import {
   createEffect,
   on,
@@ -86,6 +88,9 @@ import type { ReferenceInfo } from "@opencode-ai/sdk/v2/client"
 export { createPromptInputHistory }
 export type { PromptInputControls, PromptInputHistory, PromptInputProps, PromptInputState, PromptInputSubmission }
 
+const decodeTeams = Schema.decodeUnknownOption(AgentTeam.Teams)
+const emptyTeams = Schema.decodeUnknownSync(AgentTeam.Teams)({})
+
 const EXAMPLES = [
   "prompt.example.1",
   "prompt.example.2",
@@ -128,6 +133,31 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const language = useLanguage()
   const platform = usePlatform()
   const tabs = () => props.controls.session.tabs
+  const teamOptions = createMemo(() =>
+    Object.entries(Option.getOrElse(decodeTeams(sync().data.config.teams), () => emptyTeams))
+      .filter(([, team]) => !team.disabled)
+      .filter(([name]) =>
+        props.controls.agents.available.some((agent) => agent.name === `team-${name}` && !agent.hidden),
+      )
+      .map(([name]) => ({ id: `team-${name}`, label: name })),
+  )
+  const noTeamOption = createMemo(() => ({ id: "__none__", label: language.t("prompt.team.none") }))
+  const teamPickerOptions = createMemo(() => [noTeamOption(), ...teamOptions()])
+  const selectedTeam = createMemo(() => teamOptions().find((team) => team.id === props.controls.agents.current))
+  let previousAgent: string | undefined
+  const isSelectedTeam = (name: string) => teamOptions().some((team) => team.id === name)
+  const selectTeam = (team: { id: string; label: string } | undefined) => {
+    const current = props.controls.agents.current
+    if (!team || team.id === "__none__") {
+      if (isSelectedTeam(current)) props.controls.agents.select(previousAgent)
+      previousAgent = undefined
+      restoreFocus()
+      return
+    }
+    if (!isSelectedTeam(current)) previousAgent = current || undefined
+    props.controls.agents.select(team.id)
+    restoreFocus()
+  }
   let editorRef!: HTMLDivElement
   let fileInputRef: HTMLInputElement | undefined
   let scrollRef!: HTMLDivElement
@@ -1692,6 +1722,23 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
               </div>
               <div class="flex items-center gap-1.5 min-w-0 flex-1 h-7">
                 <Show when={!agentsLoading()}>
+                  <Show when={teamOptions().length > 0}>
+                    <div data-component="prompt-team-control">
+                      <Select
+                        size="normal"
+                        options={teamPickerOptions()}
+                        current={selectedTeam() ?? noTeamOption()}
+                        value={(team) => team.id}
+                        label={(team) => team.label}
+                        onSelect={selectTeam}
+                        class="max-w-[130px] text-text-base"
+                        valueClass="truncate text-13-regular text-text-base"
+                        triggerStyle={control()}
+                        triggerProps={{ "data-action": "prompt-team", "aria-label": language.t("prompt.team.label") }}
+                        variant="ghost"
+                      />
+                    </div>
+                  </Show>
                   <div
                     data-component="prompt-agent-control"
                     classList={{ "animate-in fade-in duration-300": agentsShouldFadeIn() }}

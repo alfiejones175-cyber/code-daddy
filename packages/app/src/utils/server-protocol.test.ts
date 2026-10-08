@@ -8,6 +8,16 @@ const mockFetch = (run: (input: string | URL | Request) => Promise<Response>) =>
   Object.assign(run, { preconnect: globalThis.fetch.preconnect })
 
 describe("detectServerProtocol", () => {
+  test("recognizes native team configuration with the shared health shape", async () => {
+    const fetcher = mockFetch((input) => {
+      const path = new URL(input instanceof Request ? input.url : input).pathname
+      if (path === "/global/health") return Promise.resolve(json({}, 404))
+      if (path === "/api/team/config") return Promise.resolve(json({ data: { teams: {} }, directory: "/global" }))
+      return Promise.resolve(json({ healthy: true }))
+    })
+    expect(await detectServerProtocol(server, fetcher)).toBe("v2")
+  })
+
   test("prefers the legacy health endpoint when both API generations exist", async () => {
     const fetcher = mockFetch((input) => {
       const path = new URL(input instanceof Request ? input.url : input).pathname

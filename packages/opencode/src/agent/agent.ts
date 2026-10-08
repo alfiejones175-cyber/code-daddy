@@ -27,6 +27,8 @@ import * as OtelTracer from "@effect/opentelemetry/Tracer"
 import { AbsolutePath, type DeepMutable } from "@opencode-ai/core/schema"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
+import { ConfigTeam } from "@opencode-ai/core/config/team"
+import { Wildcard } from "@opencode-ai/core/util/wildcard"
 import { LocationServiceMap, locationServiceMapLayer } from "@opencode-ai/core/location-services"
 import { Reference } from "@opencode-ai/core/reference"
 import { Location } from "@opencode-ai/core/location"
@@ -293,6 +295,77 @@ const layer = Layer.effect(
           item.permission = Permission.merge(item.permission, Permission.fromConfig(value.permission ?? {}))
         }
 
+        ConfigTeam.validate(
+          cfg.teams,
+          cfg.default_team,
+          Object.entries(agents).map(([id, agent]) => ({ id, mode: agent.mode, hidden: agent.hidden })),
+        )
+        for (const [name, team] of Object.entries(cfg.teams ?? {})) {
+          if (team.disabled) continue
+          const sourceLead = agents[team.lead]
+          if (!sourceLead) throw new Error(`teams.${name}.lead: Agent "${team.lead}" was not found`)
+          const leadID = ConfigTeam.leadID(name)
+          agents[leadID] = {
+            ...sourceLead,
+            name: leadID,
+            description:
+              team.description ??
+              `Lead the ${name} agent team. Assign work to its fixed roles and review their results.`,
+            prompt: [sourceLead.prompt, ConfigTeam.prompt(name, team)].filter(Boolean).join("\n\n"),
+            mode: "primary",
+            hidden: false,
+            options: { ...sourceLead.options },
+            permission: Permission.merge(
+              sourceLead.permission.map((rule) => ({ ...rule })),
+              Permission.fromConfig({
+                task: {
+                  "*": "deny",
+                  ...Object.fromEntries(
+                    Object.entries(team.roles).map(([role, info]) => [
+                      ConfigTeam.roleID(name, role),
+                      Permission.evaluate("task", info.agent, sourceLead.permission).action,
+                    ]),
+                  ),
+                },
+              }),
+            ),
+            ...(team.model
+              ? { model: Provider.parseModel(team.model), variant: undefined }
+              : sourceLead.model
+                ? { model: { ...sourceLead.model } }
+                : {}),
+          }
+          for (const [role, info] of Object.entries(team.roles)) {
+            const sourceRole = agents[info.agent]
+            if (!sourceRole) throw new Error(`teams.${name}.roles.${role}.agent: Agent "${info.agent}" was not found`)
+            const roleID = ConfigTeam.roleID(name, role)
+            const reviewOnly = info.kind === "reviewer" || team.review?.role === role
+            agents[roleID] = {
+              ...sourceRole,
+              name: roleID,
+              description: info.description ??
+                (reviewOnly
+                  ? `Independent read-only reviewer role ${role} for ${name}`
+                  : `Team role ${role} for ${name}${info.instructions ? `: ${info.instructions}` : ""}`),
+              prompt: [sourceRole.prompt, ConfigTeam.rolePrompt(role, info, team.review)].filter(Boolean).join("\n\n"),
+              mode: "subagent",
+              hidden: false,
+              options: { ...sourceRole.options },
+              permission: reviewOnly
+                ? reviewPermissions(sourceRole.permission, team.review?.jev === true).map((rule) => ({ ...rule }))
+                : Permission.merge(
+                    sourceRole.permission.map((rule) => ({ ...rule })),
+                    Permission.fromConfig({ task: "deny" }),
+                  ),
+              ...(info.model
+                ? { model: Provider.parseModel(info.model), variant: undefined }
+                : sourceRole.model
+                  ? { model: { ...sourceRole.model } }
+                  : {}),
+            }
+          }
+        }
+
         // Ensure Truncate.GLOB is allowed unless explicitly configured
         for (const name in agents) {
           const agent = agents[name]
@@ -437,6 +510,22 @@ const layer = Layer.effect(
     })
   }),
 )
+
+function reviewPermissions(source: PermissionV1.Ruleset, jev: boolean): PermissionV1.Ruleset {
+  const safe = ["read", "grep", "glob", "list", "skill", "external_directory"]
+  return [
+    ...source.map((rule) => ({ ...rule })),
+    { permission: "*", pattern: "*", action: "deny" },
+    ...safe.flatMap((permission) =>
+      source.filter((rule) => Wildcard.match(permission, rule.permission)).map((rule) => ({ ...rule, permission })),
+    ),
+    ...(jev
+      ? source
+          .filter((rule) => Wildcard.match("jev_review_code", rule.permission))
+          .map((rule) => ({ ...rule, permission: "jev_review_code" }))
+      : []),
+  ]
+}
 
 const locationServiceMapNode = LayerNode.make({
   service: LocationServiceMap.Service,

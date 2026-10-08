@@ -38,16 +38,20 @@ export async function requestJevReview(input: {
   signal?: AbortSignal
   fetch?: typeof globalThis.fetch
 }): Promise<JevReviewState> {
-  const url = new URL(`${input.server.url.replace(/\/$/, "")}/session/${encodeURIComponent(input.sessionID)}/jev-review/${encodeURIComponent(input.messageID)}`)
+  const url = new URL(
+    `${input.server.url.replace(/\/$/, "")}/session/${encodeURIComponent(input.sessionID)}/jev-review/${encodeURIComponent(input.messageID)}`,
+  )
   const response = await (input.fetch ?? globalThis.fetch)(url, {
     method: input.payload ? "POST" : "GET",
     signal: input.signal,
     headers: {
       "x-opencode-directory": encodeURIComponent(input.directory),
       ...(input.payload ? { "Content-Type": "application/json" } : {}),
-      ...(input.server.password ? {
-        Authorization: `Basic ${authTokenFromCredentials({ username: input.server.username, password: input.server.password })}`,
-      } : {}),
+      ...(input.server.password
+        ? {
+            Authorization: `Basic ${authTokenFromCredentials({ username: input.server.username, password: input.server.password })}`,
+          }
+        : {}),
     },
     ...(input.payload ? { body: JSON.stringify(input.payload) } : {}),
   })
@@ -56,5 +60,9 @@ export async function requestJevReview(input: {
   const state = body && typeof body === "object" && "data" in body ? body.data : body
   if (!state || typeof state !== "object" || !("status" in state) || !("responseDigest" in state))
     throw new Error("Invalid Jev review response")
+  // A failed retry may leave an earlier successful review stored. Surface this
+  // attempt's failure before the UI refetches and displays that older result.
+  if (input.payload && state.review?.result && state.review.result.status !== "ok")
+    throw new Error("Jev review attempt unavailable")
   return state as JevReviewState
 }

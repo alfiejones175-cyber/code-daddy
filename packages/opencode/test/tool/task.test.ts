@@ -15,6 +15,8 @@ import type { SessionPrompt } from "../../src/session/prompt"
 import { MessageID, PartID, SessionID } from "../../src/session/schema"
 import { SessionRunState } from "@/session/run-state"
 import { SessionStatus } from "@/session/status"
+import { Skill } from "@/skill"
+import { Permission } from "@/permission"
 
 import { TaskTool, type TaskPromptOps } from "../../src/tool/task"
 import { Truncate } from "@/tool/truncate"
@@ -24,6 +26,8 @@ import { disposeAllInstances } from "../fixture/fixture"
 import { testEffect } from "../lib/effect"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
+import { SessionTable } from "@opencode-ai/core/session/sql"
+import { eq } from "drizzle-orm"
 
 afterEach(async () => {
   await disposeAllInstances()
@@ -38,6 +42,8 @@ const layer = (flags: Partial<RuntimeFlags.Info> = {}) =>
   LayerNode.compile(
     LayerNode.group([
       Agent.node,
+      Permission.node,
+      Skill.node,
       BackgroundJob.node,
       EventV2Bridge.node,
       Config.node,
@@ -249,7 +255,7 @@ describe("tool.task", () => {
     Effect.gen(function* () {
       const sessions = yield* Session.Service
       const { chat, assistant } = yield* seed()
-      const child = yield* sessions.create({ parentID: chat.id, title: "Existing child" })
+      const child = yield* sessions.create({ parentID: chat.id, title: "Existing child", agent: "general" })
       const tool = yield* TaskTool
       const def = yield* tool.init()
       let seen: SessionPrompt.PromptInput | undefined
@@ -282,6 +288,391 @@ describe("tool.task", () => {
       expect(seen?.sessionID).toBe(child.id)
       expect(seen?.variant).toBe("xhigh")
     }),
+  )
+
+  it.instance(
+    "execute rejects a task_id owned by another parent, agent, or directory",
+    () =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const database = yield* Database.Service
+        const parent = yield* seed("Parent")
+        const other = yield* seed("Other parent")
+        const wrongParent = yield* sessions.create({
+          parentID: other.chat.id,
+          title: "Other parent's child",
+          agent: "general",
+        })
+        const wrongAgent = yield* sessions.create({
+          parentID: parent.chat.id,
+          title: "Alpha child",
+          agent: "alpha",
+        })
+        const wrongDirectory = yield* sessions.create({
+          parentID: parent.chat.id,
+          title: "Other directory child",
+          agent: "general",
+        })
+        yield* database.db
+          .update(SessionTable)
+          .set({ directory: "/another/directory" })
+          .where(eq(SessionTable.id, wrongDirectory.id))
+          .pipe(Effect.orDie)
+        const tool = yield* TaskTool
+        const def = yield* tool.init()
+        const input = {
+          description: "continue review",
+          prompt: "continue the assigned work",
+          subagent_type: "general",
+        }
+        let asks = 0
+        const context = {
+          sessionID: parent.chat.id,
+          messageID: parent.assistant.id,
+          agent: "build",
+          abort: new AbortController().signal,
+          extra: { promptOps: stubOps() },
+          messages: [],
+          metadata: () => Effect.void,
+          ask: () =>
+            Effect.sync(() => {
+              asks++
+            }),
+        }
+
+        const parentExit = yield* def.execute({ ...input, task_id: wrongParent.id }, context).pipe(Effect.exit)
+        const agentExit = yield* def.execute({ ...input, task_id: wrongAgent.id }, context).pipe(Effect.exit)
+        const directoryExit = yield* def.execute({ ...input, task_id: wrongDirectory.id }, context).pipe(Effect.exit)
+
+        expect(Exit.isFailure(parentExit)).toBe(true)
+        expect(Exit.isFailure(agentExit)).toBe(true)
+        expect(Exit.isFailure(directoryExit)).toBe(true)
+        expect(asks).toBe(0)
+        if (Exit.isFailure(parentExit))
+          expect(Cause.pretty(parentExit.cause)).toContain("direct child of the current session")
+        if (Exit.isFailure(agentExit)) expect(Cause.pretty(agentExit.cause)).toContain("selected subagent")
+        if (Exit.isFailure(directoryExit)) expect(Cause.pretty(directoryExit.cause)).toContain("current directory")
+      }),
+    {
+      config: {
+        agent: {
+          alpha: {
+            description: "Alpha agent",
+            mode: "subagent",
+          },
+        },
+      },
+    },
+  )
+
+  it.instance(
+    "team leads stay within their fixed roster after task approval and role agents cannot delegate",
+    () =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const { chat, assistant } = yield* seed("Team parent")
+        const tool = yield* TaskTool
+        const def = yield* tool.init()
+        let asks = 0
+        const context = (agent: string) => ({
+          sessionID: chat.id,
+          messageID: assistant.id,
+          agent,
+          abort: new AbortController().signal,
+          extra: { promptOps: stubOps() },
+          messages: [],
+          metadata: () => Effect.void,
+          ask: () =>
+            Effect.sync(() => {
+              asks++
+            }),
+        })
+        const input = {
+          description: "out of roster",
+          prompt: "try an unassigned role",
+          subagent_type: "general",
+        }
+        const leadExit = yield* def.execute(input, context("team-review")).pipe(Effect.exit)
+        const roleExit = yield* def.execute(input, context("team-review/reviewer")).pipe(Effect.exit)
+
+        expect(Exit.isFailure(leadExit)).toBe(true)
+        expect(Exit.isFailure(roleExit)).toBe(true)
+        expect(asks).toBe(0)
+        expect(yield* sessions.children(chat.id)).toHaveLength(0)
+        if (Exit.isFailure(leadExit)) expect(Cause.pretty(leadExit.cause)).toContain("configured roles")
+        if (Exit.isFailure(roleExit)) expect(Cause.pretty(roleExit.cause)).toContain("cannot delegate additional tasks")
+      }),
+    {
+      config: {
+        agent: {
+          lead: {
+            mode: "primary",
+            permission: { task: { "*": "allow" } },
+          },
+          reviewer: {
+            mode: "subagent",
+            permission: { task: { "*": "allow" } },
+          },
+        },
+        teams: {
+          review: {
+            lead: "lead",
+            roles: {
+              reviewer: { agent: "reviewer" },
+            },
+          },
+        },
+      },
+    },
+  )
+
+  it.instance(
+    "rejects an unavailable required team skill before creating a subchat",
+    () =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const { chat, assistant } = yield* seed("Skill preflight")
+        const tool = yield* TaskTool
+        const def = yield* tool.init()
+        const asked: string[] = []
+        const exit = yield* def
+          .execute(
+            {
+              description: "review changes",
+              prompt: "Check the current changes.",
+              subagent_type: "team-review/reviewer",
+            },
+            {
+              sessionID: chat.id,
+              messageID: assistant.id,
+              agent: "team-review",
+              abort: new AbortController().signal,
+              extra: { promptOps: stubOps() },
+              messages: [],
+              metadata: () => Effect.void,
+              ask: (request) =>
+                Effect.sync(() => {
+                  asked.push(request.permission)
+                }),
+            },
+          )
+          .pipe(Effect.exit)
+        expect(Exit.isFailure(exit)).toBe(true)
+        expect(asked).toEqual(["task"])
+        expect(yield* sessions.children(chat.id)).toHaveLength(0)
+        if (Exit.isFailure(exit)) expect(Cause.pretty(exit.cause)).toContain("Required team skill is unavailable")
+      }),
+    {
+      config: {
+        agent: {
+          lead: { mode: "primary", permission: { task: { "*": "allow" } } },
+          reviewer: { mode: "subagent", permission: { task: { "*": "allow" } } },
+        },
+        teams: {
+          review: {
+            lead: "lead",
+            roles: { reviewer: { agent: "reviewer", skills: ["missing-quality"] } },
+            review: { role: "reviewer" },
+          },
+        },
+      },
+    },
+  )
+
+  it.instance(
+    "does not let task approval or bypassAgentCheck override a reviewer role's skill denial",
+    () =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const { chat, assistant } = yield* seed("Denied reviewer skill")
+        const tool = yield* TaskTool
+        const def = yield* tool.init()
+        let asks = 0
+        const exit = yield* def
+          .execute(
+            {
+              description: "review changes",
+              prompt: "Check the current changes.",
+              subagent_type: "team-review/reviewer",
+            },
+            {
+              sessionID: chat.id,
+              messageID: assistant.id,
+              agent: "team-review",
+              abort: new AbortController().signal,
+              extra: { promptOps: stubOps(), bypassAgentCheck: true },
+              messages: [],
+              metadata: () => Effect.void,
+              ask: () =>
+                Effect.sync(() => {
+                  asks++
+                }),
+            },
+          )
+          .pipe(Effect.exit)
+        expect(Exit.isFailure(exit)).toBe(true)
+        expect(asks).toBe(0)
+        expect(yield* sessions.children(chat.id)).toHaveLength(0)
+        if (Exit.isFailure(exit)) expect(Cause.pretty(exit.cause)).toContain("Required team skill is denied")
+      }),
+    {
+      config: {
+        agent: {
+          lead: { mode: "primary", permission: { task: { "*": "allow" } } },
+          reviewer: {
+            mode: "subagent",
+            permission: {
+              task: { "*": "allow" },
+              skill: { "customize-opencode": "deny" },
+            },
+          },
+        },
+        teams: {
+          review: {
+            lead: "lead",
+            roles: { reviewer: { agent: "reviewer", skills: ["customize-opencode"] } },
+            review: { role: "reviewer" },
+          },
+        },
+      },
+    },
+  )
+
+  it.instance(
+    "asks using the current team lead's skill permission after task approval",
+    () =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const permission = yield* Permission.Service
+        const { chat, assistant } = yield* seed("Reviewer skill approval")
+        const tool = yield* TaskTool
+        const def = yield* tool.init()
+        let taskAsks = 0
+        const execution = yield* def
+          .execute(
+            {
+              description: "review configuration",
+              prompt: "Review the configuration changes.",
+              subagent_type: "team-review/reviewer",
+            },
+            {
+              sessionID: chat.id,
+              messageID: assistant.id,
+              agent: "team-review",
+              abort: new AbortController().signal,
+              extra: { promptOps: stubOps() },
+              messages: [],
+              metadata: () => Effect.void,
+              ask: (request) =>
+                Effect.sync(() => {
+                  taskAsks++
+                  expect(request.permission).toBe("task")
+                }),
+            },
+          )
+          .pipe(Effect.forkChild)
+        const requests = yield* Effect.gen(function* () {
+          for (let attempt = 0; attempt < 20; attempt++) {
+            const pending = yield* permission.list()
+            if (pending.length) return pending
+            yield* Effect.sleep("10 millis")
+          }
+          return []
+        })
+
+        expect(taskAsks).toBe(1)
+        expect(requests).toHaveLength(1)
+        expect(requests[0]).toMatchObject({ permission: "skill", patterns: ["customize-opencode"] })
+        if (requests[0]) yield* permission.reply({ requestID: requests[0].id, reply: "always" })
+        const result = yield* Fiber.join(execution)
+
+        expect(result.output).toContain("<task id=")
+        expect(yield* sessions.children(chat.id)).toHaveLength(1)
+      }),
+    {
+      config: {
+        agent: {
+          lead: {
+            mode: "primary",
+            permission: { task: { "team-review/*": "allow" }, skill: { "customize-opencode": "ask" } },
+          },
+          reviewer: {
+            mode: "subagent",
+            permission: { task: { "*": "deny" }, skill: { "customize-opencode": "allow" } },
+          },
+        },
+        teams: {
+          review: {
+            lead: "lead",
+            roles: { reviewer: { agent: "reviewer", skills: ["customize-opencode"] } },
+            review: { role: "reviewer" },
+          },
+        },
+      },
+    },
+  )
+
+  it.instance(
+    "does not preload a team skill denied by the current lead when the role allows it",
+    () =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const { chat, assistant } = yield* seed("Lead denied skill")
+        const tool = yield* TaskTool
+        const def = yield* tool.init()
+        let asks = 0
+        const exit = yield* def
+          .execute(
+            {
+              description: "review configuration",
+              prompt: "Review the configuration changes.",
+              subagent_type: "team-review/reviewer",
+            },
+            {
+              sessionID: chat.id,
+              messageID: assistant.id,
+              agent: "team-review",
+              abort: new AbortController().signal,
+              extra: { promptOps: stubOps() },
+              messages: [],
+              metadata: () => Effect.void,
+              ask: () =>
+                Effect.sync(() => {
+                  asks++
+                }),
+            },
+          )
+          .pipe(Effect.exit)
+
+        expect(Exit.isFailure(exit)).toBe(true)
+        expect(asks).toBe(1)
+        expect(yield* sessions.children(chat.id)).toHaveLength(0)
+        if (Exit.isFailure(exit)) expect(Cause.pretty(exit.cause)).toContain("Required team skill is denied")
+      }),
+    {
+      config: {
+        agent: {
+          lead: {
+            mode: "primary",
+            permission: {
+              task: { "team-review/*": "allow" },
+              skill: { "customize-opencode": "deny" },
+            },
+          },
+          reviewer: {
+            mode: "subagent",
+            permission: { task: { "*": "deny" }, skill: { "customize-opencode": "allow" } },
+          },
+        },
+        teams: {
+          review: {
+            lead: "lead",
+            roles: { reviewer: { agent: "reviewer", skills: ["customize-opencode"] } },
+            review: { role: "reviewer" },
+          },
+        },
+      },
+    },
   )
 
   it.instance("execute surfaces child errors with a resumable task_id", () =>
@@ -467,7 +858,7 @@ describe("tool.task", () => {
     }),
   )
 
-  it.instance("execute creates a child when task_id does not exist", () =>
+  it.instance("execute rejects a missing task_id instead of starting a new child", () =>
     Effect.gen(function* () {
       const sessions = yield* Session.Service
       const { chat, assistant } = yield* seed()
@@ -476,31 +867,32 @@ describe("tool.task", () => {
       let seen: SessionPrompt.PromptInput | undefined
       const promptOps = stubOps({ text: "created", onPrompt: (input) => (seen = input) })
 
-      const result = yield* def.execute(
-        {
-          description: "inspect bug",
-          prompt: "look into the cache key path",
-          subagent_type: "general",
-          task_id: "ses_missing",
-        },
-        {
-          sessionID: chat.id,
-          messageID: assistant.id,
-          agent: "build",
-          abort: new AbortController().signal,
-          extra: { promptOps },
-          messages: [],
-          metadata: () => Effect.void,
-          ask: () => Effect.void,
-        },
-      )
+      const exit = yield* def
+        .execute(
+          {
+            description: "inspect bug",
+            prompt: "look into the cache key path",
+            subagent_type: "general",
+            task_id: "ses_missing",
+          },
+          {
+            sessionID: chat.id,
+            messageID: assistant.id,
+            agent: "build",
+            abort: new AbortController().signal,
+            extra: { promptOps },
+            messages: [],
+            metadata: () => Effect.void,
+            ask: () => Effect.void,
+          },
+        )
+        .pipe(Effect.exit)
 
       const kids = yield* sessions.children(chat.id)
-      expect(kids).toHaveLength(1)
-      expect(kids[0]?.id).toBe(result.metadata.sessionId)
-      expect(result.metadata.sessionId).not.toBe("ses_missing")
-      expect(result.output).toContain(`<task id="${result.metadata.sessionId}" state="completed">`)
-      expect(seen?.sessionID).toBe(result.metadata.sessionId)
+      expect(Exit.isFailure(exit)).toBe(true)
+      expect(kids).toHaveLength(0)
+      expect(seen).toBeUndefined()
+      if (Exit.isFailure(exit)) expect(Cause.pretty(exit.cause)).toContain("Task session not found: ses_missing")
     }),
   )
 

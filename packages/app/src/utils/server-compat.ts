@@ -141,6 +141,16 @@ function createV1Api(input: CompatibleInput): CompatibleApi {
         value?: Parameters<ServerApi["session"]["list"]>[0],
         options?: Parameters<ServerApi["session"]["list"]>[1],
       ) {
+        if (value?.parentID) {
+          const result = await legacy({ directory: value.directory }).session.children({ sessionID: value.parentID })
+          const sessions = (result.data ?? []).filter(
+            (session) =>
+              session.parentID === value.parentID &&
+              (!value.directory || session.directory === value.directory) &&
+              (!value.search || session.title.toLowerCase().includes(value.search.toLowerCase())),
+          )
+          return { data: sessions.slice(0, value.limit ?? sessions.length).map(sessionInfo), cursor: {} }
+        }
         if (!value?.directory && value?.search !== undefined) {
           const result = await legacy().experimental.session.list(
             {

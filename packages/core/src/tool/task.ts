@@ -6,6 +6,8 @@ import { Cause, DateTime, Deferred, Effect, Exit, Layer, Option, Schema } from "
 import { ToolFailure } from "@opencode-ai/llm"
 import { AgentV2 } from "../agent"
 import { Catalog } from "../catalog"
+import { Config } from "../config"
+import { ConfigTeam } from "../config/team"
 import { Database } from "../database/database"
 import { makeLocationNode, type LocationNode } from "../effect/app-node"
 import { EventV2 } from "../event"
@@ -19,6 +21,8 @@ import { SessionAccess } from "../session/access"
 import { SessionInput } from "../session/input"
 import { SessionMessage } from "../session/message"
 import { SessionTable } from "../session/sql"
+import { SkillV2 } from "../skill"
+import { SkillTool } from "./skill"
 import { ToolRegistry } from "./registry"
 import { Tool } from "./tool"
 import { Tools } from "./tools"
@@ -108,9 +112,11 @@ const layer = Layer.effectDiscard(
     const permission = yield* PermissionV2.Service
     const catalog = yield* Catalog.Service
     const agents = yield* AgentV2.Service
+    const config = yield* Config.Service
     const location = yield* Location.Service
     const database = yield* Database.Service
     const events = yield* EventV2.Service
+    const skills = yield* SkillV2.Service
     const running = new Map<
       SessionV2.ID,
       { fingerprint: string; done: Deferred.Deferred<Output, ToolFailure>; target: SessionV2.ID }
@@ -143,6 +149,25 @@ const layer = Layer.effectDiscard(
       const agent = yield* agents.get(input.subagent_type)
       if (!agent || agent.hidden || agent.mode === "primary")
         return yield* new ToolFailure({ message: `Unknown or unavailable subagent: ${input.subagent_type}` })
+      const configuredTeams = ConfigTeam.resolve(
+        (yield* config.entries()).filter((entry) => entry.type === "document").map((entry) => entry.info),
+      )
+      const teams = Object.entries(configuredTeams.teams).filter(([, team]) => !team.disabled)
+      const roles = teams.flatMap(([name, team]) =>
+        Object.entries(team.roles).map(([role, info]) => ({
+          lead: ConfigTeam.leadID(name),
+          id: ConfigTeam.roleID(name, role),
+          skills: info.skills ?? [],
+        })),
+      )
+      if (roles.some((role) => role.id === context.agent))
+        return yield* new ToolFailure({ message: "Team role agents cannot delegate additional tasks" })
+      const callerTeam = teams.find(([name]) => ConfigTeam.leadID(name) === context.agent)
+      if (callerTeam && !roles.some((role) => role.lead === context.agent && role.id === input.subagent_type))
+        return yield* new ToolFailure({ message: "Team leads can only assign tasks to their configured roles" })
+      const targetRole = roles.find((role) => role.id === input.subagent_type)
+      if (targetRole && targetRole.lead !== context.agent)
+        return yield* new ToolFailure({ message: "Team roles can only be assigned by their configured team lead" })
       let ancestor = parent
       let depth = 1
       while (ancestor.parentID) {
@@ -203,21 +228,67 @@ const layer = Layer.effectDiscard(
         return yield* new ToolFailure({ message: "Delegated input does not match its recorded tool call" })
       const completed = Schema.decodeUnknownOption(Output)(call.state.structured)
       if (Option.isSome(completed) && completed.value.sessionID === ids.sessionID) return completed.value
-      const selectedModel = owner.model
-      if (input.model && !input.task_id) {
+      const selectedModel = input.model ?? agent.model ?? owner.model
+      if ((input.model || agent.model) && !input.task_id) {
         const availableModel = (yield* catalog.model.available()).find(
-          (item) => item.providerID === input.model?.providerID && item.id === input.model.id,
+          (item) => item.providerID === selectedModel.providerID && item.id === selectedModel.id,
         )
-        if (!availableModel || (input.model.variant && !availableModel.variants.some((variant) => variant.id === input.model?.variant)))
-          return yield* new ToolFailure({ message: `Requested model is unavailable: ${input.model.providerID}/${input.model.id}` })
+        if (
+          !availableModel ||
+          (selectedModel.variant && !availableModel.variants.some((variant) => variant.id === selectedModel.variant))
+        )
+          return yield* new ToolFailure({
+            message: `Requested model is unavailable: ${selectedModel.providerID}/${selectedModel.id}`,
+          })
         yield* permission.assert({
           action: "provider.use",
-          resources: [input.model.providerID],
+          resources: [selectedModel.providerID],
+          sessionID: context.sessionID,
+          agent: AgentV2.ID.make(agent.id),
+          source: { type: "tool", messageID: context.assistantMessageID, callID: context.toolCallID },
+        })
+        yield* permission.assert({
+          action: "provider.use",
+          resources: [selectedModel.providerID],
           sessionID: context.sessionID,
           agent: context.agent,
           source: { type: "tool", messageID: context.assistantMessageID, callID: context.toolCallID },
         })
       }
+      const assignedRole = roles.find((role) => role.id === input.subagent_type)
+      const requiredSkills = assignedRole?.skills ?? []
+      const loadedSkills = yield* skills.list()
+      const skillContent: string[] = []
+      for (const required of requiredSkills) {
+        const skill = loadedSkills.find((item) => item.name === required)
+        if (!skill) return yield* new ToolFailure({ message: `Required team skill is unavailable: ${required}` })
+        yield* permission.assert({
+          action: "skill",
+          resources: [required],
+          sessionID: context.sessionID,
+          agent: AgentV2.ID.make(context.agent),
+          source: { type: "tool", messageID: context.assistantMessageID, callID: context.toolCallID },
+        })
+        yield* permission.assert({
+          action: "skill",
+          resources: [required],
+          sessionID: context.sessionID,
+          agent: AgentV2.ID.make(agent.id),
+          source: { type: "tool", messageID: context.assistantMessageID, callID: context.toolCallID },
+        })
+        skillContent.push(SkillTool.toModelOutput(skill, []))
+      }
+      const delegatedPrompt = [
+        skillContent.length
+          ? [
+              "Required team skills follow. Read and apply these instructions before doing the assignment.",
+              ...skillContent,
+            ].join("\n\n")
+          : undefined,
+        input.prompt,
+      ]
+        .filter((item) => item !== undefined)
+        .join("\n\n")
       const child = input.task_id
         ? yield* sessions.get(input.task_id)
         : yield* sessions.create({
@@ -226,16 +297,16 @@ const layer = Layer.effectDiscard(
             location: parent.location,
             title: input.description,
             agent: agent.id,
-            model: input.model ?? selectedModel,
+            model: selectedModel,
             metadata: { task: fingerprint, ...(input.max_turns ? { maxTurns: String(input.max_turns) } : {}) },
           })
       if (
         input.task_id &&
-        (input.model &&
-          (!child.model ||
-            child.model.providerID !== input.model.providerID ||
-            child.model.id !== input.model.id ||
-            (child.model.variant ?? "default") !== (input.model.variant ?? "default")))
+        input.model &&
+        (!child.model ||
+          child.model.providerID !== input.model.providerID ||
+          child.model.id !== input.model.id ||
+          (child.model.variant ?? "default") !== (input.model.variant ?? "default"))
       )
         return yield* new ToolFailure({ message: "Follow-up model must match the child session's selected model" })
       const recorded = yield* SessionInput.find(database.db, ids.messageID)
@@ -250,7 +321,12 @@ const layer = Layer.effectDiscard(
         yield* progress(context, output)
         return output
       }
-      yield* sessions.prompt({ id: ids.messageID, sessionID: child.id, prompt: { text: input.prompt }, resume: false })
+      yield* sessions.prompt({
+        id: ids.messageID,
+        sessionID: child.id,
+        prompt: { text: delegatedPrompt },
+        resume: false,
+      })
       yield* progress(context, { sessionID: child.id, status: "running" })
       const result = yield* sessions.resume(child.id).pipe(
         Effect.exit,
@@ -343,5 +419,7 @@ export const node: LocationNode<never> = makeLocationNode({
     EventV2.node,
     SessionAccess.node,
     Catalog.node,
+    Config.node,
+    SkillV2.node,
   ],
 })

@@ -25,6 +25,7 @@ import { QuestionApi } from "./groups/question"
 import { SessionApi } from "./groups/session"
 import { SyncApi } from "./groups/sync"
 import { TuiApi } from "./groups/tui"
+import { WorkflowApi } from "./groups/workflow"
 import { WorkspaceApi } from "./groups/workspace"
 import { makeApi } from "@opencode-ai/protocol/api"
 import { LocationMiddleware } from "@opencode-ai/server/location"
@@ -65,6 +66,7 @@ export const InstanceHttpApi = HttpApi.make("opencode-instance")
   .addHttpApi(FileApi)
   .addHttpApi(InstanceApi)
   .addHttpApi(JevReviewApi)
+  .addHttpApi(WorkflowApi)
   .addHttpApi(McpApi)
   .addHttpApi(ProjectApi)
   .addHttpApi(ProjectCopyApi)

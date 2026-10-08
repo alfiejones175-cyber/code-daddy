@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { rankEvidence, reviewOutput, triageFailure } from "../src/evaluator.js"
+import { rankEvidence, reviewCode, reviewOutput, triageFailure } from "../src/evaluator.js"
 
 const servers: Array<ReturnType<typeof Bun.serve>> = []
 
@@ -38,6 +38,79 @@ function triageResponse(overrides: Record<string, unknown> = {}) {
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
+
+describe("reviewCode", () => {
+  const input = {
+    requirements: ["Add a single settings toggle."],
+    changes: [
+      { id: "toggle", path: "settings.ts", diff: "+const enabled = true", context: "Existing settings use a boolean." },
+    ],
+  }
+  const assessment = (value: "supported" | "concern" | "insufficient_evidence") => ({
+    type: "choice",
+    choice: value,
+    confidence: 1,
+    probabilities: {
+      supported: value === "supported" ? 1 : 0,
+      concern: value === "concern" ? 1 : 0,
+      insufficient_evidence: value === "insufficient_evidence" ? 1 : 0,
+    },
+  })
+
+  test("asks narrow simplicity questions about each supplied change in one request", async () => {
+    let request: Record<string, unknown> | undefined
+    const baseURL = server(async (incoming) => {
+      const body = await incoming.json()
+      if (isRecord(body)) request = body
+      return Response.json({
+        model: "jev-1.13.0",
+        usage: { input_tokens: 90, output_tokens: 3 },
+        answers: {
+          "scope:toggle": assessment("supported"),
+          "duplication:toggle": assessment("insufficient_evidence"),
+          "abstraction:toggle": assessment("concern"),
+        },
+      })
+    })
+    const result = await reviewCode(input, { apiKey: "secret", baseURL })
+    expect(result).toMatchObject({
+      status: "ok",
+      rubricVersion: "jev-code-review-1",
+      findings: [
+        { changeID: "toggle", criterion: "scope", assessment: "supported" },
+        { changeID: "toggle", criterion: "duplication", assessment: "insufficient_evidence" },
+        { changeID: "toggle", criterion: "abstraction", assessment: "concern" },
+      ],
+    })
+    expect(request).toMatchObject({ state: input })
+    expect(Object.keys((request?.questions ?? {}) as Record<string, unknown>)).toEqual([
+      "scope:toggle",
+      "duplication:toggle",
+      "abstraction:toggle",
+    ])
+  })
+
+  test("rejects duplicate IDs and oversized source before calling Jev", async () => {
+    let calls = 0
+    const baseURL = server(() => {
+      calls += 1
+      return Response.json({})
+    })
+    expect(
+      await reviewCode({ ...input, changes: [input.changes[0], input.changes[0]] }, { apiKey: "secret", baseURL }),
+    ).toMatchObject({ status: "invalid_input" })
+    expect(
+      await reviewCode({ ...input, changes: [{ ...input.changes[0], id: "bad:id" }] }, { apiKey: "secret", baseURL }),
+    ).toMatchObject({ status: "invalid_input" })
+    expect(
+      await reviewCode(
+        { ...input, changes: [{ ...input.changes[0], diff: "x".repeat(4_001) }] },
+        { apiKey: "secret", baseURL },
+      ),
+    ).toMatchObject({ status: "invalid_input" })
+    expect(calls).toBe(0)
+  })
+})
 
 describe("reviewOutput", () => {
   const input = {
@@ -79,7 +152,7 @@ describe("reviewOutput", () => {
       projectID: input.projectID,
       sessionID: input.sessionID,
       messageID: input.messageID,
-      rubricVersion: "jev-output-review-1",
+      rubricVersion: "jev-output-review-2",
     })
     if (result.status !== "ok") throw new Error("expected review")
     expect(result.findings).toHaveLength(4)
@@ -90,6 +163,9 @@ describe("reviewOutput", () => {
     expect(request).toMatchObject({
       state: { requirements: input.requirements, response: input.response, evidence: input.evidence },
     })
+    const questions = request?.questions as Record<string, { instructions: string }>
+    expect(questions["reference:checks"]?.instructions).toContain("actual check result matching a check claimed")
+    expect(questions["reference:requirements"]?.instructions).toContain("independent of the assessment question")
   })
 
   test("rejects duplicate and unknown evidence references", async () => {

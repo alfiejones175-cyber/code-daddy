@@ -1,0 +1,85 @@
+{
+  "checkedAt": "2026-09-29T23:21:57.554Z",
+  "operation": "reviewCode",
+  "endpoint": "https://api.typesafe.ai",
+  "rubricVersion": "jev-code-review-1",
+  "requestDigest": "6465e63670907a9f62b97ee84335e095915230ea77e9220774631283b51f5e28",
+  "requirements": [
+    "Implement a lean team draft generator and fixed-role delegation harness, preserving source agent model, instructions, and permission policy without unnecessary wrappers or duplicate state.",
+    "Give the reviewer read-only local file access; preload only required skills permitted to the assigned role and parent session; keep assignment ownership explicit.",
+    "Use the explicitly selected configured model for draft generation; do not silently fall back to a potentially paid model."
+  ],
+  "inputCharacters": 12077,
+  "sources": [
+    {
+      "id": "v2_draft",
+      "path": "packages/core/src/config/team-draft.ts",
+      "ranges": [
+        [
+          29,
+          40
+        ],
+        [
+          43,
+          72
+        ]
+      ],
+      "sha256": "001c6f0afded09daf6392a7222546801ed81d2ba5db6333412c47a7fa6d5d83e",
+      "excerptCharacters": 3256
+    },
+    {
+      "id": "v1_draft",
+      "path": "packages/opencode/src/agent/team-draft.ts",
+      "ranges": [
+        [
+          18,
+          61
+        ]
+      ],
+      "sha256": "e29c0ce15dca20e8daa3d842051402a95e1cab60d277e46ff2027bf6e1684431",
+      "excerptCharacters": 2885
+    },
+    {
+      "id": "v2_harness",
+      "path": "packages/core/src/config/plugin/agent.ts",
+      "ranges": [
+        [
+          115,
+          164
+        ]
+      ],
+      "sha256": "b885ca7ac7235730755606c70157be280bf634821cbd0a19df6a66780719869f",
+      "excerptCharacters": 2592
+    },
+    {
+      "id": "v1_task",
+      "path": "packages/opencode/src/tool/task.ts",
+      "ranges": [
+        [
+          128,
+          151
+        ],
+        [
+          179,
+          207
+        ]
+      ],
+      "sha256": "e3b8b932ed5f06db1bc467681d93c1ce8b66da027e8e1cd1198c477007628c0e",
+      "excerptCharacters": 2720
+    }
+  ],
+  "limitations": [
+    "One advisory live evaluation of four bounded source excerpts; no provider or product behavior is established by the Jev assessment alone."
+  ],
+  "result": {
+    "status": "unavailable",
+    "reason": "network",
+    "message": "Jev evaluation is unavailable due to a network error."
+  },
+  "liveCallStatus": {
+    "sandboxAttempt": "unavailable_network",
+    "escalatedRetry": "rejected_by_auto_review",
+    "reason": "Approval review found no explicit authorization to upload the selected private source excerpts to https://api.typesafe.ai; indirect retry prohibited.",
+    "jevAssessmentProduced": false
+  }
+}

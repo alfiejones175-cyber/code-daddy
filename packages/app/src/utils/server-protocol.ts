@@ -30,6 +30,12 @@ export async function detectServerProtocol(
 
   const current = await probe(server, fetch, "/api/health").catch(() => undefined)
   if (current && "pid" in current && typeof current.pid === "number") return "v2"
-  if (current && "healthy" in current && current.healthy === true) return "v1"
+  if (current && "healthy" in current && current.healthy === true) {
+    // Native servers also use the older health shape. The team settings route
+    // distinguishes them from transitional V1 servers without guessing.
+    const teams = await probe(server, fetch, "/api/team/config").catch(() => undefined)
+    if (teams && "directory" in teams && typeof teams.directory === "string" && "data" in teams) return "v2"
+    return "v1"
+  }
   return "v2"
 }

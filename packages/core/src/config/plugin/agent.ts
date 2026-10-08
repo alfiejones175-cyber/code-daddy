@@ -7,12 +7,14 @@ import { AgentV2 } from "../../agent"
 import { Config } from "../../config"
 import { ConfigAgent } from "../agent"
 import { ConfigMarkdown } from "../markdown"
+import { ConfigTeam } from "../team"
 import { FSUtil } from "../../fs-util"
 import { ModelV2 } from "../../model"
 import { ConfigAgentV1 } from "../../v1/config/agent"
 import { ConfigMigrateV1 } from "../../v1/config/migrate"
 import { Global } from "../../global"
 import { PermissionV2 } from "../../permission"
+import { Wildcard } from "../../util/wildcard"
 import type { LocationMutation } from "../../location-mutation"
 import type { ReadTool } from "../../tool/read"
 import type { EditTool } from "../../tool/edit"
@@ -111,10 +113,94 @@ export const Plugin = define({
             })
           }
         }
+        const teams = ConfigTeam.resolve(documents.map((document) => document.info))
+        ConfigTeam.validate(teams.teams, teams.default_team, draft.list())
+        Object.entries(teams.teams).forEach(([name, team]) => {
+          if (team.disabled) return
+          const source = draft.get(team.lead)!
+          draft.update(ConfigTeam.leadID(name), (agent) => {
+            Object.assign(agent, structuredClone(source), {
+              id: ConfigTeam.leadID(name),
+              mode: "primary",
+              hidden: false,
+              ...(team.model
+                ? { model: { providerID: ModelV2.parse(team.model).providerID, id: ModelV2.parse(team.model).modelID } }
+                : {}),
+              description: team.description ?? `Lead of the ${name} team`,
+              system: [source.system, ConfigTeam.prompt(name, team)].filter(Boolean).join("\n\n"),
+              permissions: [
+                ...source.permissions,
+                { action: "task", resource: "*", effect: "deny" },
+                ...Object.entries(team.roles).map(([role, info]) => ({
+                  action: "task",
+                  resource: ConfigTeam.roleID(name, role),
+                  effect: PermissionV2.evaluate("task", info.agent, source.permissions).effect,
+                })),
+              ],
+            })
+          })
+          Object.entries(team.roles).forEach(([role, info]) => {
+            const source = draft.get(info.agent)!
+            const reviewOnly = info.kind === "reviewer" || team.review?.role === role
+            draft.update(ConfigTeam.roleID(name, role), (agent) => {
+              Object.assign(agent, structuredClone(source), {
+                id: ConfigTeam.roleID(name, role),
+                mode: "subagent",
+                hidden: false,
+                ...(info.model
+                  ? {
+                      model: {
+                        providerID: ModelV2.parse(info.model).providerID,
+                        id: ModelV2.parse(info.model).modelID,
+                      },
+                    }
+                  : {}),
+                description: info.description ??
+                  (reviewOnly
+                    ? `Independent read-only reviewer role ${role} for ${name}`
+                    : `Team role ${role} for ${name}${info.instructions ? `: ${info.instructions}` : ""}`),
+                system: [source.system, ConfigTeam.rolePrompt(role, info, team.review)].filter(Boolean).join("\n\n"),
+                permissions: [
+                  ...(reviewOnly
+                    ? reviewPermissions(source.permissions, team.review?.jev === true)
+                    : [...source.permissions, { action: "task", resource: "*", effect: "deny" }]),
+                ],
+              })
+            })
+          })
+        })
       }),
     )
   }),
 })
+
+function reviewPermissions(source: PermissionV2.Ruleset, jev: boolean): PermissionV2.Ruleset {
+  const safe = ["read", "grep", "glob", "list", "skill"]
+  const jevAction = "plugin.jev_review_code_"
+  const jevResource = "plugin:jev_review_code_"
+  const jevProbeAction = `${jevAction}probe`
+  const jevProbeResource = `${jevResource}probe`
+  return [
+    ...source,
+    { action: "*", resource: "*", effect: "deny" },
+    ...safe.flatMap((action) =>
+      source.filter((rule) => Wildcard.match(action, rule.action)).map((rule) => ({ ...rule, action })),
+    ),
+    ...(jev
+      ? source
+          .filter(
+            (rule) =>
+              (rule.action.startsWith(jevAction) || Wildcard.match(jevProbeAction, rule.action)) &&
+              (rule.resource.startsWith(jevResource) || Wildcard.match(jevProbeResource, rule.resource)),
+          )
+          .map((rule) => ({
+            ...rule,
+            action: rule.action.startsWith(jevAction) ? rule.action : `${jevAction}*`,
+            resource: rule.resource.startsWith(jevResource) ? rule.resource : `${jevResource}*`,
+          }))
+      : []),
+  ]
+}
 
 function expandPermissions(rules: PermissionV2.Ruleset, home: string): PermissionV2.Ruleset {
   // Expand only resources tools resolve as filesystem paths. Bash resources are raw shell text:

@@ -2,6 +2,36 @@ import { describe, expect, test } from "bun:test"
 import { requestJevReview } from "./jev-review"
 
 describe("requestJevReview", () => {
+  test("does not report a failed new attempt as a successful review of edited inputs", async () => {
+    const state = {
+      status: "reviewed",
+      responseDigest: "digest",
+      review: { result: { status: "unavailable", reason: "timeout", message: "Unavailable" } },
+    }
+    const fetch = (async (_input: RequestInfo | URL, _init?: RequestInit) =>
+      Response.json(state)) as typeof globalThis.fetch
+    await expect(
+      requestJevReview({
+        server: { url: "http://localhost:4096" },
+        directory: "/workspace",
+        sessionID: "ses_1",
+        messageID: "msg_1",
+        payload: { requirements: ["New requirement"], evidence: [] },
+        fetch,
+      }),
+    ).rejects.toThrow("attempt unavailable")
+    expect(
+      (
+        await requestJevReview({
+          server: { url: "http://localhost:4096" },
+          directory: "/workspace",
+          sessionID: "ses_1",
+          messageID: "msg_1",
+          fetch,
+        })
+      ).review?.result.status,
+    ).toBe("unavailable")
+  })
   test("sends the selected session and review bundle through the authenticated legacy route", async () => {
     let seen: { url: URL; method: string; headers: Headers; body: unknown } | undefined
     const fetch = (async (input, init) => {

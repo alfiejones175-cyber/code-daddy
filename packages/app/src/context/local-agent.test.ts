@@ -26,4 +26,15 @@ describe("resolveAgent", () => {
   test("uses the first agent when build is unavailable", () => {
     expect(resolveAgent([{ name: "custom" }], "missing")?.name).toBe("custom")
   })
+
+  test("honors an explicit active team when the ordinary agent picker is hidden", () => {
+    const items = [...agents, { name: "team-coding" }]
+    const options = { visible: false, teams: { coding: {} } }
+    expect(resolveAgent(items, "team-coding", options)?.name).toBe("team-coding")
+    expect(resolveAgent(items, "custom", options)?.name).toBe("build")
+    expect(resolveAgent(items, "team-coding", { visible: false, teams: { coding: { disabled: true } } })?.name).toBe(
+      "build",
+    )
+    expect(resolveAgent(agents, "team-coding", options)?.name).toBe("build")
+  })
 })

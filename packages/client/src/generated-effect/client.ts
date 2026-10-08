@@ -991,6 +991,51 @@ const adaptGroup20 = (raw: RawClient["server.routine"]) => ({
   runs: Endpoint20_5(raw),
 })
 
+type Endpoint21_0Request = Parameters<RawClient["server.team"]["team.draft"]>[0]
+type Endpoint21_0Input = {
+  readonly location?: Endpoint21_0Request["query"]["location"]
+  readonly goal: Endpoint21_0Request["payload"]["goal"]
+  readonly model: Endpoint21_0Request["payload"]["model"]
+  readonly providers?: Endpoint21_0Request["payload"]["providers"]
+}
+const Endpoint21_0 = (raw: RawClient["server.team"]) => (input: Endpoint21_0Input) =>
+  raw["team.draft"]({
+    query: { location: input["location"] },
+    payload: { goal: input["goal"], model: input["model"], providers: input["providers"] },
+  }).pipe(Effect.mapError(mapClientError))
+
+type Endpoint21_1Request = Parameters<RawClient["server.team"]["team.get"]>[0]
+type Endpoint21_1Input = { readonly location?: Endpoint21_1Request["query"]["location"] }
+const Endpoint21_1 = (raw: RawClient["server.team"]) => (input?: Endpoint21_1Input) =>
+  raw["team.get"]({ query: { location: input?.["location"] } }).pipe(
+    Effect.mapError(mapClientError),
+    Effect.map((value) => value.data),
+  )
+
+type Endpoint21_2Request = Parameters<RawClient["server.team"]["team.configGet"]>[0]
+type Endpoint21_2Input = { readonly location?: Endpoint21_2Request["query"]["location"] }
+const Endpoint21_2 = (raw: RawClient["server.team"]) => (input?: Endpoint21_2Input) =>
+  raw["team.configGet"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError))
+
+type Endpoint21_3Request = Parameters<RawClient["server.team"]["team.configUpdate"]>[0]
+type Endpoint21_3Input = {
+  readonly location?: Endpoint21_3Request["query"]["location"]
+  readonly teams?: Endpoint21_3Request["payload"]["teams"]
+  readonly default_team?: Endpoint21_3Request["payload"]["default_team"]
+}
+const Endpoint21_3 = (raw: RawClient["server.team"]) => (input?: Endpoint21_3Input) =>
+  raw["team.configUpdate"]({
+    query: { location: input?.["location"] },
+    payload: { teams: input?.["teams"], default_team: input?.["default_team"] },
+  }).pipe(Effect.mapError(mapClientError))
+
+const adaptGroup21 = (raw: RawClient["server.team"]) => ({
+  draft: Endpoint21_0(raw),
+  get: Endpoint21_1(raw),
+  configGet: Endpoint21_2(raw),
+  configUpdate: Endpoint21_3(raw),
+})
+
 const adaptClient = (raw: RawClient) => ({
   health: adaptGroup0(raw["server.health"]),
   location: adaptGroup1(raw["server.location"]),
@@ -1013,6 +1058,7 @@ const adaptClient = (raw: RawClient) => ({
   "server.project": adaptGroup18(raw["server.project"]),
   "server.mcp": adaptGroup19(raw["server.mcp"]),
   "server.routine": adaptGroup20(raw["server.routine"]),
+  teams: adaptGroup21(raw["server.team"]),
 })
 
 export const make = (options?: { readonly baseUrl?: URL | string }) =>

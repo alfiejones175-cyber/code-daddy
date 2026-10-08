@@ -210,6 +210,124 @@ it.instance(
 )
 
 it.instance(
+  "projects configured team leads and fixed roles onto configured agents",
+  () =>
+    Effect.gen(function* () {
+      const agents = yield* load((svc) => svc.list())
+      const lead = agents.find((item) => item.name === "team-review")
+      const reviewer = agents.find((item) => item.name === "team-review/reviewer")
+      const areaReviewer = agents.find((item) => item.name === "team-review/area-reviewer")
+      const sourceLead = agents.find((item) => item.name === "lead-display")
+      const sourceReviewer = agents.find((item) => item.name === "reviewer-display")
+
+      expect(lead?.mode).toBe("primary")
+      expect(lead?.hidden).toBe(false)
+      expect(lead?.prompt).toContain("Source lead guidance")
+      expect(lead?.prompt).toContain("Inspect the implementation")
+      expect(Permission.evaluate("task", "team-review/reviewer", lead!.permission).action).toBe("allow")
+      expect(Permission.evaluate("task", "general", lead!.permission).action).toBe("deny")
+      expect(Permission.evaluate("task", "general", sourceLead!.permission).action).toBe("allow")
+      expect(reviewer?.mode).toBe("subagent")
+      expect(reviewer?.hidden).toBe(false)
+      expect(reviewer?.description).toContain("Independent read-only reviewer role")
+      expect(reviewer?.prompt).toContain("Source reviewer guidance")
+      expect(reviewer?.prompt).toContain("Inspect the implementation")
+      expect(reviewer?.prompt).toContain("Required skills: code-review")
+      expect(reviewer?.prompt).toContain("Cite the changed lines.")
+      expect(reviewer?.prompt).toContain("Check error handling.")
+      expect(reviewer?.prompt).toContain("without modifying files")
+      expect(reviewer?.steps).toBe(7)
+      expect(String(reviewer?.model?.providerID)).toBe("openai")
+      expect(Permission.evaluate("task", "*", reviewer!.permission).action).toBe("deny")
+      for (const permission of ["edit", "write", "apply_patch", "bash"])
+        expect(Permission.evaluate(permission, "*", reviewer!.permission).action).toBe("deny")
+      expect(Permission.evaluate("jev_review_code", "*", reviewer!.permission).action).toBe("allow")
+      expect(areaReviewer?.prompt).toContain("without modifying files")
+      expect(Permission.evaluate("task", "*", areaReviewer!.permission).action).toBe("deny")
+      expect(Permission.evaluate("edit", "*", areaReviewer!.permission).action).toBe("deny")
+      expect(Permission.evaluate("read", "*", areaReviewer!.permission).action).toBe("allow")
+      expect(Permission.evaluate("task", "*", sourceReviewer!.permission).action).toBe("allow")
+    }),
+  {
+    config: {
+      agent: {
+        lead: {
+          name: "lead-display",
+          mode: "primary",
+          prompt: "Source lead guidance",
+          permission: { task: { "*": "allow" } },
+        },
+        reviewer: {
+          name: "reviewer-display",
+          mode: "subagent",
+          model: "openai/gpt-4",
+          prompt: "Source reviewer guidance",
+          steps: 7,
+          permission: { "*": "allow" },
+        },
+      },
+      teams: {
+        review: {
+          lead: "lead",
+          instructions: "Review changed files before delivery.",
+          roles: {
+            reviewer: {
+              agent: "reviewer",
+              instructions: "Inspect the implementation and report risks.",
+              skills: ["code-review"],
+              standards: ["Cite the changed lines."],
+            },
+            "area-reviewer": {
+              agent: "reviewer",
+              kind: "reviewer",
+              instructions: "Inspect the implementation independently.",
+            },
+          },
+          review: { role: "reviewer", checklist: ["Check error handling."], jev: true },
+        },
+      },
+      default_team: "review",
+    },
+  },
+)
+
+it.instance(
+  "team model overrides run independently of source profiles and clear inherited variants",
+  () =>
+    Effect.gen(function* () {
+      const agents = yield* load((svc) => svc.list())
+      const lead = agents.find((item) => item.name === "team-models")
+      const role = agents.find((item) => item.name === "team-models/review")
+      expect(lead?.model).toMatchObject({ providerID: "openai", modelID: "gpt-6-astra" })
+      expect(role?.model).toMatchObject({ providerID: "openrouter", modelID: "example/fast" })
+      expect(lead?.variant).toBeUndefined()
+      expect(role?.variant).toBeUndefined()
+      expect(agents.find((item) => item.name === "worker")?.model).toMatchObject({
+        providerID: "openai",
+        modelID: "source",
+      })
+      expect(agents.find((item) => item.name === "worker")?.variant).toBe("high")
+      expect(Permission.evaluate("edit", "*", role!.permission).action).toBe("deny")
+    }),
+  {
+    config: {
+      agent: {
+        coordinator: { mode: "primary", model: "openai/source", variant: "high" },
+        worker: { mode: "subagent", model: "openai/source", variant: "high", permission: { "*": "allow" } },
+      },
+      teams: {
+        models: {
+          lead: "coordinator",
+          model: "openai/gpt-6-astra",
+          roles: { review: { agent: "worker", model: "openrouter/example/fast" } },
+          review: { role: "review" },
+        },
+      },
+    },
+  },
+)
+
+it.instance(
   "custom agent config overrides native agent properties",
   () =>
     Effect.gen(function* () {

@@ -1,5 +1,5 @@
 import { tool } from "@opencode-ai/plugin/tool"
-import { rankEvidence, reviewOutput, triageFailure } from "./evaluator"
+import { rankEvidence, reviewCode, reviewOutput, triageFailure } from "./evaluator"
 import { loadSettings } from "./settings"
 
 // The desktop currently exposes legacy sessions as well as V2 sessions.
@@ -60,11 +60,15 @@ export async function server() {
           messageID: tool.schema.string().min(1).max(200),
           requirements: tool.schema.array(tool.schema.string().min(1).max(2_000)).min(1).max(5),
           response: tool.schema.string().min(1).max(12_000),
-          evidence: tool.schema.array(tool.schema.object({
-            id: tool.schema.string().min(1).max(100),
-            text: tool.schema.string().min(1).max(6_000),
-            url: tool.schema.string().max(2_000).optional(),
-          })).max(8),
+          evidence: tool.schema
+            .array(
+              tool.schema.object({
+                id: tool.schema.string().min(1).max(100),
+                text: tool.schema.string().min(1).max(6_000),
+                url: tool.schema.string().max(2_000).optional(),
+              }),
+            )
+            .max(8),
         },
         async execute(input, context) {
           await context.ask({
@@ -74,6 +78,34 @@ export async function server() {
             metadata: {},
           })
           return JSON.stringify(await reviewOutput(input, { ...(await loadSettings()), signal: context.abort }))
+        },
+      }),
+      jev_review_code: tool({
+        description:
+          "Review small current diff excerpts against explicit requirements for unnecessary scope, duplicated logic, and needless abstraction. " +
+          "Use stable change IDs and relevant context; advice may abstain and does not replace tests. Do not send secrets.",
+        args: {
+          requirements: tool.schema.array(tool.schema.string().min(1).max(2_000)).min(1).max(3),
+          changes: tool.schema
+            .array(
+              tool.schema.object({
+                id: tool.schema.string().min(1).max(64),
+                path: tool.schema.string().min(1).max(300),
+                diff: tool.schema.string().min(1).max(4_000),
+                context: tool.schema.string().min(1).max(2_000).optional(),
+              }),
+            )
+            .min(1)
+            .max(4),
+        },
+        async execute(input, context) {
+          await context.ask({
+            permission: "jev_review_code",
+            patterns: ["api.typesafe.ai"],
+            always: ["api.typesafe.ai"],
+            metadata: {},
+          })
+          return JSON.stringify(await reviewCode(input, { ...(await loadSettings()), signal: context.abort }))
         },
       }),
     },

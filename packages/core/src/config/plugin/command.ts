@@ -9,6 +9,7 @@ import { FSUtil } from "../../fs-util"
 import { ModelV2 } from "../../model"
 import { ConfigCommand } from "../command"
 import { ConfigMarkdown } from "../markdown"
+import { ConfigTeam } from "../team"
 
 const decodeCommand = Schema.decodeUnknownOption(ConfigCommand.Info)
 
@@ -19,7 +20,8 @@ export const Plugin = define({
     const fs = yield* FSUtil.Service
     yield* ctx.command.transform(
       Effect.fn(function* (draft) {
-        const documents = yield* Effect.forEach(yield* config.entries(), (entry) => {
+        const entries = yield* config.entries()
+        const documents = yield* Effect.forEach(entries, (entry) => {
           if (entry.type === "document") return Effect.succeed([{ commands: entry.info.commands }])
           return loadDirectory(fs, entry.path).pipe(
             Effect.map((commands) => [
@@ -44,6 +46,13 @@ export const Plugin = define({
             })
           }
         }
+        const teams = ConfigTeam.resolve(
+          entries.filter((entry) => entry.type === "document").map((entry) => entry.info),
+        )
+        ConfigTeam.commands(teams.teams, teams.default_team).forEach((command) => {
+          if (draft.get(command.name)) throw new Error(`teams: Command "${command.name}" already exists`)
+          draft.update(command.name, (item) => Object.assign(item, command))
+        })
       }),
     )
   }),

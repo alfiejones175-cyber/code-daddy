@@ -1,11 +1,14 @@
 import { ImagePreview } from "@opencode-ai/ui/image-preview"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
+import { AgentTeam } from "@opencode-ai/schema/agent-team"
 import { ProviderIcon } from "@opencode-ai/ui/provider-icon"
 import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
 import { Icon } from "@opencode-ai/ui/v2/icon"
 import { KeybindV2 } from "@opencode-ai/ui/v2/keybind-v2"
+import { SelectV2 } from "@opencode-ai/ui/v2/select-v2"
 import { TooltipV2 } from "@opencode-ai/ui/v2/tooltip-v2"
 import type { ReferenceInfo } from "@opencode-ai/sdk/v2/client"
+import { Option, Schema } from "effect"
 import { createEffect, createMemo, on, Show } from "solid-js"
 import { ModelSelectorPopoverV2 } from "@/components/dialog-select-model"
 import { DialogSelectModelUnpaidV2 } from "@/components/dialog-select-model-unpaid-v2"
@@ -42,7 +45,13 @@ export type PromptInputV2ComposerProps = {
 export type PromptInputV2ControllerProps = Omit<PromptInputProps, "class" | "submission">
 export type PromptInputV2ComposerController = PromptInputV2Interaction & {
   readonly model: PromptInputProps["controls"]["model"]
+  readonly agents: PromptInputProps["controls"]["agents"]
 }
+
+type TeamPickerOption = { id: string; label: string }
+
+const decodeTeams = Schema.decodeUnknownOption(AgentTeam.Teams)
+const emptyTeams = Schema.decodeUnknownSync(AgentTeam.Teams)({})
 
 export function PromptInputV2Composer(props: PromptInputV2ComposerProps) {
   const dialog = useDialog()
@@ -59,19 +68,22 @@ export function PromptInputV2Composer(props: PromptInputV2ComposerProps) {
         attachKeybind={command.keybindParts("file.attach")}
         attachShortcut={command.keybind("file.attach")}
         modelControl={
-          <PromptInputV2ModelControl
-            loading={props.controller.model.loading}
-            paid={props.controller.model.paid}
-            title={language.t("command.model.choose")}
-            keybind={command.keybindParts("model.choose")}
-            model={props.controller.model.selection}
-            providerID={props.controller.model.selection.current()?.provider?.id}
-            modelName={props.controller.model.selection.current()?.name ?? language.t("dialog.model.select.title")}
-            onClose={props.controller.restoreFocus}
-            onUnpaidClick={() =>
-              dialog.show(() => <DialogSelectModelUnpaidV2 model={props.controller.model.selection} />)
-            }
-          />
+          <div class="flex items-center gap-2">
+            <PromptTeamSelectorV2 agents={props.controller.agents} />
+            <PromptInputV2ModelControl
+              loading={props.controller.model.loading}
+              paid={props.controller.model.paid}
+              title={language.t("command.model.choose")}
+              keybind={command.keybindParts("model.choose")}
+              model={props.controller.model.selection}
+              providerID={props.controller.model.selection.current()?.provider?.id}
+              modelName={props.controller.model.selection.current()?.name ?? language.t("dialog.model.select.title")}
+              onClose={props.controller.restoreFocus}
+              onUnpaidClick={() =>
+                dialog.show(() => <DialogSelectModelUnpaidV2 model={props.controller.model.selection} />)
+              }
+            />
+          </div>
         }
       />
     </div>
@@ -411,6 +423,7 @@ export function usePromptInputV2Controller(props: PromptInputV2ControllerProps):
     },
   })
   Object.defineProperty(controller, "model", { get: () => props.controls.model })
+  Object.defineProperty(controller, "agents", { get: () => props.controls.agents })
 
   command.register("prompt-input", () => [
     {
@@ -468,6 +481,49 @@ export function usePromptInputV2Controller(props: PromptInputV2ControllerProps):
   )
 
   return controller as PromptInputV2ComposerController
+}
+
+function PromptTeamSelectorV2(props: { agents: PromptInputProps["controls"]["agents"] }) {
+  const language = useLanguage()
+  const sync = useSync()
+  const options = createMemo<TeamPickerOption[]>(() =>
+    Object.entries(Option.getOrElse(decodeTeams(sync().data.config.teams), () => emptyTeams))
+      .filter(([, team]) => !team.disabled)
+      .filter(([name]) => props.agents.available.some((agent) => agent.name === `team-${name}` && !agent.hidden))
+      .map(([name]) => ({ id: `team-${name}`, label: name })),
+  )
+  const none = createMemo<TeamPickerOption>(() => ({ id: "__none__", label: language.t("prompt.team.none") }))
+  const pickerOptions = createMemo(() => [none(), ...options()])
+  const selected = createMemo(() => options().find((item) => item.id === props.agents.current))
+  let previousAgent: string | undefined
+  const isSelectedTeam = (name: string) => options().some((item) => item.id === name)
+
+  const select = (team: TeamPickerOption | null) => {
+    const current = props.agents.current
+    if (!team || team.id === "__none__") {
+      if (isSelectedTeam(current)) props.agents.select(previousAgent)
+      previousAgent = undefined
+      return
+    }
+    if (!isSelectedTeam(current)) previousAgent = current || undefined
+    props.agents.select(team.id)
+  }
+
+  return (
+    <Show when={options().length > 0}>
+      <SelectV2
+        data-action="prompt-team"
+        options={pickerOptions()}
+        current={selected() ?? none()}
+        value={(item) => item.id}
+        label={(item) => item.label}
+        onSelect={select}
+        aria-label={language.t("prompt.team.label")}
+        appearance="inline"
+        placement="bottom-end"
+      />
+    </Show>
+  )
 }
 
 function PromptInputV2ModelControl(props: {

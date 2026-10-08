@@ -8,7 +8,7 @@ import type {
 } from "@opencode-ai/sdk/v2/client"
 import { showToast } from "@/utils/toast"
 import { getFilename } from "@opencode-ai/core/util/path"
-import { type Accessor, batch, createMemo, getOwner, onCleanup, onMount, untrack } from "solid-js"
+import { type Accessor, batch, createEffect, createMemo, getOwner, on, onCleanup, onMount, untrack } from "solid-js"
 import { createStore, produce, reconcile } from "solid-js/store"
 import { useLanguage } from "@/context/language"
 import type { InitError } from "../pages/error"
@@ -58,6 +58,8 @@ import type {
   SessionActiveOutput,
 } from "@opencode-ai/client/promise"
 import { toggleMcp } from "./global-sync/mcp"
+import type { AgentTeam } from "@opencode-ai/schema/agent-team"
+import { mutableTeamSettings } from "@/utils/team-api"
 import { createServerSession, type ServerSession } from "./server-session"
 
 type GlobalStore = {
@@ -198,12 +200,12 @@ function makeQueryOptionsApi(
   protocol: Promise<"v1" | "v2">,
 ) {
   return {
-    globalConfig: () => loadGlobalConfigQuery(scope, serverSDK(), protocol),
+    globalConfig: () => loadGlobalConfigQuery(scope, serverSDK(), protocol, serverAPI.team),
     projects: () => loadProjectsQuery(scope, serverAPI.project),
     providers: (directory: PathKey | null) =>
       loadProvidersQuery(scope, directory, serverAPI, directory ? sdkFor(directory) : serverSDK(), protocol),
     path: (directory: PathKey | null) =>
-      loadPathQuery(scope, directory, directory ? sdkFor(directory) : serverSDK(), protocol),
+      loadPathQuery(scope, directory, directory ? sdkFor(directory) : serverSDK(), protocol, serverAPI.team),
     agents: (directory: PathKey) => loadAgentsQuery(scope, directory, serverAPI.agent, sdkFor(directory), protocol),
     references: (directory: PathKey) =>
       loadReferencesQuery(scope, directory, serverAPI.reference, sdkFor(directory), protocol),
@@ -681,9 +683,21 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
   }
 
   const updateConfigMutation = useMutation(() => ({
-    mutationFn: (config: Config) => serverSDK.client.global.config.update({ config }),
+    mutationFn: async (config: Omit<Config, "teams"> & { teams?: AgentTeam.Teams }) => {
+      if ((await serverSDK.protocol) === "v2" && ("teams" in config || "default_team" in config))
+        return serverSDK.api.team.configUpdate({ teams: config.teams, default_team: config.default_team })
+      return serverSDK.client.global.config.update({
+        config: { ...config, teams: mutableTeamSettings({ teams: config.teams }).teams },
+      })
+    },
     onSuccess: () => {
       bootstrap.refetch()
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === serverSDK.scope && query.queryKey[2] === "agents",
+      })
+      Object.keys(children.children).forEach((directory) => {
+        if (children.active(directory)) queue.push(directory)
+      })
       // Invalidate all provider queries so newly configured custom providers
       // appear immediately in the available provider list across all directories.
       queryClient.invalidateQueries({ queryKey: [serverSDK.scope, null, "providers"] })
@@ -692,6 +706,16 @@ export function createServerSyncContextInner(serverSDK: ServerSDK) {
       })
     },
   }))
+
+  createEffect(
+    on(
+      () => updateConfigMutation.isPending,
+      (pending) => {
+        if (!pending) queue.refresh()
+      },
+      { defer: true },
+    ),
+  )
 
   return {
     data: globalStore,

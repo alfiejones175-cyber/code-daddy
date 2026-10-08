@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test"
 import { server } from "../src/legacy"
 
-test("legacy adapters register both operations and enforce permission before reading settings", async () => {
+test("legacy adapters register Jev operations and enforce permission before reading settings", async () => {
   const hooks = await server()
-  expect(Object.keys(hooks.tool)).toEqual(["jev_triage_failure", "jev_rank_evidence"])
+  expect(Object.keys(hooks.tool)).toEqual(["jev_triage_failure", "jev_rank_evidence", "jev_review_output", "jev_review_code"])
   const requested: string[] = []
   const context = {
     sessionID: "session-test",
@@ -27,5 +27,9 @@ test("legacy adapters register both operations and enforce permission before rea
       context,
     ),
   ).rejects.toThrow("Permission denied")
-  expect(requested).toEqual(["jev_triage_failure", "jev_rank_evidence"])
+  await expect(hooks.tool.jev_review_code.execute({
+    requirements: ["Keep the change simple"],
+    changes: [{ id: "example", path: "src/example.ts", diff: "+const enabled = true" }],
+  }, context)).rejects.toThrow("Permission denied")
+  expect(requested).toEqual(["jev_triage_failure", "jev_rank_evidence", "jev_review_code"])
 })

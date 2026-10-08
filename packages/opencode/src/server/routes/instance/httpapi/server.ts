@@ -91,6 +91,7 @@ import { fileHandlers } from "./handlers/file"
 import { globalHandlers } from "./handlers/global"
 import { instanceHandlers } from "./handlers/instance"
 import { jevReviewHandlers } from "./handlers/jev-review"
+import { workflowHandlers } from "./handlers/workflow"
 import { mcpHandlers } from "./handlers/mcp"
 import { permissionHandlers } from "./handlers/permission"
 import { projectHandlers } from "./handlers/project"
@@ -160,6 +161,7 @@ const instanceApiRoutes = HttpApiBuilder.layer(InstanceHttpApi).pipe(
     fileHandlers,
     instanceHandlers,
     jevReviewHandlers,
+    workflowHandlers,
     mcpHandlers,
     projectHandlers,
     projectCopyHandlers,

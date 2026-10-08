@@ -6,8 +6,21 @@ import type {
   ProviderListOutput,
 } from "@opencode-ai/client/promise"
 import { directoryKey, normalizeAgentList, normalizePermissionRequest, normalizeProviderList } from "./utils"
+import { Agent } from "@opencode-ai/schema/agent"
 
 describe("normalizeAgentList", () => {
+  test("adapts native team agents whose request settings live in body", () => {
+    const agent = Agent.Info.make({
+      ...Agent.Info.empty(Agent.ID.make("team-review")),
+      request: { headers: {}, body: { temperature: 0.2 } },
+    })
+    expect(normalizeAgentList([agent])[0]).toMatchObject({
+      name: "team-review",
+      temperature: 0.2,
+      options: { temperature: 0.2 },
+    })
+  })
+
   test("adapts current agents to the app agent shape", () => {
     const result = normalizeAgentList([
       {

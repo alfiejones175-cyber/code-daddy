@@ -40,7 +40,18 @@ import { withTransientReadRetry } from "@/util/effect-http-client"
 // Custom merge function that concatenates array fields instead of replacing them
 // Keep remeda's deep conditional merge type out of hot config-loading paths; TS profiling showed it dominates here.
 function mergeConfig(target: Info, source: Info): Info {
-  return mergeDeep(target, source) as Info
+  const merged = mergeDeep(target, source) as Info
+  if (source.teams !== undefined) merged.teams = { ...target.teams, ...source.teams }
+  return merged
+}
+
+function mergeWritable(target: Record<string, unknown>, source: Info) {
+  return {
+    ...mergeDeep(target, source),
+    ...(source.teams === undefined
+      ? {}
+      : { teams: { ...(isRecord(target.teams) ? target.teams : {}), ...source.teams } }),
+  }
 }
 
 function mergeConfigConcatArrays(target: Info, source: Info): Info {
@@ -148,7 +159,7 @@ function globalConfigFile() {
 }
 
 function patchJsonc(input: string, patch: unknown, path: string[] = []): string {
-  if (!isRecord(patch)) {
+  if (!isRecord(patch) || (path[0] === "teams" && path.length === 2)) {
     const edits = modify(input, path, patch, {
       formattingOptions: {
         insertSpaces: true,
@@ -644,7 +655,7 @@ const layer = Layer.effect(
       yield* fs
         .writeFileString(
           file,
-          JSON.stringify(mergeDeep(isRecord(original) ? original : writable(existing), writable(config)), null, 2),
+          JSON.stringify(mergeWritable(isRecord(original) ? original : writable(existing), writable(config)), null, 2),
         )
         .pipe(Effect.orDie)
     })
@@ -663,7 +674,7 @@ const layer = Layer.effect(
       if (!file.endsWith(".jsonc")) {
         const existing = ConfigParse.jsonc(before, file)
         ConfigParse.schema(ConfigV1.Info, ConfigV2Compat.lower(normalizeLoadedConfig(existing), file).value, file)
-        const merged = mergeDeep(isRecord(existing) ? existing : {}, patch)
+        const merged = mergeWritable(isRecord(existing) ? existing : {}, patch)
         const serialized = JSON.stringify(merged, null, 2)
         next = yield* decodeConfig(merged, file)
         changed = serialized !== before

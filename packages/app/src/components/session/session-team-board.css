@@ -1,0 +1,27 @@
+.session-team-board {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-height: 44vh;
+  overflow: auto;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-weak-base);
+  background: var(--surface-base);
+  color: var(--text-base);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.session-team-board-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+.session-team-board-heading > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.session-team-board-heading strong { color: var(--text-strong); font-size: 13px; overflow-wrap: anywhere; }
+.session-team-board-heading span, .session-team-board-caption { color: var(--text-weak); }
+.session-team-board-heading > button { flex-shrink: 0; }
+.session-team-board-caption { margin-top: 8px; }
+.session-team-board-decision { margin: 8px 0; font-weight: 600; color: var(--text-strong); }
+.session-team-board-roster { margin-top: 10px; }
+.session-team-board-roster summary { cursor: pointer; width: fit-content; padding-block: 4px; }
+.session-team-board-roster ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0 20px; }
+.session-team-board-roster li { display: flex; align-items: start; justify-content: space-between; gap: 10px; border-top: 1px solid var(--border-weak-base); padding-block: 10px; }
+.session-team-board-roster li > div { min-width: 0; overflow-wrap: anywhere; }
+.session-team-board-roster li p, .session-team-board-roster li span { color: var(--text-weak); display: block; }
+.session-team-board-roster li a { flex-shrink: 0; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 600px) { .session-team-board { padding: 10px 12px; max-height: 38vh; } }

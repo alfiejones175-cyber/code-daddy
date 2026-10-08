@@ -43,17 +43,25 @@ describe("Jev V2 integration", () => {
         expect.arrayContaining([
           expect.stringMatching(/^plugin_jev_triage_failure_/),
           expect.stringMatching(/^plugin_jev_rank_evidence_/),
+          expect.stringMatching(/^plugin_jev_review_output_/),
+          expect.stringMatching(/^plugin_jev_review_code_/),
         ]),
       )
       const triage = definitions.find((tool) => tool.name.startsWith("plugin_jev_triage_failure_"))!
       expect(triage.inputSchema).toMatchObject({
         $defs: { "Jev.TriageInput": { type: "object", required: ["evidence"] } },
       })
+      const codeReview = definitions.find((tool) => tool.name.startsWith("plugin_jev_review_code_"))!
+      expect(codeReview.inputSchema).toMatchObject({
+        $defs: { "Jev.CodeReviewInput": { type: "object", required: ["requirements", "changes"] } },
+      })
       yield* plugins.remove(PluginV2.ID.make("jev"))
       expect((yield* toolDefinitions(registry)).some((tool) => tool.name.startsWith("plugin_jev_"))).toBe(false)
       expect(Object.keys((yield* Effect.promise(() => jev.server())).tool)).toEqual([
         "jev_triage_failure",
         "jev_rank_evidence",
+        "jev_review_output",
+        "jev_review_code",
       ])
     }),
   )

@@ -53,6 +53,12 @@ function setup(
 }
 
 describe("createCompatibleApi", () => {
+  test("loads V1 child tasks through the parent-specific endpoint", async () => {
+    const { api, requests } = setup("v1")
+    await api.session.list({ directory: "/repo", parentID: "ses_parent" })
+    expect(new URL(requests[0]!.url).pathname).toBe("/session/ses_parent/children")
+    expect(new URL(requests[0]!.url).searchParams.get("directory")).toBe("/repo")
+  })
   /*
   test("routes V1 archive through the legacy session update", async () => {
     const { api, requests } = setup("v1")

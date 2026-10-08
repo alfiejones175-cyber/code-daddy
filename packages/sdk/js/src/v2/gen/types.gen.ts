@@ -21,6 +21,7 @@ export type Event =
   | EventSessionNextMoved
   | EventSessionNextPrompted
   | EventSessionNextPromptAdmitted
+  | EventSessionNextPromptCancelled
   | EventSessionNextContextUpdated
   | EventSessionNextSynthetic
   | EventSessionNextShellStarted
@@ -872,6 +873,15 @@ export type GlobalEvent = {
       }
     | {
         id: string
+        type: "session.next.prompt.cancelled"
+        properties: {
+          timestamp: number
+          sessionID: string
+          messageID: string
+        }
+      }
+    | {
+        id: string
         type: "session.next.context.updated"
         properties: {
           timestamp: number
@@ -1613,6 +1623,7 @@ export type GlobalEvent = {
     | SyncEventSessionNextMoved
     | SyncEventSessionNextPrompted
     | SyncEventSessionNextPromptAdmitted
+    | SyncEventSessionNextPromptCancelled
     | SyncEventSessionNextContextUpdated
     | SyncEventSessionNextSynthetic
     | SyncEventSessionNextShellStarted
@@ -1935,6 +1946,8 @@ export type Config = {
   model?: string
   small_model?: string
   default_agent?: string
+  teams?: AgentTeamTeams
+  default_team?: AgentTeamDefault | null
   subagent_depth?: number
   username?: string
   mode?: {
@@ -2350,6 +2363,12 @@ export type Command = {
   hints: Array<string>
 }
 
+export type ServiceUnavailableError = {
+  _tag: "ServiceUnavailableError"
+  message: string
+  service?: string
+}
+
 export type Agent = {
   name: string
   description?: string
@@ -2390,6 +2409,26 @@ export type NotFoundError = {
   data: {
     message: string
   }
+}
+
+export type WorkflowInvalidError = {
+  _tag: "WorkflowInvalidError"
+  message: string
+}
+
+export type WorkflowNotFoundError = {
+  _tag: "WorkflowNotFoundError"
+  message: string
+}
+
+export type WorkflowConflictError = {
+  _tag: "WorkflowConflictError"
+  message: string
+}
+
+export type WorkflowServerError = {
+  _tag: "WorkflowServerError"
+  message: string
 }
 
 export type McpStatusConnected = {
@@ -2726,10 +2765,20 @@ export type PromptInput = {
   agents?: Array<PromptAgentAttachment>
 }
 
-export type ServiceUnavailableError = {
-  _tag: "ServiceUnavailableError"
-  message: string
-  service?: string
+export type SessionQueueItem = {
+  id: string
+  order: number
+  text: string
+}
+
+export type SessionGoal = {
+  objective: string
+  acceptanceCriteria: Array<string>
+  budget?: number
+  status: "active" | "paused" | "blocked" | "completed"
+  progress?: string
+  blockers: Array<string>
+  evidence?: string
 }
 
 export type MessageNotFoundError = {
@@ -2745,6 +2794,7 @@ export type SessionDurableEvent =
   | SessionNextMoved
   | SessionNextPrompted
   | SessionNextPromptAdmitted
+  | SessionNextPromptCancelled
   | SessionNextContextUpdated
   | SessionNextSynthetic
   | SessionNextShellStarted
@@ -2872,6 +2922,7 @@ export type V2Event =
   | SessionNextMoved
   | SessionNextPrompted
   | SessionNextPromptAdmitted
+  | SessionNextPromptCancelled
   | SessionNextContextUpdated
   | SessionNextSynthetic
   | SessionNextShellStarted
@@ -2965,6 +3016,12 @@ export type ProjectAppearanceError = {
   data: {
     message: string
   }
+}
+
+export type RoutineNotFoundError = {
+  _tag: "RoutineNotFoundError"
+  routineID: string
+  message: string
 }
 
 export type EffectHttpApiErrorForbidden = {
@@ -3391,6 +3448,22 @@ export type SyncEventSessionNextPromptAdmitted = {
       messageID: string
       prompt: Prompt
       delivery: "steer" | "queue"
+    }
+  }
+}
+
+export type SyncEventSessionNextPromptCancelled = {
+  type: "sync"
+  id: string
+  syncEvent: {
+    type: "session.next.prompt.cancelled.1"
+    id: string
+    seq: number
+    aggregateID: string
+    data: {
+      timestamp: number
+      sessionID: string
+      messageID: string
     }
   }
 }
@@ -3846,12 +3919,62 @@ export type ConfigV2ReferenceLocal = {
   hidden?: boolean
 }
 
+export type AgentTeamName = string
+
+export type AgentTeamRole = {
+  agent: string
+  model?: string
+  modelReason?: string
+  instructions?: string
+  skills?: Array<string>
+  standards?: Array<string>
+}
+
+export type AgentTeamReview = {
+  role: AgentTeamName
+  checklist?: Array<string>
+  jev?: boolean
+}
+
+export type AgentTeamInfo = {
+  description?: string
+  lead: string
+  model?: string
+  modelReason?: string
+  roles: {
+    [key: string]: AgentTeamRole
+  }
+  instructions?: string
+  review?: AgentTeamReview
+  disabled?: boolean
+}
+
+export type AgentTeamTeams = {
+  [key: string]: AgentTeamInfo
+}
+
+export type AgentTeamDefault = AgentTeamName | null
+
 export type PolicyEffect = "allow" | "deny"
 
 export type ConfigV2ExperimentalPolicy = {
   action: "provider.use"
   effect: PolicyEffect
   resource: string
+}
+
+export type AgentTeamDraftRequest = {
+  goal: string
+  model: {
+    providerID: string
+    modelID: string
+  }
+  providers?: Array<string>
+}
+
+export type AgentTeamDraft = {
+  name: AgentTeamName
+  team: AgentTeamInfo
 }
 
 export type JevReviewResult =
@@ -3892,6 +4015,147 @@ export type JevReviewResult =
       reason: "invalid_input"
       message: "Input did not match the expected schema."
     }
+
+export type WorkflowId = string
+
+export type WorkflowModel = {
+  providerID: string
+  modelID: string
+}
+
+export type WorkflowNode =
+  | {
+      id: WorkflowId
+      name: string
+      x: number
+      y: number
+      kind: "start"
+    }
+  | {
+      id: WorkflowId
+      name: string
+      x: number
+      y: number
+      kind: "task" | "computer"
+      prompt: string
+      model: WorkflowModel
+      skills: Array<string>
+      mcpServers: Array<string>
+    }
+  | {
+      id: WorkflowId
+      name: string
+      x: number
+      y: number
+      kind: "mcp"
+      server: string
+      tool: string
+      arguments: {
+        [key: string]: unknown
+      }
+    }
+  | {
+      id: WorkflowId
+      name: string
+      x: number
+      y: number
+      kind: "decision"
+      model: "clef" | "clef-flash"
+      question: string
+      threshold: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    }
+  | {
+      id: WorkflowId
+      name: string
+      x: number
+      y: number
+      kind: "approval"
+      instructions: string
+    }
+
+export type WorkflowEdge = {
+  id: WorkflowId
+  from: WorkflowId
+  to: WorkflowId
+  outcome?: "yes" | "no"
+}
+
+export type WorkflowDefinition = {
+  version: 1
+  id: WorkflowId
+  name: string
+  directory: string
+  description: string
+  nodes: Array<WorkflowNode>
+  edges: Array<WorkflowEdge>
+  updatedAt: number
+}
+
+export type WorkflowTool = {
+  server: string
+  name: string
+  description: string
+  inputSchema: unknown
+}
+
+export type WorkflowCatalog = {
+  models: Array<{
+    providerID: string
+    modelID: string
+    name: string
+    vision: boolean
+  }>
+  skills: Array<{
+    name: string
+    description: string
+  }>
+  servers: Array<{
+    name: string
+    status: string
+  }>
+  tools: Array<WorkflowTool>
+  clefConfigured: boolean
+}
+
+export type WorkflowDemonstrationFrame = {
+  image: string
+  note: string
+}
+
+export type WorkflowTeachRequest = {
+  name: string
+  goal: string
+  model: WorkflowModel
+  frames: Array<WorkflowDemonstrationFrame>
+}
+
+export type WorkflowSkillDraft = {
+  name: string
+  content: string
+}
+
+export type WorkflowStep = {
+  nodeID: WorkflowId
+  status: "pending" | "running" | "completed" | "failed" | "skipped" | "waiting" | "cancelled"
+  output?: string
+  error?: string
+  sessionID?: string
+  outcome?: "yes" | "no"
+  startedAt?: number
+  finishedAt?: number
+}
+
+export type WorkflowRun = {
+  id: WorkflowId
+  workflowID: WorkflowId
+  definition: WorkflowDefinition
+  input: string
+  status: "running" | "waiting" | "completed" | "failed" | "cancelled" | "interrupted"
+  steps: Array<WorkflowStep>
+  createdAt: number
+  updatedAt: number
+  error?: string
+}
 
 export type ProjectDirectories = Array<{
   directory: string
@@ -4010,6 +4274,24 @@ export type SessionInputAdmitted = {
   delivery: "steer" | "queue"
   timeCreated: number
   promotedSeq?: number
+}
+
+export type SessionGoalSet = {
+  objective: string
+  acceptanceCriteria?: Array<string>
+  budget?: number
+  progress?: string
+  blockers?: Array<string>
+  evidence?: string
+}
+
+export type SessionGoalBlock = {
+  blockers: Array<string>
+  progress?: string
+}
+
+export type SessionGoalComplete = {
+  evidence: string
 }
 
 export type SessionMessageAgentSwitched = {
@@ -4327,6 +4609,25 @@ export type SessionNextPromptAdmitted = {
     messageID: string
     prompt: Prompt
     delivery: "steer" | "queue"
+  }
+}
+
+export type SessionNextPromptCancelled = {
+  id: string
+  metadata?: {
+    [key: string]: unknown
+  }
+  type: "session.next.prompt.cancelled"
+  durable?: {
+    aggregateID: string
+    seq: number
+    version: number
+  }
+  location?: LocationRef
+  data: {
+    timestamp: number
+    sessionID: string
+    messageID: string
   }
 }
 
@@ -6251,6 +6552,47 @@ export type McpInfo = {
   tools: Array<McpTool>
 }
 
+export type RoutineInfo = {
+  id: string
+  sessionID: string
+  name: string
+  prompt: string
+  intervalMs: number
+  status: "active" | "paused"
+  nextRunAt: number
+  time: {
+    created: number
+    updated: number
+  }
+}
+
+export type RoutineCreate = {
+  sessionID: string
+  name: string
+  prompt: string
+  intervalMs: number
+}
+
+export type RoutineRun = {
+  id: string
+  routineID: string
+  sessionID: string
+  messageID: string
+  scheduledAt: number
+  status: "claimed" | "admitted" | "failed" | "cancelled"
+  admittedSeq?: number
+  error?: string
+  time: {
+    claimed: number
+    updated: number
+  }
+}
+
+export type AgentTeamSettings = {
+  teams?: AgentTeamTeams
+  default_team?: AgentTeamDefault
+}
+
 export type EventModelsDevRefreshed = {
   id: string
   type: "models-dev.refreshed"
@@ -6402,6 +6744,16 @@ export type EventSessionNextPromptAdmitted = {
     messageID: string
     prompt: Prompt
     delivery: "steer" | "queue"
+  }
+}
+
+export type EventSessionNextPromptCancelled = {
+  id: string
+  type: "session.next.prompt.cancelled"
+  properties: {
+    timestamp: number
+    sessionID: string
+    messageID: string
   }
 }
 
@@ -8411,6 +8763,38 @@ export type CommandListResponses = {
 
 export type CommandListResponse = CommandListResponses[keyof CommandListResponses]
 
+export type AppTeamDraftData = {
+  body?: AgentTeamDraftRequest
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/team/draft"
+}
+
+export type AppTeamDraftErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * ServiceUnavailableError
+   */
+  503: ServiceUnavailableError
+}
+
+export type AppTeamDraftError = AppTeamDraftErrors[keyof AppTeamDraftErrors]
+
+export type AppTeamDraftResponses = {
+  /**
+   * AgentTeam.Draft
+   */
+  200: AgentTeamDraft
+}
+
+export type AppTeamDraftResponse = AppTeamDraftResponses[keyof AppTeamDraftResponses]
+
 export type AppAgentsData = {
   body?: never
   path?: never
@@ -8632,6 +9016,462 @@ export type SessionJevReviewCreateResponses = {
 }
 
 export type SessionJevReviewCreateResponse = SessionJevReviewCreateResponses[keyof SessionJevReviewCreateResponses]
+
+export type WorkflowListData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow"
+}
+
+export type WorkflowListErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowListError = WorkflowListErrors[keyof WorkflowListErrors]
+
+export type WorkflowListResponses = {
+  /**
+   * Success
+   */
+  200: Array<WorkflowDefinition>
+}
+
+export type WorkflowListResponse = WorkflowListResponses[keyof WorkflowListResponses]
+
+export type WorkflowSaveData = {
+  body?: WorkflowDefinition
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow"
+}
+
+export type WorkflowSaveErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowSaveError = WorkflowSaveErrors[keyof WorkflowSaveErrors]
+
+export type WorkflowSaveResponses = {
+  /**
+   * Workflow.Definition
+   */
+  200: WorkflowDefinition
+}
+
+export type WorkflowSaveResponse = WorkflowSaveResponses[keyof WorkflowSaveResponses]
+
+export type WorkflowCatalogData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow/catalog"
+}
+
+export type WorkflowCatalogErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowCatalogError = WorkflowCatalogErrors[keyof WorkflowCatalogErrors]
+
+export type WorkflowCatalogResponses = {
+  /**
+   * Workflow.Catalog
+   */
+  200: WorkflowCatalog
+}
+
+export type WorkflowCatalogResponse = WorkflowCatalogResponses[keyof WorkflowCatalogResponses]
+
+export type WorkflowTeachData = {
+  body?: WorkflowTeachRequest
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow/teach"
+}
+
+export type WorkflowTeachErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowTeachError = WorkflowTeachErrors[keyof WorkflowTeachErrors]
+
+export type WorkflowTeachResponses = {
+  /**
+   * Workflow.SkillDraft
+   */
+  200: WorkflowSkillDraft
+}
+
+export type WorkflowTeachResponse = WorkflowTeachResponses[keyof WorkflowTeachResponses]
+
+export type WorkflowSaveSkillData = {
+  body?: WorkflowSkillDraft
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow/skill"
+}
+
+export type WorkflowSaveSkillErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowSaveSkillError = WorkflowSaveSkillErrors[keyof WorkflowSaveSkillErrors]
+
+export type WorkflowSaveSkillResponses = {
+  /**
+   * Workflow.SkillDraft
+   */
+  200: WorkflowSkillDraft
+}
+
+export type WorkflowSaveSkillResponse = WorkflowSaveSkillResponses[keyof WorkflowSaveSkillResponses]
+
+export type WorkflowRemoveData = {
+  body?: never
+  path: {
+    workflowID: WorkflowId
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow/{workflowID}"
+}
+
+export type WorkflowRemoveErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowRemoveError = WorkflowRemoveErrors[keyof WorkflowRemoveErrors]
+
+export type WorkflowRemoveResponses = {
+  /**
+   * Success
+   */
+  200: boolean
+}
+
+export type WorkflowRemoveResponse = WorkflowRemoveResponses[keyof WorkflowRemoveResponses]
+
+export type WorkflowRunsData = {
+  body?: never
+  path: {
+    workflowID: WorkflowId
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow/{workflowID}/runs"
+}
+
+export type WorkflowRunsErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowRunsError = WorkflowRunsErrors[keyof WorkflowRunsErrors]
+
+export type WorkflowRunsResponses = {
+  /**
+   * Success
+   */
+  200: Array<WorkflowRun>
+}
+
+export type WorkflowRunsResponse = WorkflowRunsResponses[keyof WorkflowRunsResponses]
+
+export type WorkflowStartData = {
+  body?: {
+    input: string
+  }
+  path: {
+    workflowID: WorkflowId
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow/{workflowID}/run"
+}
+
+export type WorkflowStartErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowStartError = WorkflowStartErrors[keyof WorkflowStartErrors]
+
+export type WorkflowStartResponses = {
+  /**
+   * Workflow.Run
+   */
+  200: WorkflowRun
+}
+
+export type WorkflowStartResponse = WorkflowStartResponses[keyof WorkflowStartResponses]
+
+export type WorkflowGetRunData = {
+  body?: never
+  path: {
+    runID: WorkflowId
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow/run/{runID}"
+}
+
+export type WorkflowGetRunErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowGetRunError = WorkflowGetRunErrors[keyof WorkflowGetRunErrors]
+
+export type WorkflowGetRunResponses = {
+  /**
+   * Workflow.Run
+   */
+  200: WorkflowRun
+}
+
+export type WorkflowGetRunResponse = WorkflowGetRunResponses[keyof WorkflowGetRunResponses]
+
+export type WorkflowApproveData = {
+  body?: {
+    nodeID: WorkflowId
+  }
+  path: {
+    runID: WorkflowId
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow/run/{runID}/approve"
+}
+
+export type WorkflowApproveErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowApproveError = WorkflowApproveErrors[keyof WorkflowApproveErrors]
+
+export type WorkflowApproveResponses = {
+  /**
+   * Workflow.Run
+   */
+  200: WorkflowRun
+}
+
+export type WorkflowApproveResponse = WorkflowApproveResponses[keyof WorkflowApproveResponses]
+
+export type WorkflowCancelData = {
+  body?: never
+  path: {
+    runID: WorkflowId
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/workflow/run/{runID}/cancel"
+}
+
+export type WorkflowCancelErrors = {
+  /**
+   * WorkflowInvalidError | InvalidRequestError
+   */
+  400: WorkflowInvalidError | InvalidRequestError
+  /**
+   * WorkflowNotFoundError
+   */
+  404: WorkflowNotFoundError
+  /**
+   * WorkflowConflictError
+   */
+  409: WorkflowConflictError
+  /**
+   * WorkflowServerError
+   */
+  500: WorkflowServerError
+}
+
+export type WorkflowCancelError = WorkflowCancelErrors[keyof WorkflowCancelErrors]
+
+export type WorkflowCancelResponses = {
+  /**
+   * Workflow.Run
+   */
+  200: WorkflowRun
+}
+
+export type WorkflowCancelResponse = WorkflowCancelResponses[keyof WorkflowCancelResponses]
 
 export type McpStatusData = {
   body?: never
@@ -11891,6 +12731,358 @@ export type V2SessionPromptResponses = {
 
 export type V2SessionPromptResponse = V2SessionPromptResponses[keyof V2SessionPromptResponses]
 
+export type V2SessionQueueListData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/queue"
+}
+
+export type V2SessionQueueListErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+}
+
+export type V2SessionQueueListError = V2SessionQueueListErrors[keyof V2SessionQueueListErrors]
+
+export type V2SessionQueueListResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: Array<SessionQueueItem>
+  }
+}
+
+export type V2SessionQueueListResponse = V2SessionQueueListResponses[keyof V2SessionQueueListResponses]
+
+export type V2SessionQueueCancelData = {
+  body?: never
+  path: {
+    sessionID: string
+    messageID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/queue/{messageID}"
+}
+
+export type V2SessionQueueCancelErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+  /**
+   * ConflictError
+   */
+  409: ConflictError
+}
+
+export type V2SessionQueueCancelError = V2SessionQueueCancelErrors[keyof V2SessionQueueCancelErrors]
+
+export type V2SessionQueueCancelResponses = {
+  /**
+   * <No Content>
+   */
+  204: void
+}
+
+export type V2SessionQueueCancelResponse = V2SessionQueueCancelResponses[keyof V2SessionQueueCancelResponses]
+
+export type V2SessionGoalGetData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/goal"
+}
+
+export type V2SessionGoalGetErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+}
+
+export type V2SessionGoalGetError = V2SessionGoalGetErrors[keyof V2SessionGoalGetErrors]
+
+export type V2SessionGoalGetResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: SessionGoal
+  }
+}
+
+export type V2SessionGoalGetResponse = V2SessionGoalGetResponses[keyof V2SessionGoalGetResponses]
+
+export type V2SessionGoalSetData = {
+  body: SessionGoalSet
+  path: {
+    sessionID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/goal"
+}
+
+export type V2SessionGoalSetErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+}
+
+export type V2SessionGoalSetError = V2SessionGoalSetErrors[keyof V2SessionGoalSetErrors]
+
+export type V2SessionGoalSetResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: SessionGoal
+  }
+}
+
+export type V2SessionGoalSetResponse = V2SessionGoalSetResponses[keyof V2SessionGoalSetResponses]
+
+export type V2SessionGoalPauseData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/goal/pause"
+}
+
+export type V2SessionGoalPauseErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+  /**
+   * ConflictError
+   */
+  409: ConflictError
+}
+
+export type V2SessionGoalPauseError = V2SessionGoalPauseErrors[keyof V2SessionGoalPauseErrors]
+
+export type V2SessionGoalPauseResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: SessionGoal
+  }
+}
+
+export type V2SessionGoalPauseResponse = V2SessionGoalPauseResponses[keyof V2SessionGoalPauseResponses]
+
+export type V2SessionGoalResumeData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/goal/resume"
+}
+
+export type V2SessionGoalResumeErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+  /**
+   * ConflictError
+   */
+  409: ConflictError
+}
+
+export type V2SessionGoalResumeError = V2SessionGoalResumeErrors[keyof V2SessionGoalResumeErrors]
+
+export type V2SessionGoalResumeResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: SessionGoal
+  }
+}
+
+export type V2SessionGoalResumeResponse = V2SessionGoalResumeResponses[keyof V2SessionGoalResumeResponses]
+
+export type V2SessionGoalBlockData = {
+  body: SessionGoalBlock
+  path: {
+    sessionID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/goal/block"
+}
+
+export type V2SessionGoalBlockErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+  /**
+   * ConflictError
+   */
+  409: ConflictError
+}
+
+export type V2SessionGoalBlockError = V2SessionGoalBlockErrors[keyof V2SessionGoalBlockErrors]
+
+export type V2SessionGoalBlockResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: SessionGoal
+  }
+}
+
+export type V2SessionGoalBlockResponse = V2SessionGoalBlockResponses[keyof V2SessionGoalBlockResponses]
+
+export type V2SessionGoalCompleteData = {
+  body: SessionGoalComplete
+  path: {
+    sessionID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/goal/complete"
+}
+
+export type V2SessionGoalCompleteErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+  /**
+   * ConflictError
+   */
+  409: ConflictError
+}
+
+export type V2SessionGoalCompleteError = V2SessionGoalCompleteErrors[keyof V2SessionGoalCompleteErrors]
+
+export type V2SessionGoalCompleteResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: SessionGoal
+  }
+}
+
+export type V2SessionGoalCompleteResponse = V2SessionGoalCompleteResponses[keyof V2SessionGoalCompleteResponses]
+
+export type V2SessionGoalClearData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: never
+  url: "/api/session/{sessionID}/goal/clear"
+}
+
+export type V2SessionGoalClearErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+}
+
+export type V2SessionGoalClearError = V2SessionGoalClearErrors[keyof V2SessionGoalClearErrors]
+
+export type V2SessionGoalClearResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: null
+  }
+}
+
+export type V2SessionGoalClearResponse = V2SessionGoalClearResponses[keyof V2SessionGoalClearResponses]
+
 export type V2SessionCompactData = {
   body?: never
   path: {
@@ -14111,6 +15303,85 @@ export type V2McpPresetResponses = {
 
 export type V2McpPresetResponse = V2McpPresetResponses[keyof V2McpPresetResponses]
 
+export type V2McpAddRemoteData = {
+  body: {
+    name: string
+    url: string
+  }
+  path?: never
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/mcp/remote"
+}
+
+export type V2McpAddRemoteErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2McpAddRemoteError = V2McpAddRemoteErrors[keyof V2McpAddRemoteErrors]
+
+export type V2McpAddRemoteResponses = {
+  /**
+   * Success
+   */
+  200: {
+    location: LocationInfo
+    data: McpInfo
+  }
+}
+
+export type V2McpAddRemoteResponse = V2McpAddRemoteResponses[keyof V2McpAddRemoteResponses]
+
+export type V2McpRemoveData = {
+  body?: never
+  path: {
+    serverID: string
+  }
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/mcp/{serverID}"
+}
+
+export type V2McpRemoveErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2McpRemoveError = V2McpRemoveErrors[keyof V2McpRemoveErrors]
+
+export type V2McpRemoveResponses = {
+  /**
+   * Success
+   */
+  200: {
+    location: LocationInfo
+    data: McpInfo
+  }
+}
+
+export type V2McpRemoveResponse = V2McpRemoveResponses[keyof V2McpRemoveResponses]
+
 export type V2McpTestData = {
   body?: never
   path: {
@@ -14149,6 +15420,370 @@ export type V2McpTestResponses = {
 }
 
 export type V2McpTestResponse = V2McpTestResponses[keyof V2McpTestResponses]
+
+export type V2RoutineListData = {
+  body?: never
+  path?: never
+  query?: {
+    sessionID?: string
+  }
+  url: "/api/routine"
+}
+
+export type V2RoutineListErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2RoutineListError = V2RoutineListErrors[keyof V2RoutineListErrors]
+
+export type V2RoutineListResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: Array<RoutineInfo>
+  }
+}
+
+export type V2RoutineListResponse = V2RoutineListResponses[keyof V2RoutineListResponses]
+
+export type V2RoutineCreateData = {
+  body: RoutineCreate
+  path?: never
+  query?: never
+  url: "/api/routine"
+}
+
+export type V2RoutineCreateErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * SessionNotFoundError
+   */
+  404: SessionNotFoundError
+}
+
+export type V2RoutineCreateError = V2RoutineCreateErrors[keyof V2RoutineCreateErrors]
+
+export type V2RoutineCreateResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: RoutineInfo
+  }
+}
+
+export type V2RoutineCreateResponse = V2RoutineCreateResponses[keyof V2RoutineCreateResponses]
+
+export type V2RoutinePauseData = {
+  body?: never
+  path: {
+    routineID: string
+  }
+  query?: never
+  url: "/api/routine/{routineID}/pause"
+}
+
+export type V2RoutinePauseErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * RoutineNotFoundError
+   */
+  404: RoutineNotFoundError
+}
+
+export type V2RoutinePauseError = V2RoutinePauseErrors[keyof V2RoutinePauseErrors]
+
+export type V2RoutinePauseResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: RoutineInfo
+  }
+}
+
+export type V2RoutinePauseResponse = V2RoutinePauseResponses[keyof V2RoutinePauseResponses]
+
+export type V2RoutineResumeData = {
+  body?: never
+  path: {
+    routineID: string
+  }
+  query?: never
+  url: "/api/routine/{routineID}/resume"
+}
+
+export type V2RoutineResumeErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * RoutineNotFoundError
+   */
+  404: RoutineNotFoundError
+}
+
+export type V2RoutineResumeError = V2RoutineResumeErrors[keyof V2RoutineResumeErrors]
+
+export type V2RoutineResumeResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: RoutineInfo
+  }
+}
+
+export type V2RoutineResumeResponse = V2RoutineResumeResponses[keyof V2RoutineResumeResponses]
+
+export type V2RoutineRemoveData = {
+  body?: never
+  path: {
+    routineID: string
+  }
+  query?: never
+  url: "/api/routine/{routineID}"
+}
+
+export type V2RoutineRemoveErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * RoutineNotFoundError
+   */
+  404: RoutineNotFoundError
+}
+
+export type V2RoutineRemoveError = V2RoutineRemoveErrors[keyof V2RoutineRemoveErrors]
+
+export type V2RoutineRemoveResponses = {
+  /**
+   * <No Content>
+   */
+  204: void
+}
+
+export type V2RoutineRemoveResponse = V2RoutineRemoveResponses[keyof V2RoutineRemoveResponses]
+
+export type V2RoutineRunsData = {
+  body?: never
+  path: {
+    routineID: string
+  }
+  query?: {
+    limit?: string
+  }
+  url: "/api/routine/{routineID}/run"
+}
+
+export type V2RoutineRunsErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * RoutineNotFoundError
+   */
+  404: RoutineNotFoundError
+}
+
+export type V2RoutineRunsError = V2RoutineRunsErrors[keyof V2RoutineRunsErrors]
+
+export type V2RoutineRunsResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: Array<RoutineRun>
+  }
+}
+
+export type V2RoutineRunsResponse = V2RoutineRunsResponses[keyof V2RoutineRunsResponses]
+
+export type V2TeamDraftData = {
+  body: AgentTeamDraftRequest
+  path?: never
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/team/draft"
+}
+
+export type V2TeamDraftErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+  /**
+   * ServiceUnavailableError
+   */
+  503: ServiceUnavailableError
+}
+
+export type V2TeamDraftError = V2TeamDraftErrors[keyof V2TeamDraftErrors]
+
+export type V2TeamDraftResponses = {
+  /**
+   * AgentTeam.Draft
+   */
+  200: AgentTeamDraft
+}
+
+export type V2TeamDraftResponse = V2TeamDraftResponses[keyof V2TeamDraftResponses]
+
+export type V2TeamGetData = {
+  body?: never
+  path?: never
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/team"
+}
+
+export type V2TeamGetErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2TeamGetError = V2TeamGetErrors[keyof V2TeamGetErrors]
+
+export type V2TeamGetResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: AgentTeamSettings
+  }
+}
+
+export type V2TeamGetResponse = V2TeamGetResponses[keyof V2TeamGetResponses]
+
+export type V2TeamConfigGetData = {
+  body?: never
+  path?: never
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/team/config"
+}
+
+export type V2TeamConfigGetErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2TeamConfigGetError = V2TeamConfigGetErrors[keyof V2TeamConfigGetErrors]
+
+export type V2TeamConfigGetResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: AgentTeamSettings
+    directory: string
+  }
+}
+
+export type V2TeamConfigGetResponse = V2TeamConfigGetResponses[keyof V2TeamConfigGetResponses]
+
+export type V2TeamConfigUpdateData = {
+  body: AgentTeamSettings
+  path?: never
+  query?: {
+    location?: {
+      directory?: string
+      workspace?: string
+    }
+  }
+  url: "/api/team/config"
+}
+
+export type V2TeamConfigUpdateErrors = {
+  /**
+   * InvalidRequestError
+   */
+  400: InvalidRequestError
+  /**
+   * UnauthorizedError
+   */
+  401: UnauthorizedError
+}
+
+export type V2TeamConfigUpdateError = V2TeamConfigUpdateErrors[keyof V2TeamConfigUpdateErrors]
+
+export type V2TeamConfigUpdateResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: AgentTeamSettings
+    directory: string
+  }
+}
+
+export type V2TeamConfigUpdateResponse = V2TeamConfigUpdateResponses[keyof V2TeamConfigUpdateResponses]
 
 export type PtyConnectData = {
   body?: never

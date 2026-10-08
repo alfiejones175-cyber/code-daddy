@@ -4,6 +4,7 @@ import { Schema } from "effect"
 import { NonNegativeInt, PositiveInt, type DeepMutable } from "../../schema"
 import { ConfigExperimental } from "../../config/experimental"
 import { ConfigReference } from "../../config/reference"
+import { ConfigTeam } from "../../config/team"
 import { ConfigAgentV1 } from "./agent"
 import { ConfigAttachmentV1 } from "./attachment"
 import { ConfigCommandV1 } from "./command"
@@ -80,6 +81,12 @@ export const Info = Schema.Struct({
   default_agent: Schema.optional(Schema.String).annotate({
     description:
       "Default agent to use when none is specified. Must be a primary agent. Falls back to 'build' if not set or if the specified agent is invalid.",
+  }),
+  teams: Schema.optional(ConfigTeam.Teams).annotate({
+    description: "Saved teams with a lead and fixed roles referencing configured agents",
+  }),
+  default_team: Schema.optional(ConfigTeam.Default).annotate({
+    description: "Team used by the /team command; null clears an inherited default",
   }),
   subagent_depth: Schema.optional(NonNegativeInt).annotate({
     description: "Maximum subagent nesting depth. Defaults to 1, which prevents subagents from launching subagents.",

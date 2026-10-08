@@ -34,15 +34,20 @@ export const description = [
 
 export const toModelOutput = (skill: SkillV2.Info, files: ReadonlyArray<string>) => {
   const directory = path.dirname(skill.location)
+  const bundled = skill.location.startsWith("/builtin/")
   return [
     `<skill_content name="${skill.name}">`,
     `# Skill: ${skill.name}`,
     "",
     skill.content.trim(),
     "",
-    `Base directory for this skill: ${directory}`,
-    "Relative paths in this skill (e.g., scripts/, reference/) are relative to this base directory.",
-    "Note: file list is sampled.",
+    ...(bundled
+      ? ["This bundled skill is self-contained and has no filesystem resources."]
+      : [
+          `Base directory for this skill: ${directory}`,
+          "Relative paths in this skill (e.g., scripts/, reference/) are relative to this base directory.",
+          "Note: file list is sampled.",
+        ]),
     "",
     "<skill_files>",
     ...files.map((file) => `<file>${file}</file>`),
@@ -50,6 +55,15 @@ export const toModelOutput = (skill: SkillV2.Info, files: ReadonlyArray<string>)
     "</skill_content>",
   ].join("\n")
 }
+
+export const resources = Effect.fnUntraced(function* (skill: SkillV2.Info, fs: FSUtil.Interface) {
+  if (skill.location.startsWith("/builtin/") || path.basename(skill.location) !== "SKILL.md") return []
+  const directory = path.dirname(skill.location)
+  return (yield* fs.glob("**/*", { cwd: directory, absolute: true, include: "file", dot: true }))
+    .filter((file) => path.basename(file) !== "SKILL.md")
+    .toSorted()
+    .slice(0, FILE_LIMIT)
+})
 
 const unableToLoad = (name: string, error?: unknown) =>
   new ToolFailure({ message: `Unable to load skill ${name}`, error })
@@ -82,13 +96,7 @@ const layer = Layer.effectDiscard(
                   source: { type: "tool", messageID: context.assistantMessageID, callID: context.toolCallID },
                 })
                 const directory = path.dirname(skill.location)
-                const files =
-                  path.basename(skill.location) === "SKILL.md"
-                    ? (yield* fs.glob("**/*", { cwd: directory, absolute: true, include: "file", dot: true }))
-                        .filter((file) => path.basename(file) !== "SKILL.md")
-                        .toSorted()
-                        .slice(0, FILE_LIMIT)
-                    : []
+                const files = yield* resources(skill, fs)
                 return {
                   name: skill.name,
                   directory,

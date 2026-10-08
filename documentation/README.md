@@ -21,6 +21,8 @@ This is a locally maintained OpenCode-based workspace. The development desktop c
 | Understand other V2 boundaries | [Configuration](../specs/v2/config.md), [provider/model](../specs/v2/provider-model.md), [tools](../specs/v2/tools.md), [instructions](../specs/v2/instructions.md), [provider policy](../specs/v2/provider-policy.md) | Architecture references; verify partial/missing claims against current code before implementation |
 | Review project and storage designs | [Projects](../specs/project.md), [TUI package](../specs/tui-package.md), [storage design](../specs/storage/effect-sqlite-package.md), [storage migration proposal](../specs/storage/remove-opencode-db.md) | Domain-specific design references |
 | Understand current risks | [Workspace review](../plans/007-workspace-review.md) | Dated findings and tests; not a continuously updated release certificate |
+| Configure agent teams | [Agent teams](agent-teams.md) | Settings, file configuration, generated commands, and current runtime limits |
+| Build project workflows | [Workflow guide](workflows.md) | Visual steps, custom MCPs, models, taught skills, Clef decisions, and execution limits |
 | Find previous feature work | [Plan index](../plans/README.md) | Links to implementation records, historical plans, and their acceptance limits |
 | Inspect Jev audit evidence | [Core audit](../plans/validation/jev-audit-core.md), [platform audit](../plans/validation/jev-audit-platform.md), [response diagnostic](../plans/validation/jev-audit-response-diagnostic.md) | Dated investigations; candidate findings need source/test confirmation |
 

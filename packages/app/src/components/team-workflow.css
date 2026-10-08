@@ -1,0 +1,47 @@
+.team-workflow {
+  min-width: 0;
+  color: var(--text-base);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.team-workflow-scroll {
+  overflow: auto;
+  max-height: 370px;
+  border: 1px solid var(--border-weak-base);
+  border-radius: 10px;
+  background: var(--background-base);
+}
+.team-workflow[data-compact] .team-workflow-scroll { max-height: 240px; }
+.team-workflow-canvas { position: relative; }
+.team-workflow-edges { position: absolute; inset: 0; pointer-events: none; }
+.team-workflow-edges path { fill: none; stroke: var(--text-weak); stroke-width: 1.5; }
+.team-workflow-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  width: 184px;
+  height: 96px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-base);
+  border-radius: 8px;
+  background: var(--surface-raised-base);
+  text-align: start;
+  cursor: pointer;
+}
+.team-workflow-node[aria-pressed="true"] { border-color: var(--border-focus); background: var(--surface-base-hover); }
+.team-workflow-node:hover { background: var(--surface-base-hover); }
+.team-workflow-node:focus-visible, .team-workflow-scroll:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.team-workflow-node-title { color: var(--text-strong); font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.team-workflow-node > span:not(.team-workflow-node-title) { color: var(--text-weak); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-workflow-node > strong { font-size: 10px; color: var(--text-strong); }
+.team-workflow-detail { padding: 12px 2px 0; overflow-wrap: anywhere; }
+.team-workflow-detail-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.team-workflow-detail-heading > span { color: var(--text-weak); }
+.team-workflow-detail p { margin-top: 6px; }
+.team-workflow-detail details { margin-top: 8px; }
+.team-workflow-detail summary { cursor: pointer; width: fit-content; }
+.team-workflow-detail ul { padding-inline-start: 20px; list-style: disc; }
+.team-workflow-decision { font-weight: 500; color: var(--text-strong); }

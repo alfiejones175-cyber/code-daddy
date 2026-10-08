@@ -1,7 +1,7 @@
 import { describe, expect } from "bun:test"
 import fs from "fs/promises"
 import path from "path"
-import { Effect, Schema } from "effect"
+import { Effect, Exit, Schema } from "effect"
 import { AgentV2 } from "@opencode-ai/core/agent"
 import { Config } from "@opencode-ai/core/config"
 import { ConfigAgentPlugin } from "@opencode-ai/core/config/plugin/agent"
@@ -220,6 +220,248 @@ describe("ConfigAgentPlugin.Plugin", () => {
       )
 
       expect(yield* agents.get(build)).toBeUndefined()
+    }),
+  )
+
+  it.effect("projects team agents from resolved sources without broadening lead delegation", () =>
+    Effect.gen(function* () {
+      const agents = yield* AgentV2.Service
+      const config = Config.Service.of({
+        entries: () =>
+          Effect.succeed([
+            new Config.Document({
+              type: "document",
+              info: decode({
+                agents: {
+                  lead: {
+                    mode: "primary",
+                    model: "openrouter/openai/gpt-5",
+                    variant: "high",
+                    system: "Source lead guidance.",
+                    steps: 8,
+                    request: { body: { effort: "high" } },
+                    permissions: [
+                      { action: "task", resource: "*", effect: "deny" },
+                      { action: "task", resource: "reviewer", effect: "allow" },
+                      { action: "read", resource: "*", effect: "ask" },
+                    ],
+                  },
+                  reviewer: {
+                    mode: "subagent",
+                    model: "anthropic/claude-sonnet",
+                    variant: "max",
+                    system: "Source reviewer guidance.",
+                    steps: 5,
+                    request: { body: { temperature: 0.2 } },
+                    permissions: [
+                      { action: "*", resource: "*", effect: "allow" },
+                      { action: "read", resource: "secrets/**", effect: "deny" },
+                      { action: "plugin.jev_review_code_*", resource: "plugin:jev_review_code_*", effect: "allow" },
+                      {
+                        action: "plugin.jev_review_code_secret",
+                        resource: "plugin:jev_review_code_secret",
+                        effect: "deny",
+                      },
+                    ],
+                  },
+                },
+                teams: {
+                  audit: {
+                    lead: "lead",
+                    instructions: "Coordinate the audit.",
+                    roles: {
+                      review: {
+                        agent: "reviewer",
+                        instructions: "Check changed files.",
+                        skills: ["code-review"],
+                        standards: ["Cite changed files."],
+                      },
+                      "area-reviewer": {
+                        agent: "reviewer",
+                        kind: "reviewer",
+                        instructions: "Inspect the result independently.",
+                      },
+                    },
+                    review: { role: "review", checklist: ["Verify the API."], jev: true },
+                  },
+                },
+              }),
+            }),
+          ]),
+      })
+
+      yield* ConfigAgentPlugin.Plugin.effect(host({ agent: agentHost(agents) })).pipe(
+        Effect.provideService(Config.Service, config),
+      )
+
+      const lead = yield* agents.get(AgentV2.ID.make("team-audit"))
+      const role = yield* agents.get(AgentV2.ID.make("team-audit/review"))
+      const areaReviewer = yield* agents.get(AgentV2.ID.make("team-audit/area-reviewer"))
+      if (!lead || !role || !areaReviewer) throw new Error("expected projected team agents")
+      expect(lead).toMatchObject({
+        mode: "primary",
+        hidden: false,
+        model: { providerID: "openrouter", id: "openai/gpt-5", variant: "high" },
+        request: { body: { effort: "high" } },
+        steps: 8,
+      })
+      expect(lead.system).toContain("Source lead guidance.")
+      expect(lead.system).toContain("Coordinate the audit.")
+      expect(lead.system).toContain("independent review")
+      expect(PermissionV2.evaluate("task", "team-audit/review", lead.permissions).effect).toBe("allow")
+      expect(PermissionV2.evaluate("task", "reviewer", lead.permissions).effect).toBe("deny")
+      expect(PermissionV2.evaluate("task", "general", lead.permissions).effect).toBe("deny")
+      expect(PermissionV2.evaluate("read", "README.md", lead.permissions).effect).toBe("ask")
+
+      expect(role).toMatchObject({
+        mode: "subagent",
+        hidden: false,
+        model: { providerID: "anthropic", id: "claude-sonnet", variant: "max" },
+        request: { body: { temperature: 0.2 } },
+        steps: 5,
+      })
+      expect(role.system).toContain("Source reviewer guidance.")
+      expect(role.system).toContain("Check changed files.")
+      expect(role.system).toContain("Required skills: code-review")
+      expect(role.system).toContain("Cite changed files.")
+      expect(role.system).toContain("Verify the API.")
+      expect(role.system).toContain("without modifying files")
+      expect(PermissionV2.evaluate("edit", "src/file.ts", role.permissions).effect).toBe("deny")
+      expect(PermissionV2.evaluate("read", "README.md", role.permissions).effect).toBe("allow")
+      expect(PermissionV2.evaluate("read", "secrets/token.txt", role.permissions).effect).toBe("deny")
+      expect(PermissionV2.evaluate("write", "src/file.ts", role.permissions).effect).toBe("deny")
+      expect(PermissionV2.evaluate("apply_patch", "src/file.ts", role.permissions).effect).toBe("deny")
+      expect(PermissionV2.evaluate("bash", "git status", role.permissions).effect).toBe("deny")
+      expect(areaReviewer.system).toContain("without modifying files")
+      expect(PermissionV2.evaluate("task", "any", areaReviewer.permissions).effect).toBe("deny")
+      expect(PermissionV2.evaluate("edit", "src/file.ts", areaReviewer.permissions).effect).toBe("deny")
+      expect(PermissionV2.evaluate("read", "README.md", areaReviewer.permissions).effect).toBe("allow")
+      expect(PermissionV2.evaluate("task", "any", role.permissions).effect).toBe("deny")
+      expect(
+        PermissionV2.evaluate("plugin.jev_review_code_ab12", "plugin:jev_review_code_ab12", role.permissions).effect,
+      ).toBe("allow")
+      expect(
+        PermissionV2.evaluate("plugin.jev_review_code_secret", "plugin:jev_review_code_secret", role.permissions)
+          .effect,
+      ).toBe("deny")
+    }),
+  )
+
+  it.effect("applies team model overrides without mutating source profiles or inherited variants", () =>
+    Effect.gen(function* () {
+      const agents = yield* AgentV2.Service
+      const config = Config.Service.of({
+        entries: () =>
+          Effect.succeed([
+            new Config.Document({
+              type: "document",
+              info: decode({
+                agents: {
+                  lead: { mode: "primary", model: "openai/source", variant: "high" },
+                  worker: {
+                    mode: "subagent",
+                    model: "openai/source",
+                    variant: "high",
+                    permissions: [{ action: "*", resource: "*", effect: "allow" }],
+                  },
+                },
+                teams: {
+                  models: {
+                    lead: "lead",
+                    model: "openai/gpt-6-astra",
+                    roles: { review: { agent: "worker", model: "openrouter/example/fast" } },
+                    review: { role: "review" },
+                  },
+                },
+              }),
+            }),
+          ]),
+      })
+      yield* ConfigAgentPlugin.Plugin.effect(host({ agent: agentHost(agents) })).pipe(
+        Effect.provideService(Config.Service, config),
+      )
+      const lead = yield* agents.get(AgentV2.ID.make("team-models"))
+      const role = yield* agents.get(AgentV2.ID.make("team-models/review"))
+      expect(lead?.model).toMatchObject({ providerID: "openai", id: "gpt-6-astra" })
+      expect(role?.model).toMatchObject({ providerID: "openrouter", id: "example/fast" })
+      expect(lead?.model?.variant).toBeUndefined()
+      expect(role?.model?.variant).toBeUndefined()
+      expect((yield* agents.get(AgentV2.ID.make("worker")))?.model).toMatchObject({
+        providerID: "openai",
+        id: "source",
+        variant: "high",
+      })
+      expect(PermissionV2.evaluate("edit", "*", role!.permissions).effect).toBe("deny")
+    }),
+  )
+
+  it.effect("replaces an inherited team roster and skips disabled teams", () =>
+    Effect.gen(function* () {
+      const agents = yield* AgentV2.Service
+      const config = Config.Service.of({
+        entries: () =>
+          Effect.succeed([
+            new Config.Document({
+              type: "document",
+              info: decode({
+                agents: {
+                  lead: { mode: "primary" },
+                  reviewer: { mode: "subagent" },
+                  explorer: { mode: "subagent" },
+                },
+                teams: {
+                  audit: { lead: "lead", roles: { review: { agent: "reviewer" } } },
+                  parked: { lead: "lead", roles: { review: { agent: "reviewer" } } },
+                },
+                default_team: "audit",
+              }),
+            }),
+            new Config.Document({
+              type: "document",
+              info: decode({
+                teams: {
+                  audit: { lead: "lead", roles: { explore: { agent: "explorer" } } },
+                  parked: { lead: "removed", roles: { old: { agent: "removed" } }, disabled: true },
+                },
+                default_team: null,
+              }),
+            }),
+          ]),
+      })
+
+      yield* ConfigAgentPlugin.Plugin.effect(host({ agent: agentHost(agents) })).pipe(
+        Effect.provideService(Config.Service, config),
+      )
+
+      expect(yield* agents.get(AgentV2.ID.make("team-audit"))).toBeDefined()
+      expect(yield* agents.get(AgentV2.ID.make("team-audit/review"))).toBeUndefined()
+      expect(yield* agents.get(AgentV2.ID.make("team-audit/explore"))).toBeDefined()
+      expect(yield* agents.get(AgentV2.ID.make("team-parked"))).toBeUndefined()
+    }),
+  )
+
+  it.effect("rejects a team whose source agent is unavailable after discovery", () =>
+    Effect.gen(function* () {
+      const agents = yield* AgentV2.Service
+      const config = Config.Service.of({
+        entries: () =>
+          Effect.succeed([
+            new Config.Document({
+              type: "document",
+              info: decode({
+                agents: { lead: { mode: "primary" } },
+                teams: { audit: { lead: "lead", roles: { review: { agent: "missing" } } } },
+              }),
+            }),
+          ]),
+      })
+
+      const exit = yield* ConfigAgentPlugin.Plugin.effect(host({ agent: agentHost(agents) })).pipe(
+        Effect.provideService(Config.Service, config),
+        Effect.exit,
+      )
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) expect(String(exit.cause)).toContain("teams.audit.roles.review.agent")
     }),
   )
 

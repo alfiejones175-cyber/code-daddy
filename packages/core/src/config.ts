@@ -11,6 +11,7 @@ import { Location } from "./location"
 import { Policy } from "./policy"
 import { AbsolutePath } from "./schema"
 import { ConfigAgent } from "./config/agent"
+import { ConfigTeam } from "./config/team"
 import { ConfigAttachments } from "./config/attachments"
 import { ConfigCompaction } from "./config/compaction"
 import { ConfigCommand } from "./config/command"
@@ -63,6 +64,12 @@ export class Info extends Schema.Class<Info>("Config.Info")({
   }),
   agents: Schema.Record(Schema.String, ConfigAgent.Info).pipe(Schema.optional).annotate({
     description: "Named built-in agent overrides and custom agent definitions",
+  }),
+  teams: ConfigTeam.Teams.pipe(Schema.optional).annotate({
+    description: "Saved teams with a lead and fixed roles referencing configured agents",
+  }),
+  default_team: ConfigTeam.Default.pipe(Schema.optional).annotate({
+    description: "Team used by the /team command; null clears an inherited default",
   }),
   snapshots: Schema.Boolean.pipe(Schema.optional).annotate({
     description: "Enable snapshots used for undo and revert behavior",

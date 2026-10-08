@@ -18,6 +18,7 @@ import { InvalidTool } from "./invalid"
 import { SkillTool } from "./skill"
 import * as Tool from "./tool"
 import { Config } from "@/config/config"
+import { ConfigTeam } from "@opencode-ai/core/config/team"
 import { type ToolContext as PluginToolContext, type ToolDefinition } from "@opencode-ai/plugin"
 import type { JSONSchema7, JSONSchema7Definition } from "@ai-sdk/provider"
 import { Schema } from "effect"
@@ -289,7 +290,24 @@ const layer = Layer.effect(
     })
 
     const tools: Interface["tools"] = Effect.fn("ToolRegistry.tools")(function* (input) {
+      const cfg = yield* config.get()
+      const reviewTeam = Object.entries(cfg.teams ?? {}).find(
+        ([name, team]) =>
+          !team.disabled && team.review && ConfigTeam.roleID(name, team.review.role) === input.agent.name,
+      )
+      const reviewer = reviewTeam?.[1].review
+      const safeIDs = new Set(["read", "glob", "grep", "skill"])
+      const jevAllowed =
+        reviewer?.jev === true &&
+        Permission.evaluate("jev_review_code", "api.typesafe.ai", input.agent.permission).action !== "deny"
+      const currentState = yield* InstanceState.get(state)
+      const safeTool = (tool: Tool.Def) => safeIDs.has(tool.id) && currentState.builtin.includes(tool)
+      const jevTool = (tool: Tool.Def) =>
+        jevAllowed && tool.id === "jev_review_code" && currentState.custom.includes(tool)
       const filtered = (yield* all()).filter((tool) => {
+        if (reviewer) {
+          return safeTool(tool) || jevTool(tool)
+        }
         if (tool.id === WebSearchTool.id) {
           return webSearchEnabled(input.providerID, { exa: flags.enableExa, parallel: flags.enableParallel })
         }
@@ -331,7 +349,24 @@ const layer = Layer.effect(
               .join("\n"),
             parameters: output.parameters,
             jsonSchema,
-            execute: tool.execute,
+            execute: (args: unknown, ctx: Tool.Context) =>
+              Effect.gen(function* () {
+                const currentConfig = yield* config.get()
+                const currentTeam = Object.entries(currentConfig.teams ?? {}).find(
+                  ([name, team]) =>
+                    !team.disabled && team.review && ConfigTeam.roleID(name, team.review.role) === ctx.agent,
+                )
+                if (currentTeam) {
+                  const currentAgent = yield* agents.get(ctx.agent)
+                  const currentJevAllowed =
+                    currentTeam[1].review?.jev === true &&
+                    currentAgent !== undefined &&
+                    Permission.evaluate("jev_review_code", "api.typesafe.ai", currentAgent.permission).action !== "deny"
+                  if (!safeTool(tool) && !(currentJevAllowed && jevTool(tool)))
+                    return yield* Effect.die(new Error("This tool is unavailable to the read-only team reviewer"))
+                }
+                return yield* tool.execute(args, ctx)
+              }),
             formatValidationError: tool.formatValidationError,
           }
         }),
@@ -433,6 +468,7 @@ export const node = LayerNode.make({
     Question.node,
     Todo.node,
     Agent.node,
+    Permission.node,
     Skill.node,
     Session.node,
     BackgroundJob.node,

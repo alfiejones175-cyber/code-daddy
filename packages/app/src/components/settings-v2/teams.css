@@ -1,0 +1,502 @@
+.settings-v2-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.settings-v2-teams-header,
+.settings-v2-teams-actions,
+.settings-v2-teams-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-v2-teams-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.settings-v2-teams-header-row button,
+.settings-v2-teams-section-heading button,
+.settings-v2-teams-role-heading button,
+.settings-v2-teams-actions button {
+  flex: none;
+  white-space: nowrap;
+}
+
+.settings-v2-teams-description,
+.settings-v2-teams-purpose > div > p,
+.settings-v2-teams-section-heading p,
+.settings-v2-teams-review > div > p {
+  margin: 6px 0 0;
+  color: var(--text-weak);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.settings-v2-teams-overview,
+.settings-v2-teams-wizard {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+}
+
+.settings-v2-teams-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+  padding: 1px;
+}
+
+.settings-v2-teams-research-hint {
+  margin: 0 0 4px;
+  color: var(--text-weak);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.settings-v2-teams-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border-weak-base);
+  border-radius: 10px;
+  background: var(--surface-base);
+}
+
+.settings-v2-teams-card-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.settings-v2-teams-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  flex: none;
+  max-width: 100%;
+}
+
+.settings-v2-teams-card-actions [data-component="button-v2"][data-size] {
+  height: auto;
+  min-height: 24px;
+  padding-block: 4px;
+  white-space: normal;
+}
+
+.settings-v2-teams-card h3,
+.settings-v2-teams-purpose h3,
+.settings-v2-teams-section-heading h3,
+.settings-v2-teams-review h3,
+.settings-v2-teams-summary h3 {
+  margin: 0;
+  color: var(--text-base);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-v2-teams-card-main > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-v2-teams-card p {
+  margin: 7px 0 0;
+  color: var(--text-weak);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.settings-v2-teams-card dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 18px;
+  margin: 14px 0 0;
+}
+
+.settings-v2-teams-card dl > div {
+  min-width: 0;
+}
+
+.settings-v2-teams-card dt {
+  color: var(--text-weak);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.settings-v2-teams-card dd {
+  margin: 4px 0 0;
+  color: var(--text-base);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.settings-v2-teams-default {
+  color: var(--text-weak);
+  font-size: 11px;
+}
+
+.settings-v2-teams-empty {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 28px 20px;
+  border: 1px dashed var(--border-weak-base);
+  border-radius: 10px;
+}
+
+.settings-v2-teams-empty h3 {
+  margin: 0;
+  color: var(--text-weak);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.settings-v2-teams-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  padding: 1px;
+}
+
+.settings-v2-teams-steps {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  color: var(--text-weak);
+  font-size: 12px;
+}
+
+.settings-v2-teams-step-active {
+  color: var(--text-base);
+  font-weight: 600;
+}
+
+.settings-v2-teams-purpose,
+.settings-v2-teams-members {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: 1px 2px 10px 1px;
+}
+
+.settings-v2-teams-purpose > div > p {
+  max-width: 560px;
+  line-height: 1.5;
+}
+
+/* Keep the purpose and model controls scrollable instead of shrinking them
+   out of view when the wizard is taller than the settings dialog. */
+.settings-v2-teams-purpose > *,
+.settings-v2-teams-members > * {
+  flex-shrink: 0;
+}
+
+.settings-v2-teams [data-component="settings-v2-list"] {
+  gap: 0;
+}
+
+.settings-v2-teams [data-component="settings-v2-row"] {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.settings-v2-teams [data-slot="settings-v2-row-copy"],
+.settings-v2-teams [data-slot="settings-v2-row-control"] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  flex: none;
+  min-width: 0;
+}
+
+.settings-v2-teams [data-component="text-input-v2"],
+.settings-v2-teams [data-component="textarea-v2"],
+.settings-v2-teams [data-component="select-v2"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+[data-component="dialog-v2"][data-variant="settings"] .settings-v2-teams [data-component="select-v2-root"] {
+  width: 100%;
+  min-width: 0;
+}
+
+.settings-v2-teams [data-slot="text-input-v2-value"],
+.settings-v2-teams [data-slot="text-input-v2-input"],
+.settings-v2-teams [data-slot="textarea-v2-textarea"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.settings-v2-teams-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-weak);
+  font-size: 11px;
+}
+
+.settings-v2-teams-field-wide {
+  grid-column: 1 / -1;
+}
+
+.settings-v2-teams-purpose > .settings-v2-teams-field textarea,
+.settings-v2-teams-review textarea {
+  min-height: 94px;
+}
+
+.settings-v2-teams-section-heading {
+  flex: none;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.settings-v2-teams-section-heading > div {
+  flex: 1 1 22rem;
+  min-width: 0;
+}
+
+.settings-v2-teams-role {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border-weak-base);
+  border-radius: 9px;
+  background: var(--surface-base);
+}
+
+.settings-v2-teams-role-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 10px;
+}
+
+.settings-v2-teams-role-heading strong {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--text-base);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-v2-teams-role-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.settings-v2-teams-optional {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text-weak);
+  font-size: 11px;
+}
+
+.settings-v2-teams-optional summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--text-weak);
+}
+
+.settings-v2-teams-optional[open] {
+  padding-top: 10px;
+  border-top: 1px solid var(--border-weak-base);
+}
+
+.settings-v2-teams-skills {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--border-weak-base);
+  border-radius: 8px;
+}
+
+.settings-v2-teams-skills legend {
+  padding: 0 4px;
+}
+
+.settings-v2-teams-skills label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 6px;
+  color: var(--text-base);
+  overflow-wrap: anywhere;
+}
+
+.settings-v2-teams-skills small {
+  grid-column: 2;
+  color: var(--text-weak);
+  line-height: 1.4;
+}
+
+.settings-v2-teams-review,
+.settings-v2-teams-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border-weak-base);
+  border-radius: 9px;
+}
+
+.settings-v2-teams-review > div > p {
+  line-height: 1.4;
+}
+
+.settings-v2-teams-summary {
+  gap: 6px;
+  background: var(--surface-base);
+}
+
+.settings-v2-teams-summary h3 {
+  margin-bottom: 4px;
+}
+
+.settings-v2-teams-summary p {
+  margin: 0;
+  color: var(--text-weak);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.settings-v2-teams-summary strong {
+  color: var(--text-base);
+}
+
+.settings-v2-teams-default-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-base);
+  font-size: 12px;
+  flex: none;
+  white-space: nowrap;
+}
+
+.settings-v2-teams-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  flex: none;
+  padding: 12px 2px 4px;
+  border-top: 1px solid var(--border-weak-base);
+  background: var(--background-base);
+}
+
+.settings-v2-teams-actions [role="status"] {
+  margin-inline-end: auto;
+  color: var(--text-weak);
+  font-size: 12px;
+}
+
+.settings-v2-teams-error {
+  margin: 0;
+  color: var(--v2-state-fg-danger);
+  font-size: 12px;
+}
+
+.settings-v2-teams-model-note {
+  margin: 6px 0 0;
+  color: var(--text-weak);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1000px) {
+  .settings-v2-teams-card {
+    flex-direction: column;
+  }
+
+  .settings-v2-teams-card-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 680px) {
+  .settings-v2-teams-header-row,
+  .settings-v2-teams-section-heading {
+    align-items: flex-start;
+  }
+
+  .settings-v2-teams-card dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.settings-v2-teams-benchmarks {
+  font-size: 11px;
+  color: var(--text-weak);
+}
+
+.settings-v2-teams-benchmarks summary {
+  width: fit-content;
+  max-width: 100%;
+  cursor: pointer;
+  color: var(--text-base);
+  line-height: 1.5;
+}
+
+.settings-v2-teams-benchmarks > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 12px 0 0;
+}
+
+.settings-v2-teams-benchmarks p {
+  width: 100%;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.settings-v2-teams-benchmarks a {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}

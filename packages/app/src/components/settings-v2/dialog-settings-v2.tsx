@@ -16,6 +16,8 @@ import { useTabs } from "@/context/tabs"
 import { useServerSync } from "@/context/server-sync"
 import { SettingsCapabilities } from "../settings-capabilities"
 import { SettingsRoutinesV2 } from "./routines"
+import { SettingsTeamsV2 } from "./teams"
+import { WorkflowLauncher } from "../workflow-dialog"
 
 export const DialogSettings: Component<{
   sessionID?: string
@@ -96,6 +98,14 @@ export const DialogSettings: Component<{
                       <Icon name="bullet-list" />
                       {language.t("settings.tab.routines")}
                     </TabsV2.Trigger>
+                    <TabsV2.Trigger value="workflows">
+                      <Icon name="branch" />
+                      {language.t("workflow.title")}
+                    </TabsV2.Trigger>
+                    <TabsV2.Trigger value="teams">
+                      <Icon name="brain" />
+                      {language.t("settings.tab.teams")}
+                    </TabsV2.Trigger>
                   </div>
                 </div>
               </div>
@@ -126,6 +136,12 @@ export const DialogSettings: Component<{
         </TabsV2.Content>
         <TabsV2.Content value="routines" class="settings-v2-panel">
           <SettingsRoutinesV2 sessionID={props.sessionID} />
+        </TabsV2.Content>
+        <TabsV2.Content value="teams" class="settings-v2-panel">
+          <SettingsTeamsV2 />
+        </TabsV2.Content>
+        <TabsV2.Content value="workflows" class="settings-v2-panel">
+          <WorkflowLauncher directory={directory()} />
         </TabsV2.Content>
       </TabsV2>
     </Dialog>

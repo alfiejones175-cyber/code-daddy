@@ -1,9 +1,10 @@
 import type { Project } from "@opencode-ai/sdk/v2/client"
 import { createOpencodeClient } from "@opencode-ai/sdk/v2/client"
-import { OpenCode, type OpenCodeClient } from "@opencode-ai/client/promise"
+import { OpenCode } from "@opencode-ai/client/promise"
 import type { ServerConnection } from "@/context/server"
 import { decode64 } from "@/utils/base64"
 import { currentIntegrationFetch } from "./integration-fetch"
+import { createTeamApi } from "./team-api"
 
 export function authTokenFromCredentials(input: { username?: string; password: string }) {
   return btoa(`${input.username ?? "opencode"}:${input.password}`)
@@ -43,25 +44,25 @@ export function createSdkForServer({
   })
 }
 
-export function createApiForServer(input: {
-  server: ServerConnection.HttpBase
-  fetch?: typeof globalThis.fetch
-}): OpenCodeClient {
-  return OpenCode.make({
-    baseUrl: input.server.url,
-    fetch: currentIntegrationFetch(input.fetch ?? globalThis.fetch),
-    headers: input.server.password
-      ? {
-          Authorization: `Basic ${authTokenFromCredentials({
-            username: input.server.username,
-            password: input.server.password,
-          })}`,
-        }
-      : undefined,
-  })
+export function createApiForServer(input: { server: ServerConnection.HttpBase; fetch?: typeof globalThis.fetch }) {
+  return Object.assign(
+    OpenCode.make({
+      baseUrl: input.server.url,
+      fetch: currentIntegrationFetch(input.fetch ?? globalThis.fetch),
+      headers: input.server.password
+        ? {
+            Authorization: `Basic ${authTokenFromCredentials({
+              username: input.server.username,
+              password: input.server.password,
+            })}`,
+          }
+        : undefined,
+    }),
+    { team: createTeamApi(input) },
+  )
 }
 
-export type ServerApi = OpenCodeClient
+export type ServerApi = ReturnType<typeof createApiForServer>
 
 // This endpoint is newer than the vendored app client. Keep authentication and
 // location scoping at the transport boundary until the next client release.

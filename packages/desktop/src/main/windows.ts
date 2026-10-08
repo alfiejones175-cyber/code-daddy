@@ -23,7 +23,7 @@ const rendererProtocol = "oc"
 const rendererHost = "renderer"
 const clipboardWritePermission = "clipboard-sanitized-write"
 const notificationPermission = "notifications"
-const rendererPermissions = new Set([clipboardWritePermission, notificationPermission])
+const rendererPermissions = new Set([clipboardWritePermission, notificationPermission, "display-capture"])
 const oc2Theme = oc2ThemeJson as DesktopTheme
 const oc2Background = {
   light: resolveThemeVariant(oc2Theme.light, false)["background-base"],
@@ -483,6 +483,12 @@ function addDocumentPolicy(response: Response, file: string) {
 
 function allowRendererPermissions(win: BrowserWindow) {
   const webContentsId = win.webContents.id
+
+  // macOS 15+ presents its own source picker. Never choose a screen silently on
+  // platforms without it; the workflow teacher also accepts uploaded captures.
+  win.webContents.session.setDisplayMediaRequestHandler((_request, callback) => callback({}), {
+    useSystemPicker: true,
+  })
 
   win.webContents.session.setPermissionRequestHandler((webContents, permission, callback, details) => {
     callback(

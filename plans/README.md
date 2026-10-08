@@ -45,6 +45,12 @@ Detailed contracts, evaluation criteria, and transport choices live in the [Jev 
 
 ## Existing plans and evidence
 
+Project workflows are implemented in source for the default local V1 server. See the [workflow guide](../documentation/workflows.md) and [dated acceptance evidence](validation/workflows-2026-10-08.md) for execution scope, checks, and desktop installation status.
+
+Saved agent teams are implemented and installed in the local dev app. See the [implementation record](agent-teams.md), [configuration guide](../documentation/agent-teams.md), and [dated acceptance evidence](validation/agent-teams.md).
+
+The member harnesses, AI setup, skill research and Jev simplicity-review extension have separate [acceptance evidence](validation/agent-team-harnesses.md), including the boundary between prompt guidance and enforced permissions.
+
 | Document                                                                      | How to use it                                                                                                                                 |
 | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | [001 — Desktop workspace](001-desktop-workspace.md)                           | Original plan; delivered behavior is recorded in 003. Optional native-edge features remain separate.                                          |

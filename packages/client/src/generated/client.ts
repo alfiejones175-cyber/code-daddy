@@ -164,6 +164,14 @@ import type {
   ServerRoutineRemoveOutput,
   ServerRoutineRunsInput,
   ServerRoutineRunsOutput,
+  TeamsDraftInput,
+  TeamsDraftOutput,
+  TeamsGetInput,
+  TeamsGetOutput,
+  TeamsConfigGetInput,
+  TeamsConfigGetOutput,
+  TeamsConfigUpdateInput,
+  TeamsConfigUpdateOutput,
 } from "./types"
 import { ClientError } from "./client-error"
 
@@ -1361,6 +1369,58 @@ export function make(options: ClientOptions) {
           },
           requestOptions,
         ).then((value) => value.data),
+    },
+    teams: {
+      draft: (input: TeamsDraftInput, requestOptions?: RequestOptions) =>
+        request<TeamsDraftOutput>(
+          {
+            method: "POST",
+            path: `/api/team/draft`,
+            query: { location: input["location"] },
+            body: { goal: input["goal"], model: input["model"], providers: input["providers"] },
+            successStatus: 200,
+            declaredStatuses: [503, 401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      get: (input?: TeamsGetInput, requestOptions?: RequestOptions) =>
+        request<{ readonly data: TeamsGetOutput }>(
+          {
+            method: "GET",
+            path: `/api/team`,
+            query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ).then((value) => value.data),
+      configGet: (input?: TeamsConfigGetInput, requestOptions?: RequestOptions) =>
+        request<TeamsConfigGetOutput>(
+          {
+            method: "GET",
+            path: `/api/team/config`,
+            query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      configUpdate: (input?: TeamsConfigUpdateInput, requestOptions?: RequestOptions) =>
+        request<TeamsConfigUpdateOutput>(
+          {
+            method: "PATCH",
+            path: `/api/team/config`,
+            query: { location: input?.["location"] },
+            body: { teams: input?.["teams"], default_team: input?.["default_team"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401],
+            empty: false,
+          },
+          requestOptions,
+        ),
     },
   }
 }

@@ -261,6 +261,14 @@ function applyLegacySchemaOverrides(spec: OpenApiSpec) {
   const schemas = spec.components?.schemas
   if (!schemas) return
   if (schemas.AgentConfig) schemas.AgentConfig.additionalProperties = {}
+  // Team names are constrained keys; unknown entries must not widen generated SDK values.
+  if (schemas.AgentTeamTeams) schemas.AgentTeamTeams.additionalProperties = false
+  const teamRoles = schemas.AgentTeamInfo?.properties?.roles
+  if (teamRoles) teamRoles.additionalProperties = false
+  // This null is a deliberate default reset, rather than an optional-field artifact.
+  if (schemas.AgentTeamDefault) schemas.AgentTeamDefault = nullable(schemas.AgentTeamDefault)
+  if (schemas.Config?.properties?.default_team)
+    schemas.Config.properties.default_team = nullable(schemas.Config.properties.default_team)
   if (schemas.Command?.properties?.template) schemas.Command.properties.template = { type: "string" }
   if (schemas.Workspace?.properties) {
     schemas.Workspace.properties.branch = nullable(schemas.Workspace.properties.branch)

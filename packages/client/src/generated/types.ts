@@ -3393,3 +3393,196 @@ export type ServerRoutineRunsOutput = {
     readonly time: { readonly claimed: number; readonly updated: number }
   }>
 }["data"]
+
+export type TeamsDraftInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+  readonly goal: {
+    readonly goal: string
+    readonly model: { readonly providerID: string; readonly modelID: string }
+    readonly providers?: ReadonlyArray<string>
+  }["goal"]
+  readonly model: {
+    readonly goal: string
+    readonly model: { readonly providerID: string; readonly modelID: string }
+    readonly providers?: ReadonlyArray<string>
+  }["model"]
+  readonly providers?: {
+    readonly goal: string
+    readonly model: { readonly providerID: string; readonly modelID: string }
+    readonly providers?: ReadonlyArray<string>
+  }["providers"]
+}
+
+export type TeamsDraftOutput = {
+  readonly name: string
+  readonly team: {
+    readonly description?: string
+    readonly lead: string
+    readonly model?: string
+    readonly modelReason?: string
+    readonly roles: {
+      readonly [x: string]: {
+        readonly agent: string
+        readonly model?: string
+        readonly modelReason?: string
+        readonly instructions?: string
+        readonly skills?: ReadonlyArray<string>
+        readonly standards?: ReadonlyArray<string>
+      }
+    }
+    readonly instructions?: string
+    readonly review?: { readonly role: string; readonly checklist?: ReadonlyArray<string>; readonly jev?: boolean }
+    readonly disabled?: boolean
+  }
+}
+
+export type TeamsGetInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+}
+
+export type TeamsGetOutput = {
+  readonly data: {
+    readonly teams?: {
+      readonly [x: string]: {
+        readonly description?: string
+        readonly lead: string
+        readonly model?: string
+        readonly modelReason?: string
+        readonly roles: {
+          readonly [x: string]: {
+            readonly agent: string
+            readonly model?: string
+            readonly modelReason?: string
+            readonly instructions?: string
+            readonly skills?: ReadonlyArray<string>
+            readonly standards?: ReadonlyArray<string>
+          }
+        }
+        readonly instructions?: string
+        readonly review?: { readonly role: string; readonly checklist?: ReadonlyArray<string>; readonly jev?: boolean }
+        readonly disabled?: boolean
+      }
+    }
+    readonly default_team?: string | null
+  }
+}["data"]
+
+export type TeamsConfigGetInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+}
+
+export type TeamsConfigGetOutput = {
+  readonly data: {
+    readonly teams?: {
+      readonly [x: string]: {
+        readonly description?: string
+        readonly lead: string
+        readonly model?: string
+        readonly modelReason?: string
+        readonly roles: {
+          readonly [x: string]: {
+            readonly agent: string
+            readonly model?: string
+            readonly modelReason?: string
+            readonly instructions?: string
+            readonly skills?: ReadonlyArray<string>
+            readonly standards?: ReadonlyArray<string>
+          }
+        }
+        readonly instructions?: string
+        readonly review?: { readonly role: string; readonly checklist?: ReadonlyArray<string>; readonly jev?: boolean }
+        readonly disabled?: boolean
+      }
+    }
+    readonly default_team?: string | null
+  }
+  readonly directory: string
+}
+
+export type TeamsConfigUpdateInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+  readonly teams?: {
+    readonly teams?: {
+      readonly [x: string]: {
+        readonly description?: string
+        readonly lead: string
+        readonly model?: string
+        readonly modelReason?: string
+        readonly roles: {
+          readonly [x: string]: {
+            readonly agent: string
+            readonly model?: string
+            readonly modelReason?: string
+            readonly instructions?: string
+            readonly skills?: ReadonlyArray<string>
+            readonly standards?: ReadonlyArray<string>
+          }
+        }
+        readonly instructions?: string
+        readonly review?: { readonly role: string; readonly checklist?: ReadonlyArray<string>; readonly jev?: boolean }
+        readonly disabled?: boolean
+      }
+    }
+    readonly default_team?: string | null
+  }["teams"]
+  readonly default_team?: {
+    readonly teams?: {
+      readonly [x: string]: {
+        readonly description?: string
+        readonly lead: string
+        readonly model?: string
+        readonly modelReason?: string
+        readonly roles: {
+          readonly [x: string]: {
+            readonly agent: string
+            readonly model?: string
+            readonly modelReason?: string
+            readonly instructions?: string
+            readonly skills?: ReadonlyArray<string>
+            readonly standards?: ReadonlyArray<string>
+          }
+        }
+        readonly instructions?: string
+        readonly review?: { readonly role: string; readonly checklist?: ReadonlyArray<string>; readonly jev?: boolean }
+        readonly disabled?: boolean
+      }
+    }
+    readonly default_team?: string | null
+  }["default_team"]
+}
+
+export type TeamsConfigUpdateOutput = {
+  readonly data: {
+    readonly teams?: {
+      readonly [x: string]: {
+        readonly description?: string
+        readonly lead: string
+        readonly model?: string
+        readonly modelReason?: string
+        readonly roles: {
+          readonly [x: string]: {
+            readonly agent: string
+            readonly model?: string
+            readonly modelReason?: string
+            readonly instructions?: string
+            readonly skills?: ReadonlyArray<string>
+            readonly standards?: ReadonlyArray<string>
+          }
+        }
+        readonly instructions?: string
+        readonly review?: { readonly role: string; readonly checklist?: ReadonlyArray<string>; readonly jev?: boolean }
+        readonly disabled?: boolean
+      }
+    }
+    readonly default_team?: string | null
+  }
+  readonly directory: string
+}

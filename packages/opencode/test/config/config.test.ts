@@ -373,6 +373,37 @@ it.instance("updates config and preserves empty shell sentinel", () =>
   }),
 )
 
+const teamConfigFiles = ["opencode.json", "opencode.jsonc"]
+teamConfigFiles.forEach((name) =>
+  it.effect(`replaces team rosters and clears defaults in ${name}`, () =>
+    withGlobalConfig(
+      {
+        config: {
+          teams: { coding: { lead: "build", roles: { research: { agent: "explore" }, review: { agent: "general" } } } },
+          default_team: "coding",
+          model: "test/model",
+        },
+        name,
+      },
+      ({ dir }) =>
+        Effect.gen(function* () {
+          yield* Config.use.updateGlobal({
+            teams: { coding: { lead: "build", roles: { review: { agent: "general" } } } },
+            default_team: null,
+          })
+          const file = path.join(dir, name)
+          const written = ConfigParse.jsonc(yield* FSUtil.use.readFileString(file), file)
+          expect(written).toMatchObject({
+            model: "test/model",
+            default_team: null,
+            teams: { coding: { lead: "build", roles: { review: { agent: "general" } } } },
+          })
+          expect(written).not.toHaveProperty("teams.coding.roles.research")
+        }),
+    ),
+  ),
+)
+
 it.effect("updates global config and omits empty shell key in json", () =>
   withGlobalConfig({ config: { shell: "bash" } }, ({ dir }) =>
     Effect.gen(function* () {
